@@ -141,12 +141,8 @@ public final class PDXFAResource implements COSObjectable
      * @throws IOException if something went wrong when reading the XFA content.
      * 
      */        
-    public Document getDocument() throws ParserConfigurationException, SAXException, IOException 
+    public Document getDocument() throws IOException
     {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setNamespaceAware(true);
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        Document xfaDocument = builder.parse(new ByteArrayInputStream(this.getBytes())); 
-        return xfaDocument;
+        return com.tom_roush.pdfbox.util.XMLUtil.parse(new ByteArrayInputStream(this.getBytes()), true);
     }
 }

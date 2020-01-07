@@ -34,7 +34,7 @@ import org.w3c.dom.Text;
  * @author <a href="mailto:ben@benlitchfield.com">Ben Litchfield</a>
  * @version $Revision: 1.3 $
  */
-public class XMLUtil
+public final class XMLUtil
 {
     /**
      * Utility class, should not be instantiated.
@@ -53,18 +53,40 @@ public class XMLUtil
      */
     public static Document parse( InputStream is ) throws IOException
     {
-        try
-        {
-            DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = builderFactory.newDocumentBuilder();
-            return builder.parse( is );
-        }
-        catch( Exception e )
-        {
+            return parse(is, false);
+    }
+
+    /**
+     * This will parse an XML stream and create a DOM document.
+     *
+     * @param is The stream to get the XML from.
+     * @param nsAware activates namespace awareness of the parser
+     * @return The DOM document.
+     * @throws IOException It there is an error creating the dom.
+     */
+     public static Document parse(InputStream is, boolean nsAware) throws IOException
+     {
+         try {
+             DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+             builderFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+             builderFactory.setFeature("http://xml.org/sax/features/external-general-entities",
+                     false);
+             builderFactory.setFeature("http://xml.org/sax/features/external-parameter-entities",
+                     false);
+             builderFactory.setFeature(
+                     "http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+             builderFactory.setXIncludeAware(false);
+             builderFactory.setExpandEntityReferences(false);
+             builderFactory.setNamespaceAware(nsAware);
+             DocumentBuilder builder = builderFactory.newDocumentBuilder();
+             return builder.parse(is);
+         }
+         catch( Exception e )
+         {
             IOException thrown = new IOException( e.getMessage() );
             throw thrown;
-        }
-    }
+         }
+     }
 
     /**
      * This will get the text value of an element.
