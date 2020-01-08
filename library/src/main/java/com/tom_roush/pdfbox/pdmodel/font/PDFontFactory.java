@@ -16,13 +16,14 @@
  */
 package com.tom_roush.pdfbox.pdmodel.font;
 
-import android.util.Log;
-
 import java.io.IOException;
 
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import com.tom_roush.pdfbox.pdmodel.ResourceCache;
 
 /**
  * Creates the appropriate font subtype based on information in the dictionary.
@@ -30,6 +31,8 @@ import com.tom_roush.pdfbox.cos.COSName;
  */
 public final class PDFontFactory
 {
+    private static final Log LOG = LogFactory.getLog(PDFontFactory.class);
+
     private PDFontFactory()
     {
     }
@@ -43,10 +46,23 @@ public final class PDFontFactory
      */
     public static PDFont createFont(COSDictionary dictionary) throws IOException
     {
+        return createFont(dictionary, null);
+    }
+
+    /**
+     * Creates a new PDFont instance with the appropriate subclass.
+     *
+     * @param dictionary a font dictionary
+     * @param resourceCache resource cache, only useful for type 3 fonts, can be null
+     * @return a PDFont instance, based on the SubType entry of the dictionary
+     * @throws IOException if something goes wrong
+     */
+    public static PDFont createFont(COSDictionary dictionary, ResourceCache resourceCache) throws IOException
+    {
         COSName type = dictionary.getCOSName(COSName.TYPE, COSName.FONT);
         if (!COSName.FONT.equals(type))
         {
-            Log.e("PdfBox-Android", "Expected 'Font' dictionary but found '" + type.getName() + "'");
+            LOG.error("Expected 'Font' dictionary but found '" + type.getName() + "'");
         }
 
         COSName subType = dictionary.getCOSName(COSName.SUBTYPE);
@@ -62,7 +78,7 @@ public final class PDFontFactory
         else if (COSName.MM_TYPE1.equals(subType))
         {
             COSBase fd = dictionary.getDictionaryObject(COSName.FONT_DESC);
-            if (fd instanceof COSDictionary && ((COSDictionary)fd).containsKey(COSName.FONT_FILE3))
+            if (fd instanceof COSDictionary && ((COSDictionary) fd).containsKey(COSName.FONT_FILE3))
             {
                 return new PDType1CFont(dictionary);
             }
@@ -74,7 +90,7 @@ public final class PDFontFactory
         }
         else if (COSName.TYPE3.equals(subType))
         {
-            return new PDType3Font(dictionary);
+            return new PDType3Font(dictionary, resourceCache);
         }
         else if (COSName.TYPE0.equals(subType))
         {
@@ -92,7 +108,7 @@ public final class PDFontFactory
         {
             // assuming Type 1 font (see PDFBOX-1988) because it seems that Adobe Reader does this
             // however, we may need more sophisticated logic perhaps looking at the FontFile
-            Log.w("PdfBox-Android", "Invalid font subtype '" + subType + "'");
+            LOG.warn("Invalid font subtype '" + subType + "'");
             return new PDType1Font(dictionary);
         }
     }
@@ -105,7 +121,7 @@ public final class PDFontFactory
      * @throws IOException if something goes wrong
      */
     static PDCIDFont createDescendantFont(COSDictionary dictionary, PDType0Font parent)
-        throws IOException
+            throws IOException
     {
         COSName type = dictionary.getCOSName(COSName.TYPE, COSName.FONT);
         if (!COSName.FONT.equals(type))
@@ -130,16 +146,14 @@ public final class PDFontFactory
 
     /**
      * Create a default font.
-     *
+     * 
      * @return a default font
      * @throws IOException if something goes wrong
+     * @deprecated use {@link PDType1Font#HELVETICA}
      */
+    @Deprecated
     public static PDFont createDefaultFont() throws IOException
     {
-        COSDictionary dict = new COSDictionary();
-        dict.setItem(COSName.TYPE, COSName.FONT);
-        dict.setItem(COSName.SUBTYPE, COSName.TRUE_TYPE);
-        dict.setString(COSName.BASE_FONT, "Arial");
-        return createFont(dict);
+        return PDType1Font.HELVETICA;
     }
 }

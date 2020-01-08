@@ -14,13 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.tom_roush.fontbox;
 
-import android.graphics.Path;
-
+import java.awt.geom.GeneralPath;
 import java.io.IOException;
 import java.util.List;
-
 import com.tom_roush.fontbox.util.BoundingBox;
 
 /**
@@ -34,7 +33,7 @@ public interface FontBoxFont
      * The PostScript name of the font.
      */
     String getName() throws IOException;
-
+    
     /**
      * Returns the font's bounding box in PostScript units.
      */
@@ -51,7 +50,7 @@ public interface FontBoxFont
      * @return glyph path
      * @throws IOException if the path could not be read
      */
-    Path getPath(String name) throws IOException;
+    GeneralPath getPath(String name) throws IOException;
 
     /**
      * Returns the advance width for the character with the given name.
@@ -63,7 +62,7 @@ public interface FontBoxFont
 
     /**
      * Returns true if the font contains the given glyph.
-     *
+     * 
      * @param name PostScript glyph name
      */
     boolean hasGlyph(String name) throws IOException;

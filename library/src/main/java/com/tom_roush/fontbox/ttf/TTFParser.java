@@ -120,7 +120,7 @@ public class TTFParser
     }
 
     /**
-     * Parse a file and get a TrueType font.
+     * Parse a file and get a true type font.
      *
      * @param raf The TTF file.
      * @return A TrueType font.
@@ -137,7 +137,7 @@ public class TTFParser
         for (int i = 0; i < numberOfTables; i++)
         {
             TTFTable table = readTableDirectory(font, raf);
-
+            
             // skip tables with zero length
             if (table != null)
             {
@@ -147,7 +147,7 @@ public class TTFParser
         // parse tables if wanted
         if (!parseOnDemandOnly)
         {
-            parseTables(font, raf);
+            parseTables(font);
         }
 
         return font;
@@ -162,10 +162,9 @@ public class TTFParser
      * Parse all tables and check if all needed tables are present.
      *
      * @param font the TrueTypeFont instance holding the parsed data.
-     * @param raf the data stream of the to be parsed ttf font
      * @throws IOException If there is an error parsing the TrueType font.
      */
-    private void parseTables(TrueTypeFont font, TTFDataStream raf) throws IOException
+    private void parseTables(TrueTypeFont font) throws IOException
     {
         for (TTFTable table : font.getTables())
         {
@@ -174,7 +173,9 @@ public class TTFParser
                 font.readTable(table);
             }
         }
-
+        
+        boolean isPostScript = allowCFF() && font.tables.containsKey(CFFTable.TAG);
+        
         HeaderTable head = font.getHeader();
         if (head == null)
         {
@@ -200,35 +201,44 @@ public class TTFParser
             throw new IOException("post is mandatory");
         }
 
-        IndexToLocationTable loc = font.getIndexToLocation();
-        if (loc == null)
+        if (!isPostScript)
         {
-            throw new IOException("loca is mandatory");
+            IndexToLocationTable loc = font.getIndexToLocation();
+            if (loc == null)
+            {
+                throw new IOException("loca is mandatory");
+            }
+
+            if (font.getGlyph() == null)
+            {
+                throw new IOException("glyf is mandatory");
+            }
         }
-        // check other mandatory tables
-        if (font.getGlyph() == null)
-        {
-            throw new IOException("glyf is mandatory");
-        }
+
         if (font.getNaming() == null && !isEmbedded)
         {
             throw new IOException("name is mandatory");
         }
+
         if (font.getHorizontalMetrics() == null)
         {
             throw new IOException("hmtx is mandatory");
         }
-
-        // check others mandatory tables
+        
         if (!isEmbedded && font.getCmap() == null)
         {
             throw new IOException("cmap is mandatory");
         }
     }
 
+    protected boolean allowCFF()
+    {
+        return false;
+    }
+    
     private TTFTable readTableDirectory(TrueTypeFont font, TTFDataStream raf) throws IOException
     {
-        TTFTable table = null;
+        TTFTable table;
         String tag = raf.readString(4);
         if (tag.equals(CmapTable.TAG))
         {
@@ -290,6 +300,10 @@ public class TTFParser
         {
             table = new VerticalOriginTable(font);
         }
+        else if (tag.equals(GlyphSubstitutionTable.TAG))
+        {
+            table = new GlyphSubstitutionTable(font);
+        }
         else
         {
             table = readTable(font, tag);
@@ -298,9 +312,9 @@ public class TTFParser
         table.setCheckSum(raf.readUnsignedInt());
         table.setOffset(raf.readUnsignedInt());
         table.setLength(raf.readUnsignedInt());
-
-        // skip tables with zero length
-        if (table.getLength() == 0)
+        
+        // skip tables with zero length (except glyf)
+        if (table.getLength() == 0 && !tag.equals(GlyphTable.TAG))
         {
             return null;
         }

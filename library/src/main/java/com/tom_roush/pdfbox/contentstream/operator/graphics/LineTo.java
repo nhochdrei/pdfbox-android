@@ -16,16 +16,17 @@
  */
 package com.tom_roush.pdfbox.contentstream.operator.graphics;
 
-import android.graphics.PointF;
-import android.util.Log;
-
 import java.io.IOException;
 import java.util.List;
+import java.awt.geom.Point2D;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import com.tom_roush.pdfbox.contentstream.operator.MissingOperandException;
-import com.tom_roush.pdfbox.contentstream.operator.Operator;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSNumber;
+import com.tom_roush.pdfbox.contentstream.operator.Operator;
+import com.tom_roush.pdfbox.contentstream.operator.OperatorName;
 
 /**
  * l Append straight line segment to path.
@@ -34,6 +35,8 @@ import com.tom_roush.pdfbox.cos.COSNumber;
  */
 public class LineTo extends GraphicsOperatorProcessor
 {
+    private static final Log LOG = LogFactory.getLog(LineTo.class);
+    
     @Override
     public void process(Operator operator, List<COSBase> operands) throws IOException
     {
@@ -52,14 +55,14 @@ public class LineTo extends GraphicsOperatorProcessor
             return;
         }
         // append straight line segment from the current point to the point
-        COSNumber x = (COSNumber)base0;
-        COSNumber y = (COSNumber)base1;
+        COSNumber x = (COSNumber) base0;
+        COSNumber y = (COSNumber) base1;
 
-        PointF pos = context.transformedPoint(x.floatValue(), y.floatValue());
+        Point2D.Float pos = context.transformedPoint(x.floatValue(), y.floatValue());
 
         if (context.getCurrentPoint() == null)
         {
-            Log.w("PdfBox-Android", "LineTo (" + pos.x + "," + pos.y + ") without initial MoveTo");
+            LOG.warn("LineTo (" + pos.x + "," + pos.y + ") without initial MoveTo");
             context.moveTo(pos.x, pos.y);
         }
         else
@@ -71,6 +74,6 @@ public class LineTo extends GraphicsOperatorProcessor
     @Override
     public String getName()
     {
-        return "l";
+        return OperatorName.LINE_TO;
     }
 }

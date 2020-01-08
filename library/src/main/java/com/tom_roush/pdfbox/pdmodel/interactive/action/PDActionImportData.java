@@ -17,11 +17,11 @@
 
 package com.tom_roush.pdfbox.pdmodel.interactive.action;
 
-import java.io.IOException;
-
 import com.tom_roush.pdfbox.cos.COSDictionary;
-import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.pdmodel.common.filespecification.PDFileSpecification;
+
+import java.io.IOException;
+import com.tom_roush.pdfbox.cos.COSName;
 
 /**
  * @author Timur Kamalov
@@ -39,7 +39,6 @@ public class PDActionImportData extends PDAction
      */
     public PDActionImportData()
     {
-        action = new COSDictionary();
         setSubType(SUB_TYPE);
     }
 

@@ -22,9 +22,12 @@ import java.util.regex.Pattern;
 
 /**
  * Basic parser for Type 4 functions which is used to build up instruction sequences.
+ *
  */
 public final class InstructionSequenceBuilder extends Parser.AbstractSyntaxHandler
 {
+    private static final Pattern INTEGER_PATTERN = Pattern.compile("[\\+\\-]?\\d+");
+    private static final Pattern REAL_PATTERN = Pattern.compile("[\\-]?\\d*\\.\\d*([Ee]\\-?\\d+)?");
 
     private final InstructionSequence mainSequence = new InstructionSequence();
     private final Stack<InstructionSequence> seqStack = new Stack<InstructionSequence>();
@@ -60,9 +63,6 @@ public final class InstructionSequenceBuilder extends Parser.AbstractSyntaxHandl
     {
         return this.seqStack.peek();
     }
-
-    private static final Pattern INTEGER_PATTERN = Pattern.compile("[\\+\\-]?\\d+");
-    private static final Pattern REAL_PATTERN = Pattern.compile("[\\-]?\\d*\\.\\d*([Ee]\\-?\\d+)?");
 
     /** {@inheritDoc} */
     @Override
@@ -113,11 +113,8 @@ public final class InstructionSequenceBuilder extends Parser.AbstractSyntaxHandl
      */
     public static int parseInt(String token)
     {
-        if (token.startsWith("+"))
-        {
-            token = token.substring(1);
-        }
-        return Integer.parseInt(token);
+        //TODO Beginning with JDK7 Integer.parseInt accepts leading +'s
+        return Integer.parseInt(token.startsWith("+") ? token.substring(1) : token);
     }
 
     /**

@@ -23,27 +23,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
-import com.tom_roush.pdfbox.contentstream.operator.markedcontent.BeginMarkedContentSequence;
-import com.tom_roush.pdfbox.contentstream.operator.markedcontent.BeginMarkedContentSequenceWithProperties;
-import com.tom_roush.pdfbox.contentstream.operator.markedcontent.DrawObject;
-import com.tom_roush.pdfbox.contentstream.operator.markedcontent.EndMarkedContentSequence;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.pdmodel.documentinterchange.markedcontent.PDMarkedContent;
 import com.tom_roush.pdfbox.pdmodel.graphics.PDXObject;
+import com.tom_roush.pdfbox.contentstream.operator.markedcontent.BeginMarkedContentSequence;
+import com.tom_roush.pdfbox.contentstream.operator.markedcontent.BeginMarkedContentSequenceWithProperties;
+import com.tom_roush.pdfbox.contentstream.operator.markedcontent.DrawObject;
+import com.tom_roush.pdfbox.contentstream.operator.markedcontent.EndMarkedContentSequence;
 
 /**
  * This is an stream engine to extract the marked content of a pdf.
  *
  * @author Johannes Koch
  */
-public class PDFMarkedContentExtractor extends PDFTextStreamEngine
+public class PDFMarkedContentExtractor extends LegacyPDFStreamEngine
 {
     private final boolean suppressDuplicateOverlappingText = true;
     private final List<PDMarkedContent> markedContents = new ArrayList<PDMarkedContent>();
     private final Stack<PDMarkedContent> currentMarkedContents = new Stack<PDMarkedContent>();
-    private final Map<String, List<TextPosition>> characterListMapping =
-        new HashMap<String, List<TextPosition>>();
+    private final Map<String, List<TextPosition>> characterListMapping = new HashMap<String, List<TextPosition>>();
 
     /**
      * Instantiate a new PDFTextStripper object.
@@ -80,6 +79,7 @@ public class PDFMarkedContentExtractor extends PDFTextStreamEngine
         return second > first - variance && second < first + variance;
     }
 
+    @Override
     public void beginMarkedContentSequence(COSName tag, COSDictionary properties)
     {
         PDMarkedContent markedContent = PDMarkedContent.create(tag, properties);
@@ -99,6 +99,7 @@ public class PDFMarkedContentExtractor extends PDFTextStreamEngine
         this.currentMarkedContents.push(markedContent);
     }
 
+    @Override
     public void endMarkedContentSequence()
     {
         if (!this.currentMarkedContents.isEmpty())
@@ -183,7 +184,7 @@ public class PDFMarkedContentExtractor extends PDFTextStreamEngine
 
             /* In the wild, some PDF encoded documents put diacritics (accents on
              * top of characters) into a separate Tj element.  When displaying them
-             * graphically, the two chunks get overlayed.  With text output though,
+             * graphically, the two chunks get overlaid.  With text output though,
              * we need to do the overlay. This code recombines the diacritic with
              * its associated character if the two are consecutive.
              */ 

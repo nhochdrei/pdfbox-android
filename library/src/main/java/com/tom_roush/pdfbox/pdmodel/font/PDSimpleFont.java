@@ -16,15 +16,14 @@
  */
 package com.tom_roush.pdfbox.pdmodel.font;
 
-import android.graphics.Path;
-import android.util.Log;
-
+import java.awt.geom.GeneralPath;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import com.tom_roush.fontbox.FontBoxFont;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.fontbox.FontBoxFont;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
@@ -42,11 +41,12 @@ import com.tom_roush.pdfbox.pdmodel.font.encoding.WinAnsiEncoding;
  */
 public abstract class PDSimpleFont extends PDFont
 {
+    private static final Log LOG = LogFactory.getLog(PDSimpleFont.class);
+
     protected Encoding encoding;
     protected GlyphList glyphList;
     private Boolean isSymbolic;
     private final Set<Integer> noUnicode = new HashSet<Integer>(); // for logging
-    private Map<String, Integer> invertedEncoding; // for writing
 
     /**
      * Constructor for embedding.
@@ -62,8 +62,6 @@ public abstract class PDSimpleFont extends PDFont
     PDSimpleFont(String baseFont)
     {
         super(baseFont);
-
-        this.encoding = WinAnsiEncoding.INSTANCE;
 
         // assign the glyph list based on the font
         if ("ZapfDingbats".equals(baseFont))
@@ -103,7 +101,7 @@ public abstract class PDSimpleFont extends PDFont
                 this.encoding = Encoding.getInstance(encodingName);
                 if (this.encoding == null)
                 {
-                    Log.w("PdfBox-Android", "Unknown encoding: " + encodingName.getName());
+                    LOG.warn("Unknown encoding: " + encodingName.getName());
                     this.encoding = readEncodingFromFont(); // fallback
                 }
             }
@@ -113,7 +111,13 @@ public abstract class PDSimpleFont extends PDFont
                 Encoding builtIn = null;
                 Boolean symbolic = getSymbolicFlag();
                 boolean isFlaggedAsSymbolic = symbolic != null && symbolic;
-                if (!encodingDict.containsKey(COSName.BASE_ENCODING) && isFlaggedAsSymbolic)
+
+                COSName baseEncoding = encodingDict.getCOSName(COSName.BASE_ENCODING);
+                
+                boolean hasValidBaseEncoding = baseEncoding != null &&
+                            Encoding.getInstance(baseEncoding) != null;
+                
+                if (!hasValidBaseEncoding && isFlaggedAsSymbolic)
                 {
                     builtIn = readEncodingFromFont();
                 }
@@ -144,18 +148,7 @@ public abstract class PDSimpleFont extends PDFont
             glyphList = GlyphList.getAdobeGlyphList();
         }
     }
-
-    private void readEncodingFromName(COSName encodingName) throws IOException
-    {
-        this.encoding = Encoding.getInstance(encodingName);
-        if (this.encoding == null)
-        {
-            Log.w("PdfBox-Android", "Unknown encoding: " + encodingName.getName());
-            // fallback
-            this.encoding = readEncodingFromFont();
-        }
-    }
-
+    
     /**
      * Called by readEncoding() if the encoding needs to be extracted from the font file.
      *
@@ -178,7 +171,7 @@ public abstract class PDSimpleFont extends PDFont
     {
         return glyphList;
     }
-
+    
     /**
      * Returns true the font is a symbolic (that is, it does not use the Adobe Standard Roman
      * character set).
@@ -231,8 +224,8 @@ public abstract class PDSimpleFont extends PDFont
                 return true;
             }
             else if (encoding instanceof WinAnsiEncoding ||
-                encoding instanceof MacRomanEncoding ||
-                encoding instanceof StandardEncoding)
+                     encoding instanceof MacRomanEncoding ||
+                     encoding instanceof StandardEncoding)
             {
                 return false;
             }
@@ -241,13 +234,13 @@ public abstract class PDSimpleFont extends PDFont
                 // each name in Differences array must also be in the latin character set
                 for (String name : ((DictionaryEncoding)encoding).getDifferences().values())
                 {
-                    if (name.equals(".notdef"))
+                    if (".notdef".equals(name))
                     {
                         // skip
                     }
                     else if (!(WinAnsiEncoding.INSTANCE.contains(name) &&
-                        MacRomanEncoding.INSTANCE.contains(name) &&
-                        StandardEncoding.INSTANCE.contains(name)))
+                               MacRomanEncoding.INSTANCE.contains(name) &&
+                               StandardEncoding.INSTANCE.contains(name)))
                     {
                         return true;
                     }
@@ -323,19 +316,19 @@ public abstract class PDSimpleFont extends PDFont
         }
 
         // if no value has been produced, there is no way to obtain Unicode for the character.
-        if (!noUnicode.contains(code))
+        if (LOG.isWarnEnabled() && !noUnicode.contains(code))
         {
             // we keep track of which warnings have been issued, so we don't log multiple times
             noUnicode.add(code);
             if (name != null)
             {
-                Log.w("PdfBox-Android", "No Unicode mapping for " + name + " (" + code + ") in font " +
-                    getName());
+                LOG.warn("No Unicode mapping for " + name + " (" + code + ") in font " +
+                        getName());
             }
             else
             {
-                Log.w("PdfBox-Android", "No Unicode mapping for character code " + code + " in font " +
-                    getName());
+                LOG.warn("No Unicode mapping for character code " + code + " in font " +
+                        getName());
             }
         }
 
@@ -356,7 +349,7 @@ public abstract class PDSimpleFont extends PDFont
             String nameInAFM = getEncoding().getName(code);
 
             // the Adobe AFMs don't include .notdef, but Acrobat uses 250, test with PDFBOX-2334
-            if (nameInAFM.equals(".notdef"))
+            if (".notdef".equals(nameInAFM))
             {
                 return 250f;
             }
@@ -369,7 +362,7 @@ public abstract class PDSimpleFont extends PDFont
     @Override
     public boolean isStandard14()
     {
-        // this logic is based on Acrobat's behaviour, see see PDFBOX-2372
+        // this logic is based on Acrobat's behaviour, see PDFBOX-2372
         // the Encoding entry cannot have Differences if we want "standard 14" font handling
         if (getEncoding() instanceof DictionaryEncoding)
         {
@@ -398,7 +391,7 @@ public abstract class PDSimpleFont extends PDFont
      * @return glyph path
      * @throws IOException if the path could not be read
      */
-    public abstract Path getPath(String name) throws IOException;
+    public abstract GeneralPath getPath(String name) throws IOException;
 
     /**
      * Returns true if the font contains the character with the given name.
@@ -428,6 +421,20 @@ public abstract class PDSimpleFont extends PDFont
     @Override
     public boolean willBeSubset()
     {
+        return false;
+    }
+
+    @Override
+    public boolean hasExplicitWidth(int code) throws IOException
+    {
+        if (dict.containsKey(COSName.WIDTHS))
+        {
+            int firstChar = dict.getInt(COSName.FIRST_CHAR, -1);
+            if (code >= firstChar && code - firstChar < getWidths().size())
+            {
+                return true;
+            }
+        }
         return false;
     }
 }

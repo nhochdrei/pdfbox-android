@@ -36,7 +36,6 @@ public class PDActionMovie extends PDAction
      */
     public PDActionMovie()
     {
-        action = new COSDictionary();
         setSubType(SUB_TYPE);
     }
 
@@ -55,7 +54,9 @@ public class PDActionMovie extends PDAction
      * a Movie action.
      *
      * @return The S entry of the specific Movie action dictionary.
+     * @deprecated use {@link #getSubType() }.
      */
+    @Deprecated
     public String getS()
     {
         return action.getNameAsString(COSName.S);
@@ -66,7 +67,9 @@ public class PDActionMovie extends PDAction
      * a Movie action.
      *
      * @param s The Movie action.
+     * @deprecated use {@link #setSubType(java.lang.String) }.
      */
+    @Deprecated
     public void setS(String s)
     {
         action.setName(COSName.S, s);

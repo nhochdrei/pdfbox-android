@@ -18,9 +18,8 @@
 package com.tom_roush.pdfbox.pdmodel.font;
 
 /**
- * Represents a 10-byte PANOSE classification.
+ * Represents a 10-byte <a href="http://monotype.de/services/pan2">PANOSE classification</a>.
  *
- * @link http://www.monotype.com/services/pan2
  * @author John Hewson
  */
 public class PDPanoseClassification
@@ -31,7 +30,7 @@ public class PDPanoseClassification
     {
         this.bytes = bytes;
     }
-
+    
     public int getFamilyKind()
     {
         return bytes[0];
@@ -66,7 +65,7 @@ public class PDPanoseClassification
     {
         return bytes[6];
     }
-
+    
     public int getLetterform()
     {
         return bytes[7];
@@ -86,19 +85,19 @@ public class PDPanoseClassification
     {
         return bytes;
     }
-
+    
     @Override
     public String toString()
     {
-        return "{ FamilyType = " + getFamilyKind() + ", " +
-            "SerifStyle = " + getSerifStyle() + ", " +
-            "Weight = " + getWeight() + ", " +
-            "Proportion = " + getProportion() + ", " +
-            "Contrast = " + getContrast() + ", " +
-            "StrokeVariation = " + getStrokeVariation() + ", " +
-            "ArmStyle = " + getArmStyle() + ", " +
-            "Letterform = " + getLetterform() + ", " +
-            "Midline = " + getMidline() + ", " +
-            "XHeight = " + getXHeight() + "}";
+        return "{ FamilyKind = " + getFamilyKind() + ", " +
+                 "SerifStyle = " + getSerifStyle() + ", " +
+                 "Weight = " + getWeight() + ", " +
+                 "Proportion = " + getProportion() + ", " + 
+                 "Contrast = " + getContrast() + ", " +
+                 "StrokeVariation = " + getStrokeVariation() + ", " +
+                 "ArmStyle = " + getArmStyle() + ", " +
+                 "Letterform = " + getLetterform() + ", " +
+                 "Midline = " + getMidline() + ", " +
+                 "XHeight = " + getXHeight() + "}";
     }
 }

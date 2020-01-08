@@ -16,8 +16,11 @@
  */
 package com.tom_roush.pdfbox.pdmodel.graphics.shading;
 
+import java.awt.Paint;
+
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
+import com.tom_roush.pdfbox.util.Matrix;
 
 /**
  * Resources for a shading type 5 (Lattice-Form Gouraud-Shade Triangle Mesh).
@@ -61,9 +64,9 @@ public class PDShadingType5 extends PDTriangleBasedShadingType
         getCOSObject().setInt(COSName.VERTICES_PER_ROW, verticesPerRow);
     }
 
-//    @Override
-//    public Paint toPaint(Matrix matrix)
-//    {
-//        return new Type5ShadingPaint(this, matrix);
-//    }TODO: PdfBox-Android
+    @Override
+    public Paint toPaint(Matrix matrix)
+    {
+        return new Type5ShadingPaint(this, matrix);
+    }
 }

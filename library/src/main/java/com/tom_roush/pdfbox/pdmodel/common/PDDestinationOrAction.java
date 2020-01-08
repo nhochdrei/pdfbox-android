@@ -21,6 +21,7 @@ package com.tom_roush.pdfbox.pdmodel.common;
  * OpenAction that can be either a Destination or an Action.
  *
  * @author Ben Litchfield
+ *
  */
 public interface PDDestinationOrAction extends COSObjectable
 {

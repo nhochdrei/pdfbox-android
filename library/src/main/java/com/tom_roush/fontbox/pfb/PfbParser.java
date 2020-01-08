@@ -104,7 +104,7 @@ public class PfbParser
 
     /**
      * Create a new object.
-     * @param bytes The input.
+     * @param bytes   The input.
      * @throws IOException if an IO-error occurs.
      */
     public PfbParser(final byte[] bytes) throws IOException

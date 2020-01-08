@@ -16,13 +16,15 @@
  */
 package com.tom_roush.pdfbox.contentstream.operator.text;
 
-import java.io.IOException;
 import java.util.List;
 
-import com.tom_roush.pdfbox.contentstream.operator.Operator;
-import com.tom_roush.pdfbox.contentstream.operator.OperatorProcessor;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSString;
+import com.tom_roush.pdfbox.contentstream.operator.Operator;
+import com.tom_roush.pdfbox.contentstream.operator.OperatorName;
+import com.tom_roush.pdfbox.contentstream.operator.OperatorProcessor;
+
+import java.io.IOException;
 
 /**
  * Tj: Show text.
@@ -34,7 +36,7 @@ public class ShowText extends OperatorProcessor
     @Override
     public void process(Operator operator, List<COSBase> arguments) throws IOException
     {
-        if (arguments.size() < 1)
+        if (arguments.isEmpty())
         {
             // ignore ( )Tj
             return;
@@ -50,13 +52,13 @@ public class ShowText extends OperatorProcessor
             // ignore: outside of BT...ET
             return;
         }
-        COSString string = (COSString)base;
+        COSString string = (COSString) base;
         context.showTextString(string.getBytes());
     }
 
     @Override
     public String getName()
     {
-        return "Tj";
+        return OperatorName.SHOW_TEXT;
     }
 }

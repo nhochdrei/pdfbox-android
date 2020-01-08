@@ -70,7 +70,7 @@ class RC4Cipher
     }
 
     /**
-     * Thie will ensure that the value for a byte &gt;=0.
+     * This will ensure that the value for a byte &gt;=0.
      *
      * @param aByte The byte to test against.
      *
@@ -122,9 +122,9 @@ class RC4Cipher
      */
     public void write( byte[] data, OutputStream output ) throws IOException
     {
-        for( int i = 0; i < data.length; i++ )
+        for (byte aData : data)
         {
-            write( data[i], output );
+            write(aData, output);
         }
     }
 

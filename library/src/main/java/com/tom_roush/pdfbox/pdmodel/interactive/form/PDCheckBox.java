@@ -42,10 +42,10 @@ public final class PDCheckBox extends PDButton
     {
         super(acroForm);
     }
-
+    
     /**
      * Constructor.
-     *
+     * 
      * @param acroForm The form that this field is part of.
      * @param field the PDF object to represent as a field.
      * @param parent the parent node of the node
@@ -68,7 +68,7 @@ public final class PDCheckBox extends PDButton
 
     /**
      * Checks the check box.
-     *
+     * 
      * @throws IOException if the appearance couldn't be generated.
      */
     public void check() throws IOException
@@ -78,7 +78,7 @@ public final class PDCheckBox extends PDButton
 
     /**
      * Unchecks the check box.
-     *
+     * 
      * @throws IOException if the appearance couldn't be generated.
      */
     public void unCheck() throws IOException
@@ -88,22 +88,22 @@ public final class PDCheckBox extends PDButton
 
     /**
      * Get the value which sets the check box to the On state.
-     *
+     * 
      * <p>The On value should be 'Yes' but other values are possible
      * so we need to look for that. On the other hand the Off value shall
      * always be 'Off'. If not set or not part of the normal appearance keys
      * 'Off' is the default</p>
      *
-     * @return the value setting the check box to the On state.
-     * If an empty string is returned there is no appearance definition.
+     * @return the value setting the check box to the On state. 
+     *          If an empty string is returned there is no appearance definition.
      */
     public String getOnValue()
     {
         PDAnnotationWidget widget = this.getWidgets().get(0);
         PDAppearanceDictionary apDictionary = widget.getAppearance();
-
+        
         String onValue = "";
-        if (apDictionary != null)
+        if (apDictionary != null) 
         {
             PDAppearanceEntry normalAppearance = apDictionary.getNormalAppearance();
             if (normalAppearance != null)

@@ -145,10 +145,10 @@ public class PDUserProperty extends PDDictionaryWrapper
     @Override
     public String toString()
     {
-        return new StringBuilder("Name=").append(this.getName())
-            .append(", Value=").append(this.getValue())
-            .append(", FormattedValue=").append(this.getFormattedValue())
-            .append(", Hidden=").append(this.isHidden()).toString();
+        return "Name=" + this.getName() +
+                ", Value=" + this.getValue() +
+                ", FormattedValue=" + this.getFormattedValue() +
+                ", Hidden=" + this.isHidden();
     }
 
 
@@ -188,8 +188,8 @@ public class PDUserProperty extends PDDictionaryWrapper
     {
         final int prime = 31;
         int result = super.hashCode();
-        result =
-            prime * result + ((userAttributeObject == null) ? 0 : userAttributeObject.hashCode());
+        result = prime * result
+                + ((userAttributeObject == null) ? 0 : userAttributeObject.hashCode());
         return result;
     }
 
@@ -208,7 +208,7 @@ public class PDUserProperty extends PDDictionaryWrapper
         {
             return false;
         }
-        PDUserProperty other = (PDUserProperty)obj;
+        PDUserProperty other = (PDUserProperty) obj;
         if (userAttributeObject == null)
         {
             if (other.userAttributeObject != null)
@@ -222,4 +222,5 @@ public class PDUserProperty extends PDDictionaryWrapper
         }
         return true;
     }
+
 }

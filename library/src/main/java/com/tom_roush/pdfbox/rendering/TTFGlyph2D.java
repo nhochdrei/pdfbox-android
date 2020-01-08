@@ -1,31 +1,32 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
  */
 package com.tom_roush.pdfbox.rendering;
 
-import android.graphics.Path;
-import android.util.Log;
-
+import com.tom_roush.awt.geom.AffineTransform;
+import java.awt.geom.GeneralPath;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-
-import com.tom_roush.fontbox.ttf.HeaderTable;
-import com.tom_roush.fontbox.ttf.TrueTypeFont;
-import com.tom_roush.harmony.awt.geom.AffineTransform;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.fontbox.ttf.HeaderTable;
+import org.apache.fontbox.ttf.TrueTypeFont;
 import com.tom_roush.pdfbox.pdmodel.font.PDCIDFontType2;
 import com.tom_roush.pdfbox.pdmodel.font.PDFont;
 import com.tom_roush.pdfbox.pdmodel.font.PDTrueTypeFont;
@@ -37,12 +38,14 @@ import com.tom_roush.pdfbox.pdmodel.font.PDVectorFont;
  */
 final class TTFGlyph2D implements Glyph2D
 {
+    private static final Log LOG = LogFactory.getLog(TTFGlyph2D.class);
+
     private final PDFont font;
     private final TrueTypeFont ttf;
     private PDVectorFont vectorFont;
     private float scale = 1.0f;
     private boolean hasScaling;
-    private final Map<Integer, Path> glyphs = new HashMap<Integer, Path>();
+    private final Map<Integer, GeneralPath> glyphs = new HashMap<Integer, GeneralPath>();
     private final boolean isCIDFont;
 
     /**
@@ -84,7 +87,7 @@ final class TTFGlyph2D implements Glyph2D
     }
 
     @Override
-    public Path getPathForCharacterCode(int code) throws IOException
+    public GeneralPath getPathForCharacterCode(int code) throws IOException
     {
         int gid = getGIDForCharacterCode(code);
         return getPathForGID(gid, code);
@@ -111,14 +114,17 @@ final class TTFGlyph2D implements Glyph2D
      *
      * @return the GeneralPath for the given glyphId
      */
-    public Path getPathForGID(int gid, int code) throws IOException
+    public GeneralPath getPathForGID(int gid, int code) throws IOException
     {
-        Path glyphPath;
-        if (glyphs.containsKey(gid))
+        if (gid == 0 && !isCIDFont && code == 10 && font.isStandard14())
         {
-            glyphPath = glyphs.get(gid);
+            // PDFBOX-4001 return empty path for line feed on std14
+            // need to catch this early because all "bad" glyphs have gid 0
+            LOG.warn("No glyph for code " + code + " in font " + font.getName());
+            return new GeneralPath();
         }
-        else
+        GeneralPath glyphPath = glyphs.get(gid);
+        if (glyphPath == null)
         {
             if (gid == 0 || gid >= ttf.getMaximumProfile().getNumGlyphs())
             {
@@ -126,24 +132,27 @@ final class TTFGlyph2D implements Glyph2D
                 {
                     int cid = ((PDType0Font) font).codeToCID(code);
                     String cidHex = String.format("%04x", cid);
-                    Log.w("PdfBox-Android", "No glyph for " + code + " (CID " + cidHex + ") in font " +
-                        font.getName());
+                    LOG.warn("No glyph for code " + code + " (CID " + cidHex + ") in font " +
+                            font.getName());
                 }
                 else
                 {
-                    Log.w("PdfBox-Android", "No glyph for " + code + " in font " + font.getName());
+                    LOG.warn("No glyph for " + code + " in font " + font.getName());
                 }
             }
-            Path glyph = vectorFont.getPath(code);
+            
+            GeneralPath glyph = vectorFont.getPath(code);
+
             // Acrobat only draws GID 0 for embedded or "Standard 14" fonts, see PDFBOX-2372
             if (gid == 0 && !font.isEmbedded() && !font.isStandard14())
             {
                 glyph = null;
             }
+
             if (glyph == null)
             {
                 // empty glyph (e.g. space, newline)
-                glyphPath = new Path();
+                glyphPath = new GeneralPath();
                 glyphs.put(gid, glyphPath);
             }
             else
@@ -152,12 +161,13 @@ final class TTFGlyph2D implements Glyph2D
                 if (hasScaling)
                 {
                     AffineTransform atScale = AffineTransform.getScaleInstance(scale, scale);
-                    glyphPath.transform(atScale.toMatrix());
+                    glyphPath.transform(atScale);
                 }
                 glyphs.put(gid, glyphPath);
             }
         }
-        return glyphPath != null ? new Path(glyphPath) : null; // todo: expensive
+        // todo: expensive
+        return (GeneralPath) glyphPath.clone();
     }
 
     @Override

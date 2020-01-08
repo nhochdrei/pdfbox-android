@@ -20,6 +20,7 @@ import java.util.Stack;
 
 /**
  * Makes up the execution context, holding the available operators and the execution stack.
+ *
  */
 public class ExecutionContext
 {
@@ -71,7 +72,7 @@ public class ExecutionContext
      */
     public int popInt()
     {
-        return ((Integer)stack.pop());
+        return (Integer) stack.pop();
     }
 
     /**

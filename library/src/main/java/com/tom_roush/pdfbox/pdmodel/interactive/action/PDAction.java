@@ -98,7 +98,6 @@ public abstract class PDAction implements PDDestinationOrAction
 
     /**
      * This will get the type of action that the actions dictionary describes.
-     * If present, must be Action for an action dictionary.
      *
      * @return The S entry of actions dictionary.
      */
@@ -109,7 +108,6 @@ public abstract class PDAction implements PDDestinationOrAction
 
     /**
      * This will set the type of action that the actions dictionary describes.
-     * If present, must be Action for an action dictionary.
      *
      * @param s The new type of action.
      */
@@ -157,6 +155,6 @@ public abstract class PDAction implements PDDestinationOrAction
      */
     public void setNext( List<?> next )
     {
-        action.setItem(COSName.NEXT, COSArrayList.converterToCOSArray( next ) );
+        action.setItem(COSName.NEXT, COSArrayList.converterToCOSArray(next));
     }
 }

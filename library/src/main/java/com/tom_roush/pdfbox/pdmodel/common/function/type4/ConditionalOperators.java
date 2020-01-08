@@ -20,9 +20,15 @@ import java.util.Stack;
 
 /**
  * Provides the conditional operators such as "if" and "ifelse".
+ *
  */
 class ConditionalOperators
 {
+
+    private ConditionalOperators()
+    {
+        // Private constructor.
+    }
 
     /** Implements the "if" operator. */
     static class If implements Operator

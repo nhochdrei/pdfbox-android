@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
 import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.pdmodel.common.COSObjectable;
 
@@ -52,6 +51,10 @@ public abstract class Encoding implements COSObjectable
         {
             return MacRomanEncoding.INSTANCE;
         }
+        else if (COSName.MAC_EXPERT_ENCODING.equals(name))
+        {
+            return MacExpertEncoding.INSTANCE;
+        }
         else
         {
             return null;
@@ -63,9 +66,9 @@ public abstract class Encoding implements COSObjectable
     private Set<String> names;
 
     /**
-     * Returns an unmodifiable view of the code -> name mapping.
-     *
-     * @return the code -> name map
+     * Returns an unmodifiable view of the code -&gt; name mapping.
+     * 
+     * @return the code -&gt; name map
      */
     public Map<Integer, String> getCodeToNameMap()
     {
@@ -73,10 +76,10 @@ public abstract class Encoding implements COSObjectable
     }
 
     /**
-     * Returns an unmodifiable view of the name -> code mapping. More than one name may map to
+     * Returns an unmodifiable view of the name -&gt; code mapping. More than one name may map to
      * the same code.
      *
-     * @return the name -> code map
+     * @return the name -&gt; code map
      */
     public Map<String, Integer> getNameToCodeMap()
     {
@@ -84,7 +87,9 @@ public abstract class Encoding implements COSObjectable
     }
 
     /**
-     * This will add a character encoding.
+     * This will add a character encoding. An already existing mapping is preservered when creating the reverse mapping.
+     * 
+     * @see #overwrite(int, String)
      * 
      * @param code character code
      * @param name PostScript glyph name
@@ -92,7 +97,34 @@ public abstract class Encoding implements COSObjectable
     protected void add(int code, String name)
     {
         codeToName.put(code, name);
+        if (!inverted.containsKey(name))
+        {
+            inverted.put(name, code);
+        }
+    }
+
+    /**
+     * This will add a character encoding. An already existing mapping is overwritten when creating the reverse mapping.
+     * 
+     * @see Encoding#add(int, String)
+     *
+     * @param code character code
+     * @param name PostScript glyph name
+     */
+    protected void overwrite(int code, String name)
+    {
+        // remove existing reverse mapping first
+        String oldName = codeToName.get(code);
+        if (oldName != null)
+        {
+            Integer oldCode = inverted.get(oldName);
+            if (oldCode != null && oldCode == code)
+            {
+                inverted.remove(oldName);
+            }
+        }
         inverted.put(name, code);
+        codeToName.put(code, name);
     }
 
     /**
@@ -106,8 +138,15 @@ public abstract class Encoding implements COSObjectable
         // otherwise /Differences won't be accounted for
         if (names == null)
         {
-            names = new HashSet<String>(codeToName.size());
-            names.addAll(codeToName.values());
+            synchronized(this)
+            {
+                // PDFBOX-3404: avoid possibility that one thread ends up with newly created empty map from other thread
+                Set<String> tmpSet = new HashSet<String>(codeToName.values());
+                // make sure that assignment is done after initialisation is complete
+                names = tmpSet;
+                // note that it might still happen that 'names' is initialized twice, but this is harmless
+            }
+            // at this point, names will never be null.
         }
         return names.contains(name);
     }

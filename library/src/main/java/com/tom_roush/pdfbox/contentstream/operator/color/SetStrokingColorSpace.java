@@ -23,6 +23,7 @@ import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.pdmodel.graphics.color.PDColorSpace;
 import com.tom_roush.pdfbox.contentstream.operator.Operator;
+import com.tom_roush.pdfbox.contentstream.operator.OperatorName;
 import com.tom_roush.pdfbox.contentstream.operator.OperatorProcessor;
 
 /**
@@ -36,9 +37,12 @@ public class SetStrokingColorSpace extends OperatorProcessor
     @Override
     public void process(Operator operator, List<COSBase> arguments) throws IOException
     {
-        COSName name = (COSName)arguments.get(0);
-
-        PDColorSpace cs = context.getResources().getColorSpace(name);
+        COSBase base = arguments.get(0);
+        if (!(base instanceof COSName))
+        {
+            return;
+        }
+        PDColorSpace cs = context.getResources().getColorSpace((COSName) base);
         context.getGraphicsState().setStrokingColorSpace(cs);
         context.getGraphicsState().setStrokingColor(cs.getInitialColor());
     }
@@ -46,6 +50,6 @@ public class SetStrokingColorSpace extends OperatorProcessor
     @Override
     public String getName()
     {
-        return "CS";
+        return OperatorName.STROKING_COLORSPACE;
     }
 }

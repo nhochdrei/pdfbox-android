@@ -16,19 +16,27 @@
  */
 package com.tom_roush.pdfbox.pdmodel.interactive.annotation;
 
-import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSDictionary;
+import com.tom_roush.pdfbox.cos.COSArray;
+import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSName;
+import com.tom_roush.pdfbox.pdmodel.PDDocument;
+import com.tom_roush.pdfbox.pdmodel.interactive.annotation.handlers.PDAppearanceHandler;
+import com.tom_roush.pdfbox.pdmodel.interactive.annotation.handlers.PDHighlightAppearanceHandler;
+import com.tom_roush.pdfbox.pdmodel.interactive.annotation.handlers.PDSquigglyAppearanceHandler;
+import com.tom_roush.pdfbox.pdmodel.interactive.annotation.handlers.PDStrikeoutAppearanceHandler;
+import com.tom_roush.pdfbox.pdmodel.interactive.annotation.handlers.PDUnderlineAppearanceHandler;
 
 /**
- * This is the abstract class that represents a text markup annotation
- * Introduced in PDF 1.3 specification, except Squiggly lines in 1.4.
+ * This is the abstract class that represents a text markup annotation Introduced in PDF 1.3 specification, except
+ * Squiggly lines in 1.4.
  *
  * @author Paul King
  */
 public class PDAnnotationTextMarkup extends PDAnnotationMarkup
 {
-
+    private PDAppearanceHandler customAppearanceHandler;
+    
     /**
      * The types of annotation.
      */
@@ -58,76 +66,118 @@ public class PDAnnotationTextMarkup extends PDAnnotationMarkup
      */
     public PDAnnotationTextMarkup(String subType)
     {
-        super();
-        setSubtype( subType );
+        setSubtype(subType);
 
         // Quad points are required, set and empty array
-        setQuadPoints( new float[0] );
+        setQuadPoints(new float[0]);
     }
 
     /**
-     * Creates a TextMarkup annotation from a COSDictionary, expected to be a
-     * correct object definition.
+     * Creates a TextMarkup annotation from a COSDictionary, expected to be a correct object definition.
      *
-     * @param field the PDF objet to represent as a field.
+     * @param field the PDF object to represent as a field.
      */
-    public PDAnnotationTextMarkup( COSDictionary field )
+    public PDAnnotationTextMarkup(COSDictionary field)
     {
-        super( field );
+        super(field);
     }
 
     /**
-     * This will set the set of quadpoints which encompass the areas of this
-     * annotation.
+     * This will set the set of quadpoints which encompass the areas of this annotation.
      *
-     * @param quadPoints
-     *            an array representing the set of area covered
+     * @param quadPoints an array representing the set of area covered
      */
-    public void setQuadPoints( float[] quadPoints )
+    public void setQuadPoints(float[] quadPoints)
     {
         COSArray newQuadPoints = new COSArray();
-        newQuadPoints.setFloatArray( quadPoints );
+        newQuadPoints.setFloatArray(quadPoints);
         getCOSObject().setItem(COSName.QUADPOINTS, newQuadPoints);
     }
 
     /**
-     * This will retrieve the set of quadpoints which encompass the areas of
-     * this annotation.
+     * This will retrieve the set of quadpoints which encompass the areas of this annotation.
      *
      * @return An array of floats representing the quad points.
      */
     public float[] getQuadPoints()
     {
-        COSArray quadPoints = (COSArray) getCOSObject().getDictionaryObject(COSName.QUADPOINTS);
-        if (quadPoints != null)
+        COSBase base = getCOSObject().getDictionaryObject(COSName.QUADPOINTS);
+        if (base instanceof COSArray)
         {
-            return quadPoints.toFloatArray();
+            return ((COSArray) base).toFloatArray();
         }
-        else
-        {
-            return null; // Should never happen as this is a required item
-        }
+        // Should never happen as this is a required item
+        return null; 
     }
 
     /**
-     * This will set the sub type (and hence appearance, AP taking precedence) For
-     * this annotation. See the SUB_TYPE_XXX constants for valid values.
+     * This will set the sub type (and hence appearance, AP taking precedence) For this annotation. See the SUB_TYPE_XXX
+     * constants for valid values.
      *
      * @param subType The subtype of the annotation
      */
-    public void setSubtype( String subType )
+    public void setSubtype(String subType)
     {
         getCOSObject().setName(COSName.SUBTYPE, subType);
     }
 
     /**
-     * This will retrieve the sub type (and hence appearance, AP taking precedence)
-     * For this annotation.
+     * This will retrieve the sub type (and hence appearance, AP taking precedence) For this annotation.
      *
      * @return The subtype of this annotation, see the SUB_TYPE_XXX constants.
      */
     public String getSubtype()
     {
         return getCOSObject().getNameAsString(COSName.SUBTYPE);
+    }
+
+        /**
+     * Set a custom appearance handler for generating the annotations appearance streams.
+     * 
+     * @param appearanceHandler
+     */
+    public void setCustomAppearanceHandler(PDAppearanceHandler appearanceHandler)
+    {
+        customAppearanceHandler = appearanceHandler;
+    }
+
+    @Override
+    public void constructAppearances()
+    {
+        this.constructAppearances(null);
+    }
+
+    @Override
+    public void constructAppearances(PDDocument document)
+    {
+        if (customAppearanceHandler == null)
+        {
+            PDAppearanceHandler appearanceHandler = null;
+            if (SUB_TYPE_HIGHLIGHT.equals(getSubtype()))
+            {
+                appearanceHandler = new PDHighlightAppearanceHandler(this);
+            }
+            else if  (SUB_TYPE_SQUIGGLY.equals(getSubtype()))
+            {
+                appearanceHandler = new PDSquigglyAppearanceHandler(this);
+            }
+            else if  (SUB_TYPE_STRIKEOUT.equals(getSubtype()))
+            {
+                appearanceHandler = new PDStrikeoutAppearanceHandler(this);
+            }
+            else if  (SUB_TYPE_UNDERLINE.equals(getSubtype()))
+            {
+                appearanceHandler = new PDUnderlineAppearanceHandler(this);
+            }
+
+            if (appearanceHandler != null)
+            {
+                appearanceHandler.generateAppearanceStreams();
+            }
+        }
+        else
+        {
+            customAppearanceHandler.generateAppearanceStreams();
+        }
     }
 }

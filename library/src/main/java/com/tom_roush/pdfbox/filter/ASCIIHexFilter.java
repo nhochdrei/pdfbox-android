@@ -16,22 +16,24 @@
  */
 package com.tom_roush.pdfbox.filter;
 
-import android.util.Log;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.util.Hex;
 
 /**
  * Decodes data encoded in an ASCII hexadecimal form, reproducing the original binary data.
- * 
+ *
  * @author Ben Litchfield
  */
 final class ASCIIHexFilter extends Filter
 {
+    private static final Log LOG = LogFactory.getLog(ASCIIHexFilter.class);
+
     private static final int[] REVERSE_HEX = {
       /*   0 */  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
       /*  10 */  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -43,7 +45,22 @@ final class ASCIIHexFilter extends Filter
       /*  70 */  15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
       /*  80 */  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
       /*  90 */  -1, -1, -1, -1, -1, -1, -1, 10, 11, 12,
-      /* 100 */  13, 14, 15
+      /* 100 */  13, 14, 15, -1, -1, -1, -1, -1, -1, -1,
+      /* 110 */  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      /* 120 */  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      /* 130 */  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      /* 140 */  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      /* 150 */  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      /* 160 */  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      /* 170 */  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      /* 180 */  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      /* 190 */  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      /* 200 */  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      /* 210 */  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      /* 220 */  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      /* 230 */  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      /* 240 */  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      /* 250 */  -1, -1, -1, -1, -1, -1
     };
 
     @Override
@@ -65,7 +82,7 @@ final class ASCIIHexFilter extends Filter
        
             if (REVERSE_HEX[firstByte] == -1)
             {
-                Log.e("PdfBox-Android", "Invalid hex, int: " + firstByte + " char: " + (char)firstByte);
+                LOG.error("Invalid hex, int: " + firstByte + " char: " + (char)firstByte);
             }
             value = REVERSE_HEX[firstByte] * 16;
             secondByte = encoded.read();
@@ -80,7 +97,7 @@ final class ASCIIHexFilter extends Filter
             {
                 if (REVERSE_HEX[secondByte] == -1)
                 {
-                	Log.e("PdfBox-Android", "Invalid hex, int: " + secondByte + " char: " + (char)secondByte);
+                    LOG.error("Invalid hex, int: " + secondByte + " char: " + (char)secondByte);
                 }
                 value += REVERSE_HEX[secondByte];
             }
@@ -114,7 +131,7 @@ final class ASCIIHexFilter extends Filter
         int byteRead;
         while ((byteRead = input.read()) != -1)
         {
-            encoded.write(Hex.getBytes((byte)byteRead));
+            Hex.writeHexByte((byte)byteRead, encoded);
         }
         encoded.flush();
     }

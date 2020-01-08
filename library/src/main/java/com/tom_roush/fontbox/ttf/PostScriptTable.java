@@ -17,6 +17,8 @@
 package com.tom_roush.fontbox.ttf;
 
 import java.io.IOException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * A table in a true type font.
@@ -25,6 +27,7 @@ import java.io.IOException;
  */
 public class PostScriptTable extends TTFTable
 {
+    private static final Log LOG = LogFactory.getLog(PostScriptTable.class);
     private float formatType;
     private float italicAngle;
     private short underlinePosition;
@@ -32,7 +35,7 @@ public class PostScriptTable extends TTFTable
     private long isFixedPitch;
     private long minMemType42;
     private long maxMemType42;
-    private long minMemType1;
+    private long mimMemType1;
     private long maxMemType1;
     private String[] glyphNames = null;
 
@@ -54,7 +57,7 @@ public class PostScriptTable extends TTFTable
      * @throws IOException If there is an error reading the data.
      */
     @Override
-    public void read(TrueTypeFont ttf, TTFDataStream data) throws IOException
+    void read(TrueTypeFont ttf, TTFDataStream data) throws IOException
     {
         formatType = data.read32Fixed();
         italicAngle = data.read32Fixed();
@@ -63,7 +66,7 @@ public class PostScriptTable extends TTFTable
         isFixedPitch = data.readUnsignedInt();
         minMemType42 = data.readUnsignedInt();
         maxMemType42 = data.readUnsignedInt();
-        minMemType1 = data.readUnsignedInt();
+        mimMemType1 = data.readUnsignedInt();
         maxMemType1 = data.readUnsignedInt();
 
         if (formatType == 1.0f)
@@ -104,7 +107,7 @@ public class PostScriptTable extends TTFTable
             for (int i = 0; i < numGlyphs; i++)
             {
                 int index = glyphNameIndex[i];
-                if (index < WGL4Names.NUMBER_OF_MAC_GLYPHS)
+                if (index >= 0 && index < WGL4Names.NUMBER_OF_MAC_GLYPHS)
                 {
                     glyphNames[i] = WGL4Names.MAC_GLYPH_NAMES[index];
                 }
@@ -131,17 +134,26 @@ public class PostScriptTable extends TTFTable
             glyphNames = new String[glyphNameIndex.length];
             for (int i = 0; i < glyphNames.length; i++)
             {
-                String name = WGL4Names.MAC_GLYPH_NAMES[glyphNameIndex[i]];
-                if (name != null)
+                int index = glyphNameIndex[i];
+                if (index >= 0 && index < WGL4Names.NUMBER_OF_MAC_GLYPHS)
                 {
-                    glyphNames[i] = name;
+                    String name = WGL4Names.MAC_GLYPH_NAMES[index];
+                    if (name != null)
+                    {
+                        glyphNames[i] = name;
+                    }
+                }
+                else
+                {
+                    LOG.debug("incorrect glyph name index " + index +
+                              ", valid numbers 0.." + WGL4Names.NUMBER_OF_MAC_GLYPHS);
                 }
             }
-
         }
         else if (formatType == 3.0f)
         {
             // no postscript information is provided.
+            LOG.debug("No PostScript name information is provided for the font " + font.getName());
         }
         initialized = true;
     }
@@ -231,7 +243,7 @@ public class PostScriptTable extends TTFTable
      */
     public long getMinMemType1()
     {
-        return minMemType1;
+        return mimMemType1;
     }
 
     /**
@@ -239,7 +251,7 @@ public class PostScriptTable extends TTFTable
      */
     public void setMimMemType1(long mimMemType1Value)
     {
-        this.minMemType1 = mimMemType1Value;
+        this.mimMemType1 = mimMemType1Value;
     }
 
     /**
@@ -311,7 +323,7 @@ public class PostScriptTable extends TTFTable
      */
     public String getName(int gid)
     {
-        if (gid < 0 || glyphNames == null || gid > glyphNames.length)
+        if (gid < 0 || glyphNames == null || gid >= glyphNames.length)
         {
             return null;
         }

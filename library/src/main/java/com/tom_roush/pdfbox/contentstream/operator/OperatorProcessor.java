@@ -16,11 +16,10 @@
  */
 package com.tom_roush.pdfbox.contentstream.operator;
 
-import java.io.IOException;
-import java.util.List;
-
-import com.tom_roush.pdfbox.contentstream.PDFStreamEngine;
 import com.tom_roush.pdfbox.cos.COSBase;
+import com.tom_roush.pdfbox.contentstream.PDFStreamEngine;
+import java.util.List;
+import java.io.IOException;
 
 /**
  * Processes a PDF operator.
@@ -69,16 +68,15 @@ public abstract class OperatorProcessor
      * Returns the name of this operator, e.g. "BI".
      */
     public abstract String getName();
-
+    
     /**
      * Check whether all operands list elements are an instance of a specific class.
      *
      * @param operands The operands list.
      * @param clazz The expected class.
-     *
      * @return the boolean
      */
-    public boolean checkArrayTypesClass(List<COSBase> operands, Class clazz)
+    public boolean checkArrayTypesClass(List<COSBase> operands, Class<?> clazz)
     {
         for (COSBase base : operands)
         {

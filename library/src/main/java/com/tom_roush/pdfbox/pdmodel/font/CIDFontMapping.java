@@ -17,8 +17,8 @@
 
 package com.tom_roush.pdfbox.pdmodel.font;
 
-import com.tom_roush.fontbox.FontBoxFont;
-import com.tom_roush.fontbox.ttf.OpenTypeFont;
+import org.apache.fontbox.FontBoxFont;
+import org.apache.fontbox.ttf.OpenTypeFont;
 
 /**
  * A CIDFontMapping is a kind of FontMapping which allows for an additional TrueTypeFont substitute

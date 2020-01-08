@@ -16,10 +16,10 @@
  */
 package com.tom_roush.pdfbox.pdmodel.graphics.state;
 
-import android.util.Log;
-
 import java.io.IOException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;
@@ -28,11 +28,12 @@ import com.tom_roush.pdfbox.pdmodel.common.COSObjectable;
 import com.tom_roush.pdfbox.pdmodel.common.function.PDFunction;
 import com.tom_roush.pdfbox.pdmodel.graphics.PDXObject;
 import com.tom_roush.pdfbox.pdmodel.graphics.form.PDTransparencyGroup;
+import com.tom_roush.pdfbox.util.Matrix;
 
 /**
  * Soft mask.
  *
- * @author K�hn & Weyh Software, GmbH
+ * @author Kühn &amp; Weyh Software GmbH
  */
 public final class PDSoftMask implements COSObjectable
 {
@@ -51,7 +52,7 @@ public final class PDSoftMask implements COSObjectable
             }
             else
             {
-                Log.w("PdfBox-Android", "Invalid SMask " + dictionary);
+                LOG.warn("Invalid SMask " + dictionary);
                 return null;
             }
         }
@@ -61,10 +62,12 @@ public final class PDSoftMask implements COSObjectable
         }
         else
         {
-            Log.w("PdfBox-Android", "Invalid SMask " + dictionary);
+            LOG.warn("Invalid SMask " + dictionary);
             return null;
         }
     }
+
+    private static final Log LOG = LogFactory.getLog(PDSoftMask.class);
 
     private final COSDictionary dictionary;
     private COSName subType = null;
@@ -73,11 +76,17 @@ public final class PDSoftMask implements COSObjectable
     private PDFunction transferFunction = null;
 
     /**
+     * To allow a soft mask to know the CTM at the time of activation of the ExtGState.
+     */
+    private Matrix ctm;
+
+    /**
      * Creates a new soft mask.
+     *
+     * @param dictionary The soft mask dictionary.
      */
     public PDSoftMask(COSDictionary dictionary)
     {
-        super();
         this.dictionary = dictionary;
     }
 
@@ -112,7 +121,11 @@ public final class PDSoftMask implements COSObjectable
             COSBase cosGroup = getCOSObject().getDictionaryObject(COSName.G);
             if (cosGroup != null)
             {
-                group = (PDTransparencyGroup)PDXObject.createXObject(cosGroup, null);
+                PDXObject x = PDXObject.createXObject(cosGroup, null);
+                if (x instanceof PDTransparencyGroup)
+                {
+                    group = (PDTransparencyGroup) x;
+                }
             }
         }
         return group;
@@ -145,5 +158,25 @@ public final class PDSoftMask implements COSObjectable
             }
         }
         return transferFunction;
+    }
+
+    /**
+     * Set the CTM that is valid at the time the ExtGState was activated.
+     *
+     * @param ctm
+     */
+    void setInitialTransformationMatrix(Matrix ctm)
+    {
+        this.ctm = ctm;
+    }
+
+    /**
+     * Returns the CTM at the time the ExtGState was activated.
+     *
+     * @return the CTM at the time the ExtGState was activated.
+     */
+    public Matrix getInitialTransformationMatrix()
+    {
+        return ctm;
     }
 }

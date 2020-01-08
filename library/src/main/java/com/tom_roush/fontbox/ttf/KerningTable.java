@@ -16,9 +16,10 @@
  */
 package com.tom_roush.fontbox.ttf;
 
-import android.util.Log;
-
 import java.io.IOException;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * A 'kern' table in a true type font.
@@ -27,6 +28,9 @@ import java.io.IOException;
  */
 public class KerningTable extends TTFTable
 {
+
+    private static final Log LOG = LogFactory.getLog(KerningTable.class);
+
     /**
      * Tag to identify this table.
      */
@@ -47,7 +51,7 @@ public class KerningTable extends TTFTable
      * @throws IOException If there is an error reading the data.
      */
     @Override
-    public void read(TrueTypeFont ttf, TTFDataStream data) throws IOException
+    void read(TrueTypeFont ttf, TTFDataStream data) throws IOException
     {
         int version = data.readUnsignedShort();
         if (version != 0)
@@ -65,8 +69,7 @@ public class KerningTable extends TTFTable
         }
         else
         {
-            Log.d("PdfBox-Android", "Skipped kerning table due to an unsupported kerning table " +
-                "version: " + version);
+            LOG.debug("Skipped kerning table due to an unsupported kerning table version: " + version);
         }
         if (numSubtables > 0)
         {
@@ -92,7 +95,7 @@ public class KerningTable extends TTFTable
     }
 
     /**
-     * Obtain first subtable that supports horizontal kerning with specificed cross stream.
+     * Obtain first subtable that supports horizontal kerning with specified cross stream.
      *
      * @param cross true if requesting cross stream horizontal kerning
      * @return first matching subtable or null if none found

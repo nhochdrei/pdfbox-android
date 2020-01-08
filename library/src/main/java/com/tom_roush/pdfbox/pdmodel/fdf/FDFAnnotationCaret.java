@@ -22,7 +22,6 @@ import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.pdmodel.common.PDRectangle;
-
 import org.w3c.dom.Element;
 
 /**
@@ -79,7 +78,6 @@ public class FDFAnnotationCaret extends FDFAnnotation
 
     private void initFringe(Element element) throws IOException
     {
-
         String fringe = element.getAttribute("fringe");
         if (fringe != null && !fringe.isEmpty())
         {
@@ -129,7 +127,7 @@ public class FDFAnnotationCaret extends FDFAnnotation
 
     /**
      * This will set the symbol that shall be associated with the caret.
-     *
+     * 
      * @param symbol the symbol
      */
     public final void setSymbol(String symbol)
@@ -144,7 +142,7 @@ public class FDFAnnotationCaret extends FDFAnnotation
 
     /**
      * This will retrieve the symbol that shall be associated with the caret.
-     *
+     * 
      * @return the symbol
      */
     public String getSymbol()

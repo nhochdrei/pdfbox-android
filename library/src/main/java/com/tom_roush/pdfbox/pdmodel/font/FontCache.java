@@ -20,8 +20,7 @@ package com.tom_roush.pdfbox.pdmodel.font;
 import java.lang.ref.SoftReference;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import com.tom_roush.fontbox.FontBoxFont;
+import org.apache.fontbox.FontBoxFont;
 
 /**
  * An in-memory cache for system fonts. This allows PDFBox to manage caching for a {@link FontProvider}.
@@ -32,7 +31,7 @@ import com.tom_roush.fontbox.FontBoxFont;
 public final class FontCache
 {
     private final Map<FontInfo, SoftReference<FontBoxFont>> cache =
-        new ConcurrentHashMap<FontInfo, SoftReference<FontBoxFont>>();
+            new ConcurrentHashMap<FontInfo, SoftReference<FontBoxFont>>();
 
     /**
      * Adds the given FontBox font to the cache.

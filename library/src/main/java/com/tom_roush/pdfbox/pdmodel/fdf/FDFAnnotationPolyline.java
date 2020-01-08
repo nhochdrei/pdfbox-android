@@ -16,20 +16,19 @@
  */
 package com.tom_roush.pdfbox.pdmodel.fdf;
 
-import android.util.Log;
-
+import java.awt.Color;
 import java.io.IOException;
 
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
-import com.tom_roush.harmony.awt.AWTColor;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.pdmodel.interactive.annotation.PDAnnotationLine;
-
 import org.w3c.dom.Element;
 
 /**
@@ -40,10 +39,11 @@ import org.w3c.dom.Element;
  */
 public class FDFAnnotationPolyline extends FDFAnnotation
 {
+    private static final Log LOG = LogFactory.getLog(FDFAnnotationPolyline.class);
     /**
      * COS Model value for SubType entry.
      */
-    public static final String SUBTYPE ="Polyline";
+    public static final String SUBTYPE = "Polyline";
 
     /**
      * Default constructor.
@@ -51,7 +51,7 @@ public class FDFAnnotationPolyline extends FDFAnnotation
     public FDFAnnotationPolyline()
     {
         super();
-        annot.setName( COSName.SUBTYPE, SUBTYPE );
+        annot.setName(COSName.SUBTYPE, SUBTYPE);
     }
 
     /**
@@ -59,9 +59,9 @@ public class FDFAnnotationPolyline extends FDFAnnotation
      *
      * @param a An existing FDF Annotation.
      */
-    public FDFAnnotationPolyline( COSDictionary a )
+    public FDFAnnotationPolyline(COSDictionary a)
     {
-        super( a );
+        super(a);
     }
 
     /**
@@ -71,7 +71,7 @@ public class FDFAnnotationPolyline extends FDFAnnotation
      *
      * @throws IOException If there is an error extracting information from the element.
      */
-    public FDFAnnotationPolyline( Element element ) throws IOException
+    public FDFAnnotationPolyline(Element element) throws IOException
     {
         super(element);
         annot.setName(COSName.SUBTYPE, SUBTYPE);
@@ -100,8 +100,7 @@ public class FDFAnnotationPolyline extends FDFAnnotation
         }
         catch (XPathExpressionException e)
         {
-            Log.d("PdfBox-Android",
-                "Error while evaluating XPath expression for polyline vertices");
+            LOG.debug("Error while evaluating XPath expression for polyline vertices");
         }
     }
 
@@ -122,12 +121,12 @@ public class FDFAnnotationPolyline extends FDFAnnotation
         if (color != null && color.length() == 7 && color.charAt(0) == '#')
         {
             int colorValue = Integer.parseInt(color.substring(1, 7), 16);
-            setInteriorColor(new AWTColor(colorValue));
+            setInteriorColor(new Color(colorValue));
         }
     }
 
     /**
-     * This will set the coordinates of the the vertices.
+     * This will set the coordinates of the vertices.
      *
      * @param vertices array of floats [x1, y1, x2, y2, ...] vertex coordinates in default user space.
      */
@@ -139,7 +138,7 @@ public class FDFAnnotationPolyline extends FDFAnnotation
     }
 
     /**
-     * This will get the coordinates of the the vertices.
+     * This will get the coordinates of the vertices.
      *
      * @return array of floats [x1, y1, x2, y2, ...] vertex coordinates in default user space.
      */
@@ -245,7 +244,7 @@ public class FDFAnnotationPolyline extends FDFAnnotation
      *
      * @param color The interior color of the line endings.
      */
-    public void setInteriorColor(AWTColor color)
+    public void setInteriorColor(Color color)
     {
         COSArray array = null;
         if (color != null)
@@ -262,16 +261,16 @@ public class FDFAnnotationPolyline extends FDFAnnotation
      *
      * @return object representing the color.
      */
-    public AWTColor getInteriorColor()
+    public Color getInteriorColor()
     {
-        AWTColor retval = null;
+        Color retval = null;
         COSArray array = (COSArray) annot.getDictionaryObject(COSName.IC);
         if (array != null)
         {
             float[] rgb = array.toFloatArray();
             if (rgb.length >= 3)
             {
-                retval = new AWTColor(rgb[0], rgb[1], rgb[2]);
+                retval = new Color(rgb[0], rgb[1], rgb[2]);
             }
         }
         return retval;

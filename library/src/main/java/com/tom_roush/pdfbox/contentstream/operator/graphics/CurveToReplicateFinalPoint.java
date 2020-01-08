@@ -16,15 +16,15 @@
  */
 package com.tom_roush.pdfbox.contentstream.operator.graphics;
 
-import android.graphics.PointF;
-
 import java.io.IOException;
 import java.util.List;
-
+import java.awt.geom.Point2D;
 import com.tom_roush.pdfbox.contentstream.operator.MissingOperandException;
-import com.tom_roush.pdfbox.contentstream.operator.Operator;
+
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSNumber;
+import com.tom_roush.pdfbox.contentstream.operator.Operator;
+import com.tom_roush.pdfbox.contentstream.operator.OperatorName;
 
 /**
  * y Append curved segment to path with final point replicated.
@@ -44,14 +44,13 @@ public final class CurveToReplicateFinalPoint extends GraphicsOperatorProcessor
         {
             return;
         }
-
         COSNumber x1 = (COSNumber)operands.get(0);
         COSNumber y1 = (COSNumber)operands.get(1);
         COSNumber x3 = (COSNumber)operands.get(2);
         COSNumber y3 = (COSNumber)operands.get(3);
 
-        PointF point1 = context.transformedPoint(x1.floatValue(), y1.floatValue());
-        PointF point3 = context.transformedPoint(x3.floatValue(), y3.floatValue());
+        Point2D.Float point1 = context.transformedPoint(x1.floatValue(), y1.floatValue());
+        Point2D.Float point3 = context.transformedPoint(x3.floatValue(), y3.floatValue());
 
         context.curveTo(point1.x, point1.y,
                         point3.x, point3.y,
@@ -61,6 +60,6 @@ public final class CurveToReplicateFinalPoint extends GraphicsOperatorProcessor
     @Override
     public String getName()
     {
-        return "y";
+        return OperatorName.CURVE_TO_REPLICATE_FINAL_POINT;
     }
 }

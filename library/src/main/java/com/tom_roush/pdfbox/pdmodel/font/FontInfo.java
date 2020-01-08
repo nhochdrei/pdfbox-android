@@ -17,7 +17,7 @@
 
 package com.tom_roush.pdfbox.pdmodel.font;
 
-import com.tom_roush.fontbox.FontBoxFont;
+import org.apache.fontbox.FontBoxFont;
 
 /**
  * Information about a font on the system.
@@ -65,30 +65,18 @@ public abstract class FontInfo
         int usWeightClass = getWeightClass();
         switch (usWeightClass)
         {
-            case -1:
-                return 0;
-            case 0:
-                return 0;
-            case 100:
-                return 2;
-            case 200:
-                return 3;
-            case 300:
-                return 4;
-            case 400:
-                return 5;
-            case 500:
-                return 6;
-            case 600:
-                return 7;
-            case 700:
-                return 8;
-            case 800:
-                return 9;
-            case 900:
-                return 10;
-            default:
-                return 0;
+            case -1: return 0;
+            case 0: return 0;
+            case 100: return 2;
+            case 200: return 3;
+            case 300: return 4;
+            case 400: return 5;
+            case 500: return 6;
+            case 600: return 7;
+            case 700: return 8;
+            case 800: return 9;
+            case 900: return 10;
+            default: return 0;
         }
     }
 
@@ -121,15 +109,16 @@ public abstract class FontInfo
      * Returns the Panose classification of the font, if any.
      */
     public abstract PDPanoseClassification getPanose();
-
+    
     // todo: 'post' table for Italic. Also: OS/2 fsSelection for italic/bold.
     // todo: ulUnicodeRange too?
-
+    
     @Override
     public String toString()
     {
-        return getPostScriptName() + " (" + getFormat() + ", mac: 0x" +
-            Integer.toHexString(getMacStyle()) + ", os/2: 0x" +
-            Integer.toHexString(getFamilyClass()) + ", cid: " + getCIDSystemInfo() + ")";
+        return getPostScriptName() + " (" + getFormat() +
+                ", mac: 0x" + Integer.toHexString(getMacStyle()) +
+                ", os/2: 0x" + Integer.toHexString(getFamilyClass()) +
+                ", cid: " + getCIDSystemInfo() + ")";
     }
 }

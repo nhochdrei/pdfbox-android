@@ -16,19 +16,20 @@
  */
 package com.tom_roush.pdfbox.pdmodel.font;
 
-import android.graphics.Path;
-
+import java.awt.geom.GeneralPath;
 import java.io.IOException;
 import java.io.InputStream;
-
-import com.tom_roush.fontbox.FontBoxFont;
-import com.tom_roush.fontbox.util.BoundingBox;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.fontbox.FontBoxFont;
+import org.apache.fontbox.util.BoundingBox;
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.cos.COSStream;
 import com.tom_roush.pdfbox.pdmodel.PDResources;
+import com.tom_roush.pdfbox.pdmodel.ResourceCache;
 import com.tom_roush.pdfbox.pdmodel.common.PDRectangle;
 import com.tom_roush.pdfbox.pdmodel.font.encoding.DictionaryEncoding;
 import com.tom_roush.pdfbox.pdmodel.font.encoding.Encoding;
@@ -43,10 +44,16 @@ import com.tom_roush.pdfbox.util.Vector;
  */
 public class PDType3Font extends PDSimpleFont
 {
+    /**
+     * Log instance.
+     */
+    private static final Log LOG = LogFactory.getLog(PDType3Font.class);
+
     private PDResources resources;
     private COSDictionary charProcs;
     private Matrix fontMatrix;
     private BoundingBox fontBBox;
+    private final ResourceCache resourceCache;
 
     /**
      * Constructor.
@@ -55,7 +62,19 @@ public class PDType3Font extends PDSimpleFont
      */
     public PDType3Font(COSDictionary fontDictionary) throws IOException
     {
+        this(fontDictionary, null);
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param fontDictionary The font dictionary according to the PDF specification.
+     * @param resourceCache Resource cache, can be null.
+     */
+    public PDType3Font(COSDictionary fontDictionary, ResourceCache resourceCache) throws IOException
+    {
         super(fontDictionary);
+        this.resourceCache = resourceCache;
         readEncoding();
     }
 
@@ -68,11 +87,23 @@ public class PDType3Font extends PDSimpleFont
     @Override
     protected final void readEncoding() throws IOException
     {
-        COSDictionary encodingDict = (COSDictionary)dict.getDictionaryObject(COSName.ENCODING);
-        encoding = new DictionaryEncoding(encodingDict);
+        COSBase encodingBase = dict.getDictionaryObject(COSName.ENCODING);
+        if (encodingBase instanceof COSName)
+        {
+            COSName encodingName = (COSName) encodingBase;
+            encoding = Encoding.getInstance(encodingName);
+            if (encoding == null)
+            {
+                LOG.warn("Unknown encoding: " + encodingName.getName());
+            }
+        }
+        else if (encodingBase instanceof COSDictionary)
+        {
+            encoding = new DictionaryEncoding((COSDictionary) encodingBase);
+        }
         glyphList = GlyphList.getAdobeGlyphList();
     }
-
+    
     @Override
     protected Encoding readEncodingFromFont() throws IOException
     {
@@ -87,7 +118,7 @@ public class PDType3Font extends PDSimpleFont
     }
 
     @Override
-    public Path getPath(String name) throws IOException
+    public GeneralPath getPath(String name) throws IOException
     {
         // Type 3 fonts do not use vector paths
         throw new UnsupportedOperationException("not supported for Type 3 fonts");
@@ -96,8 +127,8 @@ public class PDType3Font extends PDSimpleFont
     @Override
     public boolean hasGlyph(String name) throws IOException
     {
-        COSStream stream = (COSStream) getCharProcs().getDictionaryObject(COSName.getPDFName(name));
-        return stream != null;
+        COSBase base = getCharProcs().getDictionaryObject(COSName.getPDFName(name));
+        return base instanceof COSStream;
     }
 
     @Override
@@ -106,7 +137,6 @@ public class PDType3Font extends PDSimpleFont
         // Type 3 fonts do not use FontBox fonts
         throw new UnsupportedOperationException("not supported for Type 3 fonts");
     }
-
 
     @Override
     public Vector getDisplacement(int code) throws IOException
@@ -119,9 +149,10 @@ public class PDType3Font extends PDSimpleFont
     {
         int firstChar = dict.getInt(COSName.FIRST_CHAR, -1);
         int lastChar = dict.getInt(COSName.LAST_CHAR, -1);
-        if (getWidths().size() > 0 && code >= firstChar && code <= lastChar)
+        if (!getWidths().isEmpty() && code >= firstChar && code <= lastChar)
         {
-            return getWidths().get(code - firstChar);
+            Float w = getWidths().get(code - firstChar);
+            return w == null ? 0 : w;
         }
         else
         {
@@ -141,7 +172,8 @@ public class PDType3Font extends PDSimpleFont
     public float getWidthFromFont(int code) throws IOException
     {
         PDType3CharProc charProc = getCharProc(code);
-        if (charProc == null)
+        if (charProc == null || charProc.getContentStream() == null || 
+            charProc.getContentStream().getLength() == 0)
         {
             return 0;
         }
@@ -163,11 +195,11 @@ public class PDType3Font extends PDSimpleFont
             // the following values are all more or less accurate at least all are average
             // values. Maybe we'll find another way to get those value for every single glyph
             // in the future if needed
-            PDRectangle fontBBox = desc.getFontBoundingBox();
+            PDRectangle bbox = desc.getFontBoundingBox();
             float retval = 0;
-            if (fontBBox != null)
+            if (bbox != null)
             {
-                retval = fontBBox.getHeight() / 2;
+                retval = bbox.getHeight() / 2;
             }
             if (retval == 0)
             {
@@ -207,10 +239,10 @@ public class PDType3Font extends PDSimpleFont
     {
         if (fontMatrix == null)
         {
-            COSArray array = (COSArray) dict.getDictionaryObject(COSName.FONT_MATRIX);
-            if (array != null)
+            COSBase base = dict.getDictionaryObject(COSName.FONT_MATRIX);
+            if (base instanceof COSArray)
             {
-                fontMatrix = new Matrix(array);
+                fontMatrix = new Matrix((COSArray) base);
             }
             else
             {
@@ -227,6 +259,12 @@ public class PDType3Font extends PDSimpleFont
         return false;
     }
 
+    @Override
+    public boolean isStandard14()
+    {
+        return false;
+    }
+
     /**
      * Returns the optional resources of the type3 stream.
      *
@@ -236,10 +274,10 @@ public class PDType3Font extends PDSimpleFont
     {
         if (resources == null)
         {
-            COSDictionary resources = (COSDictionary) dict.getDictionaryObject(COSName.RESOURCES);
-            if (resources != null)
+            COSBase base = dict.getDictionaryObject(COSName.RESOURCES);
+            if (base instanceof COSDictionary)
             {
-                this.resources = new PDResources(resources);
+                this.resources = new PDResources((COSDictionary) base, resourceCache);
             }
         }
         return resources;
@@ -252,11 +290,11 @@ public class PDType3Font extends PDSimpleFont
      */
     public PDRectangle getFontBBox()
     {
-        COSArray rect = (COSArray) dict.getDictionaryObject(COSName.FONT_BBOX);
+         COSBase base = dict.getDictionaryObject(COSName.FONT_BBOX);
         PDRectangle retval = null;
-        if(rect != null)
+        if (base instanceof COSArray)
         {
-            retval = new PDRectangle(rect);
+            retval = new PDRectangle((COSArray) base);
         }
         return retval;
     }
@@ -274,8 +312,8 @@ public class PDType3Font extends PDSimpleFont
     private BoundingBox generateBoundingBox()
     {
         PDRectangle rect = getFontBBox();
-        if (rect.getLowerLeftX() == 0 && rect.getLowerLeftY() == 0 && rect.getUpperRightX() == 0 &&
-            rect.getUpperRightY() == 0)
+        if (rect.getLowerLeftX() == 0 && rect.getLowerLeftY() == 0
+                && rect.getUpperRightX() == 0 && rect.getUpperRightY() == 0)
         {
             // Plan B: get the max bounding box of the glyphs
             COSDictionary cp = getCharProcs();
@@ -284,7 +322,7 @@ public class PDType3Font extends PDSimpleFont
                 COSBase base = cp.getDictionaryObject(name);
                 if (base instanceof COSStream)
                 {
-                    PDType3CharProc charProc = new PDType3CharProc(this, (COSStream)base);
+                    PDType3CharProc charProc = new PDType3CharProc(this, (COSStream) base);
                     try
                     {
                         PDRectangle glyphBBox = charProc.getGlyphBBox();
@@ -292,14 +330,10 @@ public class PDType3Font extends PDSimpleFont
                         {
                             continue;
                         }
-                        rect.setLowerLeftX(
-                            Math.min(rect.getLowerLeftX(), glyphBBox.getLowerLeftX()));
-                        rect.setLowerLeftY(
-                            Math.min(rect.getLowerLeftY(), glyphBBox.getLowerLeftY()));
-                        rect.setUpperRightX(
-                            Math.max(rect.getUpperRightX(), glyphBBox.getUpperRightX()));
-                        rect.setUpperRightY(
-                            Math.max(rect.getUpperRightY(), glyphBBox.getUpperRightY()));
+                        rect.setLowerLeftX(Math.min(rect.getLowerLeftX(), glyphBBox.getLowerLeftX()));
+                        rect.setLowerLeftY(Math.min(rect.getLowerLeftY(), glyphBBox.getLowerLeftY()));
+                        rect.setUpperRightX(Math.max(rect.getUpperRightX(), glyphBBox.getUpperRightX()));
+                        rect.setUpperRightY(Math.max(rect.getUpperRightY(), glyphBBox.getUpperRightY()));
                     }
                     catch (IOException ex)
                     {
@@ -308,13 +342,13 @@ public class PDType3Font extends PDSimpleFont
                 }
             }
         }
-        return new BoundingBox(rect.getLowerLeftX(), rect.getLowerLeftY(), rect.getWidth(),
-            rect.getHeight());
+        return new BoundingBox(rect.getLowerLeftX(), rect.getLowerLeftY(),
+                rect.getUpperRightX(), rect.getUpperRightY());
     }
 
     /**
      * Returns the dictionary containing all streams to be used to render the glyphs.
-     *
+     * 
      * @return the dictionary containing all glyph streams.
      */
     public COSDictionary getCharProcs()
@@ -325,25 +359,20 @@ public class PDType3Font extends PDSimpleFont
         }
         return charProcs;
     }
-
+    
     /**
      * Returns the stream of the glyph for the given character code
-     *
+     * 
      * @param code character code
      * @return the stream to be used to render the glyph
      */
     public PDType3CharProc getCharProc(int code)
     {
         String name = getEncoding().getName(code);
-        if (!name.equals(".notdef"))
+        COSBase base = getCharProcs().getDictionaryObject(COSName.getPDFName(name));
+        if (base instanceof COSStream)
         {
-            COSStream stream;
-            stream = (COSStream)getCharProcs().getDictionaryObject(COSName.getPDFName(name));
-            if (stream == null)
-            {
-                return null;
-            }
-            return new PDType3CharProc(this, stream);
+            return new PDType3CharProc(this, (COSStream) base);
         }
         return null;
     }

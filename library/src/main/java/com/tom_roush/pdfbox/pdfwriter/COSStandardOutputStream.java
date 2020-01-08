@@ -49,7 +49,7 @@ public class COSStandardOutputStream extends FilterOutputStream
     private boolean onNewLine = false;
     
     /**
-     * COSOutputStream constructor comment.
+     * Constructor.
      *
      * @param out The underlying stream to write to.
      */
@@ -59,17 +59,31 @@ public class COSStandardOutputStream extends FilterOutputStream
     }
 
     /**
-     * COSOutputStream constructor comment.
+     * Constructor.
      *
      * @param out The underlying stream to write to.
      * @param position The current position of output stream.
+     * @deprecated use {@link COSStandardOutputStream#COSStandardOutputStream(java.io.OutputStream, long) }
      */
+    @Deprecated
     public COSStandardOutputStream(OutputStream out, int position)
     {
         super(out);
         this.position = position;
     }
-    
+
+    /**
+     * Constructor.
+     *
+     * @param out The underlying stream to write to.
+     * @param position The current position of output stream.
+     */
+    public COSStandardOutputStream(OutputStream out, long position)
+    {
+        super(out);
+        this.position = position;
+    }
+
     /**
      * This will get the current position in the stream.
      *

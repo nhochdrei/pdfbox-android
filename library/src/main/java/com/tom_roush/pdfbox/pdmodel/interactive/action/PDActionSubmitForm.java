@@ -17,13 +17,13 @@
 
 package com.tom_roush.pdfbox.pdmodel.interactive.action;
 
-import java.io.IOException;
-
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.pdmodel.common.filespecification.PDFileSpecification;
+
+import java.io.IOException;
 
 /**
  * This represents a Submit-Form action that can be executed in a PDF document.
@@ -86,7 +86,7 @@ public class PDActionSubmitForm extends PDAction
     public COSArray getFields()
     {
         COSBase retval = this.action.getDictionaryObject(COSName.FIELDS);
-        return retval instanceof COSArray ? (COSArray)retval : null;
+        return retval instanceof COSArray ? (COSArray) retval : null;
     }
 
     /**

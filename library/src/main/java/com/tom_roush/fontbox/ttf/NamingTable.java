@@ -36,7 +36,7 @@ public class NamingTable extends TTFTable
      * A tag that identifies this table type.
      */
     public static final String TAG = "name";
-
+    
     private List<NameRecord> nameRecords;
 
     private Map<Integer, Map<Integer, Map<Integer, Map<Integer, String>>>> lookupTable;
@@ -58,7 +58,7 @@ public class NamingTable extends TTFTable
      * @throws IOException If there is an error reading the data.
      */
     @Override
-    public void read(TrueTypeFont ttf, TTFDataStream data) throws IOException
+    void read(TrueTypeFont ttf, TTFDataStream data) throws IOException
     {
         int formatSelector = data.readUnsignedShort();
         int numberOfNameRecords = data.readUnsignedShort();
@@ -84,56 +84,54 @@ public class NamingTable extends TTFTable
             int platform = nr.getPlatformId();
             int encoding = nr.getPlatformEncodingId();
             Charset charset = Charsets.ISO_8859_1;
-            if (platform == NameRecord.PLATFORM_WINDOWS &&
-                (encoding == NameRecord.ENCODING_WINDOWS_SYMBOL ||
-                    encoding == NameRecord.ENCODING_WINDOWS_UNICODE_BMP))
+            if (platform == NameRecord.PLATFORM_WINDOWS && (encoding == NameRecord.ENCODING_WINDOWS_SYMBOL || encoding == NameRecord.ENCODING_WINDOWS_UNICODE_BMP))
+            {
+                charset = Charsets.UTF_16;
+            }
+            else if (platform == NameRecord.PLATFORM_UNICODE)
             {
                 charset = Charsets.UTF_16;
             }
             else if (platform == NameRecord.PLATFORM_ISO)
             {
-                if (encoding == 0)
+                switch (encoding)
                 {
-                    charset = Charsets.US_ASCII;
-                }
-                else if (encoding == 1)
-                {
-                    //not sure is this is correct??
-                    charset = Charsets.ISO_10646;
-                }
-                else if (encoding == 2)
-                {
-                    charset = Charsets.ISO_8859_1;
+                    case 0:
+                        charset = Charsets.US_ASCII;
+                        break;
+                    case 1:
+                        //not sure is this is correct??
+                        charset = Charsets.ISO_10646;
+                        break;
+                    case 2:
+                        charset = Charsets.ISO_8859_1;
+                        break;
+                    default:
+                        break;
                 }
             }
-            
             String string = data.readString(nr.getStringLength(), charset);
             nr.setString(string);
         }
 
         // build multi-dimensional lookup table
-        lookupTable = new HashMap<Integer, Map<Integer, Map<Integer, Map<Integer, String>>>>(
-            nameRecords.size());
+        lookupTable = new HashMap<Integer, Map<Integer, Map<Integer, Map<Integer, String>>>>(nameRecords.size());
         for (NameRecord nr : nameRecords)
         {
             // name id
-            Map<Integer, Map<Integer, Map<Integer, String>>> platformLookup = lookupTable.get(
-                nr.getNameId());
+            Map<Integer, Map<Integer, Map<Integer, String>>> platformLookup = lookupTable.get(nr.getNameId());
             if (platformLookup == null)
             {
-                platformLookup = new HashMap<Integer, Map<Integer, Map<Integer, String>>>();
+                platformLookup = new HashMap<Integer, Map<Integer, Map<Integer, String>>>(); 
                 lookupTable.put(nr.getNameId(), platformLookup);
             }
-
             // platform id
-            Map<Integer, Map<Integer, String>> encodingLookup = platformLookup.get(
-                nr.getPlatformId());
+            Map<Integer, Map<Integer, String>> encodingLookup = platformLookup.get(nr.getPlatformId());
             if (encodingLookup == null)
             {
                 encodingLookup = new HashMap<Integer, Map<Integer, String>>();
                 platformLookup.put(nr.getPlatformId(), encodingLookup);
             }
-
             // encoding id
             Map<Integer, String> languageLookup = encodingLookup.get(nr.getPlatformEncodingId());
             if (languageLookup == null)
@@ -141,7 +139,6 @@ public class NamingTable extends TTFTable
                 languageLookup = new HashMap<Integer, String>();
                 encodingLookup.put(nr.getPlatformEncodingId(), languageLookup);
             }
-
             // language id / string
             languageLookup.put(nr.getLanguageId(), nr.getString());
         }
@@ -162,7 +159,6 @@ public class NamingTable extends TTFTable
                              NameRecord.ENCODING_WINDOWS_UNICODE_BMP,
                              NameRecord.LANGUGAE_WINDOWS_EN_US);
         }
-
         if (psName != null)
         {
             psName = psName.trim();

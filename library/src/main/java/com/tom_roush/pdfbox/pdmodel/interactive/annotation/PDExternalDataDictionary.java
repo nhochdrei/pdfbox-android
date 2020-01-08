@@ -21,7 +21,8 @@ import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.pdmodel.common.COSObjectable;
 
 /**
- * This class represents an external data dictionary. 
+ * This class represents an external data dictionary.
+ * 
  */
 public class PDExternalDataDictionary implements COSObjectable
 {
@@ -39,7 +40,7 @@ public class PDExternalDataDictionary implements COSObjectable
 
     /**
      * Constructor.
-     *
+     * 
      * @param dictionary Dictionary
      */
     public PDExternalDataDictionary(COSDictionary dictionary)
@@ -59,8 +60,8 @@ public class PDExternalDataDictionary implements COSObjectable
     }
 
     /**
-     * returns the type of the external data dictionary.
-     * It must be "ExData", if present
+     * returns the type of the external data dictionary. It must be "ExData", if present
+     * 
      * @return the type of the external data dictionary
      */
     public String getType()
@@ -70,7 +71,7 @@ public class PDExternalDataDictionary implements COSObjectable
 
     /**
      * returns the subtype of the external data dictionary.
-     *
+     * 
      * @return the subtype of the external data dictionary
      */
     public String getSubtype()
@@ -80,7 +81,7 @@ public class PDExternalDataDictionary implements COSObjectable
 
     /**
      * This will set the subtype of the external data dictionary.
-     *
+     * 
      * @param subtype the subtype of the external data dictionary
      */
     public void setSubtype(String subtype)

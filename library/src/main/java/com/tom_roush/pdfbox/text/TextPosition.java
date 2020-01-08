@@ -16,12 +16,12 @@
  */
 package com.tom_roush.pdfbox.text;
 
-import android.util.Log;
-
 import java.text.Normalizer;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import com.tom_roush.pdfbox.pdmodel.font.PDFont;
 import com.tom_roush.pdfbox.util.Matrix;
 
@@ -32,12 +32,95 @@ import com.tom_roush.pdfbox.util.Matrix;
  */
 public final class TextPosition
 {
+    private static final Log LOG = LogFactory.getLog(TextPosition.class);
+
     private static final Map<Integer, String> DIACRITICS = createDiacritics();
+
+    // text matrix for the start of the text object, coordinates are in display units
+    // and have not been adjusted
+    private final Matrix textMatrix;
+
+    // ending X and Y coordinates in display units
+    private final float endX;
+    private final float endY;
+
+    private final float maxHeight; // maximum height of text, in display units
+    private final int rotation; // 0, 90, 180, 270 degrees of page rotation
+    private final float x;
+    private final float y;
+    private final float pageHeight;
+    private final float pageWidth;
+
+    private final float widthOfSpace; // width of a space, in display units
+
+    private final int[] charCodes; // internal PDF character codes
+    private final PDFont font;
+    private final float fontSize;
+    private final int fontSizePt;
+
+    // mutable
+    private float[] widths;
+    private String unicode;
+    private float direction = -1;
+
+    /**
+     * Constructor.
+     *
+     * @param pageRotation rotation of the page that the text is located in
+     * @param pageWidth width of the page that the text is located in
+     * @param pageHeight height of the page that the text is located in
+     * @param textMatrix text rendering matrix for start of text (in display units)
+     * @param endX x coordinate of the end position
+     * @param endY y coordinate of the end position
+     * @param maxHeight Maximum height of text (in display units)
+     * @param individualWidth The width of the given character/string. (in text units)
+     * @param spaceWidth The width of the space character. (in display units)
+     * @param unicode The string of Unicode characters to be displayed.
+     * @param charCodes An array of the internal PDF character codes for the glyphs in this text.
+     * @param font The current font for this text position.
+     * @param fontSize The new font size.
+     * @param fontSizeInPt The font size in pt units (see {@link #getFontSizeInPt()} for details).
+     */
+    public TextPosition(int pageRotation, float pageWidth, float pageHeight, Matrix textMatrix,
+                        float endX, float endY, float maxHeight, float individualWidth,
+                        float spaceWidth, String unicode, int[] charCodes, PDFont font,
+                        float fontSize, int fontSizeInPt)
+    {
+        this.textMatrix = textMatrix;
+
+        this.endX = endX;
+        this.endY = endY;
+
+        int rotationAngle = pageRotation;
+        this.rotation = rotationAngle;
+
+        this.maxHeight = maxHeight;
+        this.pageHeight = pageHeight;
+        this.pageWidth = pageWidth;
+
+        this.widths = new float[] { individualWidth };
+        this.widthOfSpace = spaceWidth;
+        this.unicode = unicode;
+        this.charCodes = charCodes;
+        this.font = font;
+        this.fontSize = fontSize;
+        this.fontSizePt = fontSizeInPt;
+
+        x = getXRot(rotationAngle);
+        if (rotationAngle == 0 || rotationAngle == 180)
+        {
+            y = this.pageHeight - getYLowerLeftRot(rotationAngle);
+        }
+        else
+        {
+            y = this.pageWidth - getYLowerLeftRot(rotationAngle);
+        }
+    }
 
     // Adds non-decomposing diacritics to the hash with their related combining character.
     // These are values that the unicode spec claims are equivalent but are not mapped in the form
     // NFKC normalization method. Determined by going through the Combining Diacritical Marks
-    // section of the Unicode spec and identifying which characters are not mapped to by the
+    // section of the Unicode spec and identifying which characters are not  mapped to by the
     // normalization.
     private static Map<Integer, String> createDiacritics()
     {
@@ -76,89 +159,10 @@ public final class TextPosition
         return map;
     }
 
-    // text matrix for the start of the text object, coordinates are in display units
-    // and have not been adjusted
-    private final Matrix textMatrix;
-
-    // ending X and Y coordinates in display units
-    private final float endX;
-    private final float endY;
-
-    private final float maxHeight; // maximum height of text, in display units
-    private final int rotation; // 0, 90, 180, 270 degrees of page rotation
-    private final float x;
-    private final float y;
-    private final float pageHeight;
-    private final float pageWidth;
-
-    private final float widthOfSpace; // width of a space, in display units
-
-    private final int[] charCodes; // internal PDF character codes
-    private final PDFont font;
-    private final float fontSize;
-    private final int fontSizePt;
-
-    // mutable
-    private float[] widths;
-    private String unicode;
-    private float direction = -1;
-
     /**
-     * Constructor.
-     *
-     * @param pageRotation rotation of the page that the text is located in
-     * @param pageWidth rotation of the page that the text is located in
-     * @param pageHeight rotation of the page that the text is located in
-     * @param textMatrix TextMatrix for start of text (in display units)
-     * @param endX x coordinate of the end position
-     * @param endY y coordinate of the end position
-     * @param maxHeight Maximum height of text (in display units)
-     * @param individualWidth The width of the given character/string. (in text units)
-     * @param spaceWidth The width of the space character. (in display units)
-     * @param unicode The string of Unicode characters to be displayed.
-     * @param charCodes An array of the internal PDF character codes for the glyphs in this text.
-     * @param font The current font for this text position.
-     * @param fontSize The new font size.
-     * @param fontSizeInPt The font size in pt units.
-     */
-    public TextPosition(int pageRotation, float pageWidth, float pageHeight, Matrix textMatrix,
-        float endX, float endY, float maxHeight, float individualWidth,
-        float spaceWidth, String unicode, int[] charCodes, PDFont font,
-        float fontSize, int fontSizeInPt)
-    {
-        this.textMatrix = textMatrix;
-
-        this.endX = endX;
-        this.endY = endY;
-
-        int rotationAngle = pageRotation;
-        this.rotation = rotationAngle;
-
-        this.maxHeight = maxHeight;
-        this.pageHeight = pageHeight;
-        this.pageWidth = pageWidth;
-
-        this.widths = new float[] { individualWidth };
-        this.widthOfSpace = spaceWidth;
-        this.unicode = unicode;
-        this.charCodes = charCodes;
-        this.font = font;
-        this.fontSize = fontSize;
-        this.fontSizePt = fontSizeInPt;
-
-        x = getXRot(rotationAngle);
-        if (rotationAngle == 0 || rotationAngle == 180)
-        {
-            y = this.pageHeight - getYLowerLeftRot(rotationAngle);
-        }
-        else
-        {
-            y = this.pageWidth - getYLowerLeftRot(rotationAngle);
-        }
-    }
-
-    /**
-     * Return the string of characters stored in this object.
+     * Return the string of characters stored in this object. The length can be different than the
+     * CharacterCodes length e.g. if ligatures are used ("fi", "fl", "ffl") where one glyph
+     * represents several unicode characters.
      *
      * @return The string on the screen.
      */
@@ -178,7 +182,10 @@ public final class TextPosition
     }
 
     /**
-     * Return the text matrix stored in this object.
+     * The matrix containing the starting text position and scaling. Despite the name, it is not the
+     * text matrix set by the "Tm" operator, it is really the effective text rendering matrix (which
+     * is dependent on the current transformation matrix (set by the "cm" operator), the text matrix
+     * (set by the "Tm" operator), the font size (set by the "Tf" operator) and the page cropbox).
      *
      * @return The Matrix containing the starting text position
      */
@@ -188,8 +195,16 @@ public final class TextPosition
     }
 
     /**
-     * Return the direction/orientation of the string in this object based on its text matrix.
-     * @return The direction of the text (0, 90, 180, or 270)
+     * Return the direction/orientation of the string in this object based on its text matrix. Only
+     * angles of 0, 90, 180, or 270 are supported. To get other angles, use this code:
+     * <pre>
+     * TextPosition text = ...
+     * Matrix m = text.getTextMatrix().clone();
+     * m.concatenate(text.getFont().getFontMatrix());
+     * int angle = (int) Math.round(Math.toDegrees(Math.atan2(m.getShearY(), m.getScaleY())));
+     * </pre>
+     *
+     * @return The direction of the text (0, 90, 180, or 270).
      */
     public float getDir()
     {
@@ -199,7 +214,7 @@ public final class TextPosition
             float b = textMatrix.getShearY();
             float c = textMatrix.getShearX();
             float d = textMatrix.getScaleX();
-
+    
             // 12 0   left to right
             // 0 12
             if (a > 0 && Math.abs(b) < d && Math.abs(c) < a && d > 0)
@@ -262,7 +277,12 @@ public final class TextPosition
 
     /**
      * This will get the page rotation adjusted x position of the character.
-     * This is adjusted based on page rotation so that the upper left is 0,0.
+     * This is adjusted based on page rotation so that the upper left is 0,0 which is
+     * unlike PDF coordinates, which start at the bottom left. See also
+     * <a href="https://stackoverflow.com/questions/57067372/">this answer by Michael Klink</a> for
+     * further details and
+     * <a href="https://issues.apache.org/jira/browse/PDFBOX-4597">PDFBOX-4597</a> for a sample
+     * file.
      *
      * @return The x coordinate of the character.
      */
@@ -275,6 +295,13 @@ public final class TextPosition
      * This will get the text direction adjusted x position of the character.
      * This is adjusted based on text direction so that the first character
      * in that direction is in the upper left at 0,0.
+     * This method ignores the page rotation but takes the text rotation (see
+     * {@link #getDir() getDir()}) and adjusts the coordinates to awt. This is useful when doing
+     * text extraction, to compare the glyph positions when imagining these to be horizontal. See also
+     * <a href="https://stackoverflow.com/questions/57067372/">this answer by Michael Klink</a> for
+     * further details and
+     * <a href="https://issues.apache.org/jira/browse/PDFBOX-4597">PDFBOX-4597</a> for a sample
+     * file.
      *
      * @return The x coordinate of the text.
      */
@@ -312,8 +339,13 @@ public final class TextPosition
     }
 
     /**
-     * This will get the y position of the text, adjusted so that 0,0 is upper left and it is
-     * adjusted based on the page rotation.
+     * This will get the page rotation adjusted x position of the character.
+     * This is adjusted based on page rotation so that the upper left is 0,0 which is
+     * unlike PDF coordinates, which start at the bottom left. See also
+     * <a href="https://stackoverflow.com/questions/57067372/">this answer by Michael Klink</a> for
+     * further details and
+     * <a href="https://issues.apache.org/jira/browse/PDFBOX-4597">PDFBOX-4597</a> for a sample
+     * file.
      *
      * @return The adjusted y coordinate of the character.
      */
@@ -325,6 +357,13 @@ public final class TextPosition
     /**
      * This will get the y position of the text, adjusted so that 0,0 is upper left and it is
      * adjusted based on the text direction.
+     * This method ignores the page rotation but takes the
+     * text rotation and adjusts the coordinates to awt. This is useful when doing text extraction,
+     * to compare the glyph positions when imagining these to be horizontal. See also
+     * <a href="https://stackoverflow.com/questions/57067372/">this answer by Michael Klink</a> for
+     * further details and
+     * <a href="https://issues.apache.org/jira/browse/PDFBOX-4597">PDFBOX-4597</a> for a sample
+     * file.
      *
      * @return The adjusted y coordinate of the character.
      */
@@ -402,7 +441,10 @@ public final class TextPosition
     }
 
     /**
-     * This will get the font size that this object is suppose to be drawn at.
+     * This will get the font size that has been set with the "Tf" operator (Set text font and
+     * size). When the text is rendered, it may appear bigger or smaller depending on the current
+     * transformation matrix (set by the "cm" operator) and the text matrix (set by the "Tm"
+     * operator).
      *
      * @return The font size.
      */
@@ -412,8 +454,11 @@ public final class TextPosition
     }
 
     /**
-     * This will get the font size in pt. To get this size we have to multiply the pdf-fontsize
-     * and the scaling from the textmatrix
+     * This will get the font size in pt. To get this size we have to multiply the font size from
+     * {@link #getFontSize() getFontSize()} with the text matrix (set by the "Tm" operator)
+     * horizontal scaling factor and truncate the result to integer. The actual rendering may appear
+     * bigger or smaller depending on the current transformation matrix (set by the "cm" operator).
+     * To get the size in rendering, use {@link #getXScale() getXScale()}.
      *
      * @return The font size in pt.
      */
@@ -444,7 +489,11 @@ public final class TextPosition
     }
 
     /**
-     * @return Returns the xScale.
+     * This will get the X scaling factor. This is dependent on the current transformation matrix
+     * (set by the "cm" operator), the text matrix (set by the "Tm" operator) and the font size (set
+     * by the "Tf" operator).
+     *
+     * @return The X scaling factor.
      */
     public float getXScale()
     {
@@ -452,7 +501,11 @@ public final class TextPosition
     }
 
     /**
-     * @return Returns the yScale.
+     * This will get the Y scaling factor. This is dependent on the current transformation matrix
+     * (set by the "cm" operator), the text matrix (set by the "Tm" operator) and the font size (set
+     * by the "Tf" operator).
+     *
+     * @return The Y scaling factor.
      */
     public float getYScale()
     {
@@ -462,7 +515,7 @@ public final class TextPosition
     /**
      * Get the widths of each individual character.
      *
-     * @return An array that is the same length as the length of the string.
+     * @return An array that has the same length as the CharacterCodes array.
      */
     public float[] getIndividualWidths()
     {
@@ -495,7 +548,8 @@ public final class TextPosition
         // y-coordinate is top of TextPosition
         double thisYstart = getYDirAdj();
         double tp2Ystart = tp2.getYDirAdj();
-        if (tp2Ystart + tp2.getHeightDir() < thisYstart || tp2Ystart > thisYstart + getHeightDir())
+        if (tp2Ystart + tp2.getHeightDir() < thisYstart ||
+                tp2Ystart > thisYstart + getHeightDir())
         {
             return false;
         }
@@ -544,15 +598,15 @@ public final class TextPosition
         {
             if (i >= widths.length)
             {
-                Log.i("PdfBox-Android", "diacritic " + diacritic.getUnicode() + " on ligature " +
-                    unicode + " is not supported yet and is ignored (PDFBOX-2831)");
+                LOG.info("diacritic " + diacritic.getUnicode() + " on ligature " + unicode + 
+                        " is not supported yet and is ignored (PDFBOX-2831)");
                 break;
             }
             float currCharXEnd = currCharXStart + widths[i];
 
-            // this is the case where there is an overlap of the diacritic character with the
-            // current character and the previous character. If no previous character, just append
-            // the diacritic after the current one
+             // this is the case where there is an overlap of the diacritic character with the
+             // current character and the previous character. If no previous character, just append
+             // the diacritic after the current one
             if (diacXStart < currCharXStart && diacXEnd <= currCharXEnd)
             {
                 if (i == 0)
@@ -580,20 +634,20 @@ public final class TextPosition
             }
             // diacritic completely covers this character and therefore we assume that this is the
             // character the diacritic belongs to
-            else if (diacXStart < currCharXStart && diacXEnd > currCharXEnd)
+            else if (diacXStart < currCharXStart)
             {
                 insertDiacritic(i, diacritic);
                 wasAdded = true;
             }
             // otherwise, The diacritic modifies this character because its completely
             // contained by the character width
-            else if (diacXStart >= currCharXStart && diacXEnd <= currCharXEnd)
+            else if (diacXEnd <= currCharXEnd)
             {
                 insertDiacritic(i, diacritic);
                 wasAdded = true;
             }
             // last character in the TextPosition so we add diacritic to the end
-            else if (diacXStart >= currCharXStart && diacXEnd > currCharXEnd && i == strLen - 1)
+            else if (i == strLen - 1)
             {
                 insertDiacritic(i, diacritic);
                 wasAdded = true;
@@ -667,11 +721,20 @@ public final class TextPosition
         {
             return false;
         }
+        if ("ー".equals(text))
+        {
+            // PDFBOX-3833: ー is not a real diacritic like ¨ or ˆ, it just changes the 
+            // pronunciation of the previous sound, and is printed after the previous glyph
+            // http://www.japanesewithanime.com/2017/04/prolonged-sound-mark.html
+            // Ignoring it as diacritic avoids trouble if it slightly overlaps with the next glyph.
+            return false;
+        }
         int type = Character.getType(text.charAt(0));
         return type == Character.NON_SPACING_MARK ||
-            type == Character.MODIFIER_SYMBOL ||
-            type == Character.MODIFIER_LETTER;
-    }
+               type == Character.MODIFIER_SYMBOL ||
+               type == Character.MODIFIER_LETTER;
+
+  }
 
     /**
      * Show the string data for this text position.
@@ -682,5 +745,151 @@ public final class TextPosition
     public String toString()
     {
         return getUnicode();
+    }
+
+    /**
+     * This will get the x coordinate of the end position. This is the unadjusted value passed into
+     * the constructor.
+     *
+     * @return The unadjusted x coordinate of the end position
+     */
+    public float getEndX()
+    {
+        return endX;
+    }
+
+    /**
+     * This will get the y coordinate of the end position. This is the unadjusted value passed into
+     * the constructor.
+     *
+     * @return The unadjusted y coordinate of the end position
+     */
+    public float getEndY()
+    {
+        return endY;
+    }
+
+    /**
+     * This will get the rotation of the page that the text is located in. This is the unadjusted
+     * value passed into the constructor.
+     *
+     * @return The unadjusted rotation of the page that the text is located in
+     */
+    public int getRotation()
+    {
+        return rotation;
+    }
+
+    /**
+     * This will get the height of the page that the text is located in. This is the unadjusted
+     * value passed into the constructor.
+     *
+     * @return The unadjusted height of the page that the text is located in
+     */
+    public float getPageHeight()
+    {
+        return pageHeight;
+    }
+
+    /**
+     * This will get the width of the page that the text is located in. This is the unadjusted value
+     * passed into the constructor.
+     *
+     * @return The unadjusted width of the page that the text is located in
+     */
+    public float getPageWidth()
+    {
+        return pageWidth;
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o)
+        {
+            return true;
+        }
+        if (!(o instanceof TextPosition))
+        {
+            return false;
+        }
+
+        TextPosition that = (TextPosition) o;
+
+        if (Float.compare(that.endX, endX) != 0)
+        {
+            return false;
+        }
+        if (Float.compare(that.endY, endY) != 0)
+        {
+            return false;
+        }
+        if (Float.compare(that.maxHeight, maxHeight) != 0)
+        {
+            return false;
+        }
+        if (rotation != that.rotation)
+        {
+            return false;
+        }
+        if (Float.compare(that.x, x) != 0)
+        {
+            return false;
+        }
+        if (Float.compare(that.y, y) != 0)
+        {
+            return false;
+        }
+        if (Float.compare(that.pageHeight, pageHeight) != 0)
+        {
+            return false;
+        }
+        if (Float.compare(that.pageWidth, pageWidth) != 0)
+        {
+            return false;
+        }
+        if (Float.compare(that.widthOfSpace, widthOfSpace) != 0)
+        {
+            return false;
+        }
+        if (Float.compare(that.fontSize, fontSize) != 0)
+        {
+            return false;
+        }
+        if (fontSizePt != that.fontSizePt)
+        {
+            return false;
+        }
+        if (textMatrix != null ? !textMatrix.equals(that.textMatrix) : that.textMatrix != null)
+        {
+            return false;
+        }
+        if (!Arrays.equals(charCodes, that.charCodes))
+        {
+            return false;
+        }
+        return font != null ? font.equals(that.font) : that.font == null;
+        
+        // If changing this method, do not compare mutable fields (PDFBOX-4701)        
+    }
+
+    @Override
+    public int hashCode()
+    {
+        int result = textMatrix != null ? textMatrix.hashCode() : 0;
+        result = 31 * result + Float.floatToIntBits(endX);
+        result = 31 * result + Float.floatToIntBits(endY);
+        result = 31 * result + Float.floatToIntBits(maxHeight);
+        result = 31 * result + rotation;
+        result = 31 * result + Float.floatToIntBits(x);
+        result = 31 * result + Float.floatToIntBits(y);
+        result = 31 * result + Float.floatToIntBits(pageHeight);
+        result = 31 * result + Float.floatToIntBits(pageWidth);
+        result = 31 * result + Float.floatToIntBits(widthOfSpace);
+        result = 31 * result + Arrays.hashCode(charCodes);
+        result = 31 * result + (font != null ? font.hashCode() : 0);
+        result = 31 * result + Float.floatToIntBits(fontSize);
+        result = 31 * result + fontSizePt;
+        return result;
     }
 }

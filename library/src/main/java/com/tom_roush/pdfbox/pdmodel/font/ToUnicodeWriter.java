@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.tom_roush.pdfbox.pdmodel.font;
 
 import java.io.BufferedWriter;
@@ -24,8 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-
 import com.tom_roush.pdfbox.util.Charsets;
+import com.tom_roush.pdfbox.util.Hex;
 
 /**
  * Writes ToUnicode Mapping Files.
@@ -36,6 +37,11 @@ final class ToUnicodeWriter
 {
     private final Map<Integer, String> cidToUnicode = new TreeMap<Integer, String>();
     private int wMode;
+
+    /**
+     * To test corner case of PDFBOX-4302.
+     */
+    static final int MAX_ENTRIES_PER_OPERATOR = 100;
 
     /**
      * Creates a new ToUnicode CMap writer.
@@ -124,9 +130,9 @@ final class ToUnicodeWriter
             int cid = entry.getKey();
             String text = entry.getValue();
 
-            if (cid == srcPrev + 1 && // CID must be last CID + 1
-                dstPrev.codePointCount(0, dstPrev.length()) == 1 && // no UTF-16 surrogates
-                text.codePointAt(0) == dstPrev.codePointAt(0) + 1 && // dstString must be prev + 1
+            if (cid == srcPrev + 1 &&                                 // CID must be last CID + 1
+                dstPrev.codePointCount(0, dstPrev.length()) == 1 &&   // no UTF-16 surrogates
+                text.codePointAt(0) == dstPrev.codePointAt(0) + 1 &&  // dstString must be prev + 1
                 dstPrev.codePointAt(0) + 1 <= 255 - (cid - srcCode1)) // increment last byte only
             {
                 // extend range
@@ -144,25 +150,28 @@ final class ToUnicodeWriter
             dstPrev = text;
         }
 
-        // limit of 100 entries per operator
-        int batchCount = (int)Math.ceil(srcFrom.size() / 100.0);
+        // limit entries per operator
+        int batchCount = (int) Math.ceil(srcFrom.size() /
+                                         (double) MAX_ENTRIES_PER_OPERATOR);
         for (int batch = 0; batch < batchCount; batch++)
         {
-            int count = batch == batchCount - 1 ? srcFrom.size() % 100 : 100;
+            int count = batch == batchCount - 1 ?
+                            srcFrom.size() - MAX_ENTRIES_PER_OPERATOR * batch :
+                            MAX_ENTRIES_PER_OPERATOR;
             writer.write(count + " beginbfrange\n");
             for (int j = 0; j < count; j++)
             {
-                int index = batch * 100 + j;
+                int index = batch * MAX_ENTRIES_PER_OPERATOR + j;
                 writer.write('<');
-                writer.write(toHex(srcFrom.get(index)));
+                writer.write(Hex.getChars(srcFrom.get(index).shortValue()));
                 writer.write("> ");
 
                 writer.write('<');
-                writer.write(toHex(srcTo.get(index)));
+                writer.write(Hex.getChars(srcTo.get(index).shortValue()));
                 writer.write("> ");
 
-                writer.write("<");
-                writer.write(stringToHex(dstString.get(index)));
+                writer.write('<');
+                writer.write(Hex.getCharsUTF16BE(dstString.get(index)));
                 writer.write(">\n");
             }
             writeLine(writer, "endbfrange\n");
@@ -181,21 +190,5 @@ final class ToUnicodeWriter
     {
         writer.write(text);
         writer.write('\n');
-    }
-
-    private String toHex(int num)
-    {
-        return String.format("%04X", num);
-    }
-
-    private String stringToHex(String text)
-    {
-        // use of non-BMP code points requires PDF 1.5 or later, otherwise we're limited to UCS-2
-        StringBuilder sb = new StringBuilder();
-        for (byte b : text.getBytes(Charsets.UTF_16BE))
-        {
-            sb.append(String.format("%02X", b));
-        }
-        return sb.toString();
     }
 }

@@ -16,17 +16,22 @@
  */
 package com.tom_roush.pdfbox.io;
 
-import java.io.IOException;
 import java.io.InputStream;
+import java.io.IOException;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * An InputStream which reads from a RandomAccessRead.
- *
+ * 
  * @author Ben Litchfield
  * @author John Hewson
  */
 public class RandomAccessInputStream extends InputStream
 {
+    private static final Log LOG = LogFactory.getLog(RandomAccessInputStream.class);
+
     private final RandomAccessRead input;
     private long position;
 
@@ -46,7 +51,7 @@ public class RandomAccessInputStream extends InputStream
     {
         input.seek(position);
     }
-
+    
     @Override
     public int available() throws IOException
     {
@@ -56,7 +61,7 @@ public class RandomAccessInputStream extends InputStream
         {
             return Integer.MAX_VALUE;
         }
-        return (int) available;
+        return (int)available;
     }
 
     @Override
@@ -68,7 +73,17 @@ public class RandomAccessInputStream extends InputStream
             return -1;
         }
         int b = input.read();
-        position += 1;
+        if (b != -1)
+        {
+            position += 1;
+        }
+        else
+        {
+            // should never happen due to prior isEOF() check
+            // unless there is an unsynchronized concurrent access
+            LOG.error("read() returns -1, assumed position: " +
+                       position + ", actual position: " + input.getPosition());
+        }
         return b;
     }
 
@@ -81,7 +96,17 @@ public class RandomAccessInputStream extends InputStream
             return -1;
         }
         int n = input.read(b, off, len);
-        position += n;
+        if (n != -1)
+        {
+            position += n;
+        }
+        else
+        {
+            // should never happen due to prior isEOF() check
+            // unless there is an unsynchronized concurrent access
+            LOG.error("read() returns -1, assumed position: " +
+                       position + ", actual position: " + input.getPosition());
+        }
         return n;
     }
 

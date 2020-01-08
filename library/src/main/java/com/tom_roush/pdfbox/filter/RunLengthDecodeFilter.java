@@ -16,12 +16,11 @@
  */
 package com.tom_roush.pdfbox.filter;
 
-import android.util.Log;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 
 /**
@@ -32,6 +31,7 @@ import com.tom_roush.pdfbox.cos.COSDictionary;
  */
 final class RunLengthDecodeFilter extends Filter
 {
+    private static final Log LOG = LogFactory.getLog(RunLengthDecodeFilter.class);
     private static final int RUN_LENGTH_EOD = 128;
 
     @Override
@@ -46,9 +46,14 @@ final class RunLengthDecodeFilter extends Filter
             {
                 int amountToCopy = dupAmount + 1;
                 int compressedRead;
-                while(amountToCopy > 0)
+                while (amountToCopy > 0)
                 {
                     compressedRead = encoded.read(buffer, 0, amountToCopy);
+                    // EOF reached?
+                    if (compressedRead == -1)
+                    {
+                        break;
+                    }
                     decoded.write(buffer, 0, compressedRead);
                     amountToCopy -= compressedRead;
                 }
@@ -56,6 +61,11 @@ final class RunLengthDecodeFilter extends Filter
             else
             {
                 int dupByte = encoded.read();
+                // EOF reached?
+                if (dupByte == -1)
+                {
+                    break;
+                }
                 for (int i = 0; i < 257 - dupAmount; i++)
                 {
                     decoded.write(dupByte);
@@ -69,6 +79,6 @@ final class RunLengthDecodeFilter extends Filter
     protected void encode(InputStream input, OutputStream encoded, COSDictionary parameters)
             throws IOException
     {
-    	Log.w("PdfBox-Android", "RunLengthDecodeFilter.encode is not implemented yet, skipping this stream.");
+        LOG.warn("RunLengthDecodeFilter.encode is not implemented yet, skipping this stream.");
     }
 }

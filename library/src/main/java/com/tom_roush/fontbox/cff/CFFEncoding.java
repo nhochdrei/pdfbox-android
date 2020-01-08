@@ -16,10 +16,10 @@
  */
 package com.tom_roush.fontbox.cff;
 
+import com.tom_roush.fontbox.encoding.Encoding;
+
 import java.util.HashMap;
 import java.util.Map;
-
-import com.tom_roush.fontbox.encoding.Encoding;
 
 /**
  * A CFF Type 1-equivalent Encoding. An encoding is an array of codes associated with some or all

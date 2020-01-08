@@ -20,6 +20,7 @@ import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.pdmodel.graphics.color.PDColorSpace;
 import com.tom_roush.pdfbox.contentstream.operator.Operator;
+import com.tom_roush.pdfbox.contentstream.operator.OperatorName;
 
 import java.io.IOException;
 import java.util.List;
@@ -42,6 +43,6 @@ public class SetStrokingDeviceGrayColor extends SetStrokingColor
     @Override
     public String getName()
     {
-        return "G";
+        return OperatorName.STROKING_COLOR_GRAY;
     }
 }

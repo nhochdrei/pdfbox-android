@@ -20,10 +20,12 @@ package com.tom_roush.fontbox.ttf;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import android.util.Log;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * Glyph description for composite glyphs. Composite glyphs are made up of one
@@ -35,10 +37,18 @@ import android.util.Log;
  */
 public class GlyfCompositeDescript extends GlyfDescript
 {
+    /**
+     * Log instance.
+     */
+    private static final Log LOG = LogFactory.getLog(GlyfCompositeDescript.class);
+
     private final List<GlyfCompositeComp> components = new ArrayList<GlyfCompositeComp>();
+    private final Map<Integer,GlyphDescription> descriptions = new HashMap<Integer,GlyphDescription>();
     private GlyphTable glyphTable = null;
     private boolean beingResolved = false;
     private boolean resolved = false;
+    private int pointCount = -1;
+    private int contourCount = -1;
 
     /**
      * Constructor.
@@ -47,7 +57,7 @@ public class GlyfCompositeDescript extends GlyfDescript
      * @param glyphTable the Glyphtable containing all glyphs
      * @throws IOException is thrown if something went wrong
      */
-    public GlyfCompositeDescript(TTFDataStream bais, GlyphTable glyphTable) throws IOException
+    GlyfCompositeDescript(TTFDataStream bais, GlyphTable glyphTable) throws IOException
     {
         super((short) -1, bais);
 
@@ -67,6 +77,7 @@ public class GlyfCompositeDescript extends GlyfDescript
         {
             readInstructions(bais, (bais.readUnsignedShort()));
         }
+        initDescriptions();
     }
 
     /**
@@ -81,7 +92,7 @@ public class GlyfCompositeDescript extends GlyfDescript
         }
         if (beingResolved)
         {
-        	Log.e("PdfBox-Android", "Circular reference in GlyfCompositeDesc");
+            LOG.error("Circular reference in GlyfCompositeDesc");
             return;
         }
         beingResolved = true;
@@ -89,15 +100,12 @@ public class GlyfCompositeDescript extends GlyfDescript
         int firstIndex = 0;
         int firstContour = 0;
 
-        Iterator<GlyfCompositeComp> i = components.iterator();
-        while (i.hasNext())
+        for (GlyfCompositeComp comp : components)
         {
-            GlyfCompositeComp comp = i.next();
             comp.setFirstIndex(firstIndex);
             comp.setFirstContour(firstContour);
 
-            GlyphDescription desc;
-            desc = getGlypDescription(comp.getGlyphIndex());
+            GlyphDescription desc = descriptions.get(comp.getGlyphIndex());
             if (desc != null)
             {
                 desc.resolve();
@@ -118,7 +126,7 @@ public class GlyfCompositeDescript extends GlyfDescript
         GlyfCompositeComp c = getCompositeCompEndPt(i);
         if (c != null)
         {
-            GlyphDescription gd = getGlypDescription(c.getGlyphIndex());
+            GlyphDescription gd = descriptions.get(c.getGlyphIndex());
             return gd.getEndPtOfContours(i - c.getFirstContour()) + c.getFirstIndex();
         }
         return 0;
@@ -133,7 +141,7 @@ public class GlyfCompositeDescript extends GlyfDescript
         GlyfCompositeComp c = getCompositeComp(i);
         if (c != null)
         {
-            GlyphDescription gd = getGlypDescription(c.getGlyphIndex());
+            GlyphDescription gd = descriptions.get(c.getGlyphIndex());
             return gd.getFlags(i - c.getFirstIndex());
         }
         return 0;
@@ -148,7 +156,7 @@ public class GlyfCompositeDescript extends GlyfDescript
         GlyfCompositeComp c = getCompositeComp(i);
         if (c != null)
         {
-            GlyphDescription gd = getGlypDescription(c.getGlyphIndex());
+            GlyphDescription gd = descriptions.get(c.getGlyphIndex());
             int n = i - c.getFirstIndex();
             int x = gd.getXCoordinate(n);
             int y = gd.getYCoordinate(n);
@@ -168,7 +176,7 @@ public class GlyfCompositeDescript extends GlyfDescript
         GlyfCompositeComp c = getCompositeComp(i);
         if (c != null)
         {
-            GlyphDescription gd = getGlypDescription(c.getGlyphIndex());
+            GlyphDescription gd = descriptions.get(c.getGlyphIndex());
             int n = i - c.getFirstIndex();
             int x = gd.getXCoordinate(n);
             int y = gd.getYCoordinate(n);
@@ -196,16 +204,23 @@ public class GlyfCompositeDescript extends GlyfDescript
     {
         if (!resolved)
         {
-        	Log.e("PdfBox-Android", "getPointCount called on unresolved GlyfCompositeDescript");
+            LOG.error("getPointCount called on unresolved GlyfCompositeDescript");
         }
-        GlyfCompositeComp c = components.get(components.size() - 1);
-        GlyphDescription gd = getGlypDescription(c.getGlyphIndex());
-        if (gd == null)
+        if (pointCount < 0)
         {
-        	Log.e("PdfBox-Android", "getGlypDescription(" + c.getGlyphIndex() + ") is null, returning 0");
-            return 0;
-        }
-        return c.getFirstIndex() + gd.getPointCount();
+            GlyfCompositeComp c = components.get(components.size() - 1);
+            GlyphDescription gd = descriptions.get(c.getGlyphIndex());
+            if (gd == null)
+            {
+                LOG.error("GlyphDescription for index " + c.getGlyphIndex() + " is null, returning 0");
+                pointCount = 0;
+            }
+            else
+            {
+                pointCount = c.getFirstIndex() + gd.getPointCount();
+            }
+        }   
+        return pointCount;
     }
 
     /**
@@ -216,10 +231,14 @@ public class GlyfCompositeDescript extends GlyfDescript
     {
         if (!resolved)
         {
-        	Log.e("PdfBox-Android", "getContourCount called on unresolved GlyfCompositeDescript");
+            LOG.error("getContourCount called on unresolved GlyfCompositeDescript");
         }
-        GlyfCompositeComp c = components.get(components.size() - 1);
-        return c.getFirstContour() + getGlypDescription(c.getGlyphIndex()).getContourCount();
+        if (contourCount < 0)
+        {
+            GlyfCompositeComp c = components.get(components.size() - 1);
+            contourCount = c.getFirstContour() + descriptions.get(c.getGlyphIndex()).getContourCount();
+        }
+        return contourCount;
     }
 
     /**
@@ -236,8 +255,8 @@ public class GlyfCompositeDescript extends GlyfDescript
     {
         for (GlyfCompositeComp c : components)
         {
-            GlyphDescription gd = getGlypDescription(c.getGlyphIndex());
-            if (c.getFirstIndex() <= i && i < (c.getFirstIndex() + gd.getPointCount()))
+            GlyphDescription gd = descriptions.get(c.getGlyphIndex());
+            if (c.getFirstIndex() <= i && gd != null && i < (c.getFirstIndex() + gd.getPointCount()))
             {
                 return c;
             }
@@ -249,8 +268,8 @@ public class GlyfCompositeDescript extends GlyfDescript
     {
         for (GlyfCompositeComp c : components)
         {
-            GlyphDescription gd = getGlypDescription(c.getGlyphIndex());
-            if (c.getFirstContour() <= i && i < (c.getFirstContour() + gd.getContourCount()))
+            GlyphDescription gd = descriptions.get(c.getGlyphIndex());
+            if (c.getFirstContour() <= i && gd != null && i < (c.getFirstContour() + gd.getContourCount()))
             {
                 return c;
             }
@@ -258,21 +277,23 @@ public class GlyfCompositeDescript extends GlyfDescript
         return null;
     }
 
-    private GlyphDescription getGlypDescription(int index)
+    private void initDescriptions()
     {
-        try
+        for (GlyfCompositeComp component : components)
         {
-            GlyphData glyph = glyphTable.getGlyph(index);
-            if (glyph != null)
+            try
             {
-                return glyph.getDescription();
+                int index = component.getGlyphIndex();
+                GlyphData glyph = glyphTable.getGlyph(index);
+                if (glyph != null)
+                {
+                    descriptions.put(index, glyph.getDescription());
+                }
             }
-            return null;
-        }
-        catch (IOException e)
-        {
-        	Log.e("PdfBox-Android", e.getMessage());
-            return null;
+            catch (IOException e)
+            {
+                LOG.error(e);
+            }            
         }
     }
 }

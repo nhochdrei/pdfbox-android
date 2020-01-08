@@ -16,6 +16,8 @@
  */
 package com.tom_roush.fontbox.cmap;
 
+import static com.tom_roush.fontbox.cmap.CMap.toInt;
+
 /**
  * This represents a single entry in the codespace range.
  *
@@ -25,11 +27,10 @@ public class CodespaceRange
 {
     private byte[] start;
     private byte[] end;
-
     private int startInt;
     private int endInt;
     private int codeLength = 0;
-
+    
     /**
      * Creates a new instance of CodespaceRange.
      */
@@ -39,7 +40,7 @@ public class CodespaceRange
 
     /**
      * Returns the length of the codes of the codespace.
-     *
+     * 
      * @return the code length
      */
     public int getCodeLength()
@@ -95,20 +96,6 @@ public class CodespaceRange
     }
 
     /**
-     * Returns an int for the given byte array
-     */
-    private int toInt(byte[] data, int dataLen)
-    {
-        int code = 0;
-        for (int i = 0; i < dataLen; ++i)
-        {
-            code <<= 8;
-            code |= (data[i] + 256) % 256;
-        }
-        return code;
-    }
-
-    /**
      * Returns true if the given code bytes match this codespace range.
      */
     public boolean isFullMatch(byte[] code, int codeLen)
@@ -117,11 +104,12 @@ public class CodespaceRange
         if (codeLen == codeLength)
         {
             int value = toInt(code, codeLen);
-            if (value >= startInt && value <= endInt)
+            if (value >= startInt && value <=endInt)
             {
                 return true;
             }
         }
         return false;
     }
+    
 }

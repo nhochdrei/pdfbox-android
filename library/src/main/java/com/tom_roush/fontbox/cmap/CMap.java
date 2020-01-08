@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * This class represents a CMap file.
@@ -30,6 +32,8 @@ import java.util.Map;
  */
 public class CMap
 {
+    private static final Log LOG = LogFactory.getLog(CMap.class);
+
     private int wmode = 0;
     private String cmapName = null;
     private String cmapVersion = null;
@@ -95,7 +99,7 @@ public class CMap
 
     /**
      * Reads a character code from a string in the content stream.
-     * <p>>See "CMap Mapping" and "Handling Undefined Characters" in PDF32000 for more details.
+     * <p>See "CMap Mapping" and "Handling Undefined Characters" in PDF32000 for more details.
      *
      * @param in string stream
      * @return character code
@@ -104,10 +108,10 @@ public class CMap
     public int readCode(InputStream in) throws IOException
     {
         byte[] bytes = new byte[maxCodeLength];
-        in.read(bytes, 0, minCodeLength);
-        for (int i = minCodeLength - 1; i < maxCodeLength; i++)
+        in.read(bytes,0,minCodeLength);
+        for (int i = minCodeLength-1; i < maxCodeLength; i++)
         {
-            final int byteCount = i + 1;
+            final int byteCount = i+1;
             for (CodespaceRange range : codespaceRanges)
             {
                 if (range.isFullMatch(bytes, byteCount))
@@ -120,19 +124,25 @@ public class CMap
                 bytes[byteCount] = (byte)in.read();
             }
         }
-        throw new IOException("CMap is invalid");
+        String seq = "";
+        for (int i = 0; i < maxCodeLength; ++i)
+        {
+            seq += String.format("0x%02X (%04o) ", bytes[i], bytes[i]);
+        }
+        LOG.warn("Invalid character code sequence " + seq + "in CMap " + cmapName);
+        return 0;
     }
 
     /**
      * Returns an int for the given byte array
      */
-    private int toInt(byte[] data, int dataLen)
+    static int toInt(byte[] data, int dataLen)
     {
         int code = 0;
         for (int i = 0; i < dataLen; ++i)
         {
             code <<= 8;
-            code |= (data[i] + 256) % 256;
+            code |= (data[i] & 0xFF);
         }
         return code;
     }
@@ -211,14 +221,22 @@ public class CMap
     /**
      * This will add a CID Range.
      *
-     * @param from starting charactor of the CID range.
+     * @param from starting character of the CID range.
      * @param to ending character of the CID range.
      * @param cid the cid to be started with.
      *
      */
     void addCIDRange(char from, char to, int cid)
     {
-        codeToCidRanges.add(new CIDRange(from, to, cid));
+        CIDRange lastRange = null;
+        if (!codeToCidRanges.isEmpty())
+        {
+            lastRange = codeToCidRanges.get(codeToCidRanges.size() - 1);
+        }
+        if (lastRange == null || !lastRange.extend(from, to, cid))
+        {
+            codeToCidRanges.add(new CIDRange(from, to, cid));
+        }
     }
 
     /**

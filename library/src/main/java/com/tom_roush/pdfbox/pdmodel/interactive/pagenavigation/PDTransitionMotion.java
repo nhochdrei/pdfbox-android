@@ -19,7 +19,7 @@ package com.tom_roush.pdfbox.pdmodel.interactive.pagenavigation;
 /**
  * The direction of motion for the specified transition effect. Only for {@link PDTransitionStyle#Split},
  * {@link PDTransitionStyle#Blinds} and {@link PDTransitionStyle#Fly}.
- *
+ * 
  * @author Andrea Vacondio
  *
  */
@@ -32,5 +32,5 @@ public enum PDTransitionMotion
     /**
      * Outward from the center of the page
      */
-    O;
+    O
 }

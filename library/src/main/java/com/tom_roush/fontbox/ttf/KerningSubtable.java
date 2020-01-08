@@ -16,19 +16,22 @@
  */
 package com.tom_roush.fontbox.ttf;
 
-import android.util.Log;
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 /**
  * A 'kern' table in a true type font.
- *
+ * 
  * @author Glenn Adams
  */
 public class KerningSubtable
 {
+    private static final Log LOG = LogFactory.getLog(KerningSubtable.class);
+
     // coverage field bit masks and values
     private static final int COVERAGE_HORIZONTAL = 0x0001;
     private static final int COVERAGE_MINIMUMS = 0x0002;
@@ -42,8 +45,8 @@ public class KerningSubtable
 
     // true if horizontal kerning
     private boolean horizontal;
-    // true if mimimum adjustment values (versus kerning values)
-    private boolean minimums;
+    // true if minimum adjustment values (versus kerning values)
+    private boolean minimums; 
     // true if cross-stream (block progression) kerning
     private boolean crossStream;
     // format specific pair data
@@ -52,15 +55,15 @@ public class KerningSubtable
     KerningSubtable()
     {
     }
-
+    
     /**
      * This will read the required data from the stream.
-     *
+     * 
      * @param data The stream to read the data from.
      * @param version The version of the table to be read
      * @throws IOException If there is an error reading the data.
      */
-    public void read(TTFDataStream data, int version) throws IOException
+    void read(TTFDataStream data, int version) throws IOException
     {
         if (version == 0)
         {
@@ -68,7 +71,6 @@ public class KerningSubtable
         }
         else if (version == 1)
         {
-
             readSubtable1(data);
         }
         else
@@ -153,8 +155,7 @@ public class KerningSubtable
         }
         else
         {
-            Log.w("PdfBox-Android",
-                "No kerning subtable data available due to an unsupported kerning subtable version");
+            LOG.warn("No kerning subtable data available due to an unsupported kerning subtable version");
         }
         return kerning;
     }
@@ -170,8 +171,7 @@ public class KerningSubtable
     {
         if (pairs == null)
         {
-            Log.w("PdfBox-Android",
-                "No kerning subtable data available due to an unsupported kerning subtable version");
+            LOG.warn("No kerning subtable data available due to an unsupported kerning subtable version");
             return 0;
         }
         return pairs.getKerning(l, r);
@@ -182,14 +182,14 @@ public class KerningSubtable
         int version = data.readUnsignedShort();
         if (version != 0)
         {
-            throw new UnsupportedOperationException("Unsupported kerning sub-table version: "
-                + version);
+            LOG.info("Unsupported kerning sub-table version: " + version);
+            return;
         }
         int length = data.readUnsignedShort();
         if (length < 6)
         {
             throw new IOException("Kerning sub-table too short, got " + length
-                + " bytes, expect 6 or more.");
+                    + " bytes, expect 6 or more.");
         }
         int coverage = data.readUnsignedShort();
         if (isBitsSet(coverage, COVERAGE_HORIZONTAL, COVERAGE_HORIZONTAL_SHIFT))
@@ -215,8 +215,7 @@ public class KerningSubtable
         }
         else
         {
-            Log.d("PdfBox-Android", "Skipped kerning subtable due to an unsupported kerning" +
-                " subtable version: " + format);
+            LOG.debug("Skipped kerning subtable due to an unsupported kerning subtable version: " + format);
         }
     }
 
@@ -226,16 +225,14 @@ public class KerningSubtable
         pairs.read(data);
     }
 
-    private void readSubtable0Format2(TTFDataStream data) throws IOException
+    private void readSubtable0Format2(TTFDataStream data)
     {
-        throw new UnsupportedOperationException(
-            "Kerning table version 0 format 2 not yet supported.");
+        LOG.info("Kerning subtable format 2 not yet supported.");
     }
 
-    private void readSubtable1(TTFDataStream data) throws IOException
+    private void readSubtable1(TTFDataStream data)
     {
-        throw new UnsupportedOperationException(
-            "Kerning table version 1 formats not yet supported.");
+        LOG.info("Kerning subtable format 1 not yet supported.");
     }
 
     private static boolean isBitsSet(int bits, int mask, int shift)
@@ -248,14 +245,14 @@ public class KerningSubtable
         return (bits & mask) >> shift;
     }
 
-    private abstract static class PairData
+    private interface PairData
     {
-        public abstract void read(TTFDataStream data) throws IOException;
+        void read(TTFDataStream data) throws IOException;
 
-        public abstract int getKerning(int l, int r);
+        int getKerning(int l, int r);
     }
 
-    private static class PairData0Format0 extends PairData implements Comparator<int[]>
+    private static class PairData0Format0 implements Comparator<int[]>, PairData
     {
         private int searchRange;
         private int[][] pairs;
@@ -264,7 +261,7 @@ public class KerningSubtable
         public void read(TTFDataStream data) throws IOException
         {
             int numPairs = data.readUnsignedShort();
-            searchRange = data.readUnsignedShort() / 6;
+            searchRange = data.readUnsignedShort()/6;
             int entrySelector = data.readUnsignedShort();
             int rangeShift = data.readUnsignedShort();
             pairs = new int[numPairs][3];
@@ -282,17 +279,11 @@ public class KerningSubtable
         @Override
         public int getKerning(int l, int r)
         {
-            int[] key = new int[]{l, r, 0};
-            int index;
-            index = Arrays.binarySearch(pairs, 0, searchRange, key, this);
+            int[] key = new int[] { l, r, 0 };
+            int index = Arrays.binarySearch(pairs, key, this);
             if (index >= 0)
             {
                 return pairs[index][2];
-            }
-            index = Arrays.binarySearch(pairs, searchRange, pairs.length, key, this);
-            if (index >= 0)
-            {
-                return pairs[searchRange + index][2];
             }
             return 0;
         }

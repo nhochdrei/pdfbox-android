@@ -101,21 +101,28 @@ final class Type1Parser
         // font dict
         int length = read(Token.INTEGER).intValue();
         read(Token.NAME, "dict");
-        readMaybe(Token.NAME, "dup"); // found in some TeX fonts
+        // found in some TeX fonts
+        readMaybe(Token.NAME, "dup");
+        // if present, the "currentdict" is not required
         read(Token.NAME, "begin");
 
         for (int i = 0; i < length; i++)
         {
             // premature end
-            if (lexer.peekToken().getKind() == Token.NAME &&
-                lexer.peekToken().getText().equals("currentdict"))
+            Token token = lexer.peekToken();
+            if (token == null)
+            {
+                break;
+            }
+            if (token.getKind() == Token.NAME &&
+                (token.getText().equals("currentdict") || token.getText().equals("end")))
             {
                 break;
             }
 
             // key/value
             String key = read(Token.LITERAL).getText();
-            if (key.equals("FontInfo"))
+            if (key.equals("FontInfo") || key.equals("Fontinfo"))
             {
                 readFontInfo(readSimpleDict());
             }
@@ -133,7 +140,7 @@ final class Type1Parser
             }
         }
 
-        read(Token.NAME, "currentdict");
+        readMaybe(Token.NAME, "currentdict");
         read(Token.NAME, "end");
 
         read(Token.NAME, "currentfile");
@@ -316,12 +323,20 @@ final class Type1Parser
 
         for (int i = 0; i < length; i++)
         {
+            if (lexer.peekToken() == null)
+            {
+                break;
+            }
             if (lexer.peekToken().getKind() == Token.NAME &&
                !lexer.peekToken().getText().equals("end"))
             {
                 read(Token.NAME);
             }
             // premature end
+            if (lexer.peekToken() == null)
+            {
+                break;
+            }
             if (lexer.peekToken().getKind() == Token.NAME &&
                 lexer.peekToken().getText().equals("end"))
             {
@@ -360,6 +375,10 @@ final class Type1Parser
     {
         List<Token> value = new ArrayList<Token>();
         Token token = lexer.nextToken();
+        if (lexer.peekToken() == null)
+        {
+            return value;
+        }
         value.add(token);
 
         if (token.getKind() == Token.START_ARRAY)
@@ -367,6 +386,10 @@ final class Type1Parser
             int openArray = 1;
             while (true)
             {
+                if (lexer.peekToken() == null)
+                {
+                    return value;
+                }
                 if (lexer.peekToken().getKind() == Token.START_ARRAY)
                 {
                     openArray++;
@@ -389,7 +412,19 @@ final class Type1Parser
         {
             value.addAll(readProc());
         }
+        else if (token.getKind() == Token.START_DICT)
+        {
+            // skip "/GlyphNames2HostCode << >> def"
+            read(Token.END_DICT);
+            return value;
+        }
 
+        readPostScriptWrapper(value);
+        return value;
+    }
+
+    private void readPostScriptWrapper(List<Token> value) throws IOException
+    {
         // postscript wrapper (not in the Type 1 spec)
         if (lexer.peekToken().getText().equals("systemdict"))
         {
@@ -414,7 +449,6 @@ final class Type1Parser
 
             read(Token.NAME, "if");
         }
-        return value;
     }
 
     /**
@@ -458,19 +492,39 @@ final class Type1Parser
      */
     private void parseBinary(byte[] bytes) throws IOException
     {
-        byte[] decrypted = decrypt(bytes, EEXEC_KEY, 4);
+        byte[] decrypted;
+        // Sometimes, fonts use the hex format, so this needs to be converted before decryption
+        if (isBinary(bytes))
+        {
+            decrypted = decrypt(bytes, EEXEC_KEY, 4);
+        }
+        else
+        {
+            decrypted = decrypt(hexToBinary(bytes), EEXEC_KEY, 4);
+        }
         lexer = new Type1Lexer(decrypted);
 
         // find /Private dict
-        while (!lexer.peekToken().getText().equals("Private"))
+        Token peekToken = lexer.peekToken();
+        while (peekToken != null && !peekToken.getText().equals("Private"))
         {
+            // for a more thorough validation, the presence of "begin" before Private
+            // determines how code before and following charstrings should look
+            // it is not currently checked anyway
             lexer.nextToken();
+            peekToken = lexer.peekToken();
+        }
+        if (peekToken == null)
+        {
+            throw new IOException("/Private token not found");
         }
 
         // Private dict
         read(Token.LITERAL, "Private");
         int length = read(Token.INTEGER).intValue();
         read(Token.NAME, "dict");
+        // actually could also be "/Private 10 dict def Private begin"
+        // instead of the "dup"
         readMaybe(Token.NAME, "dup");
         read(Token.NAME, "begin");
 
@@ -479,7 +533,7 @@ final class Type1Parser
         for (int i = 0; i < length; i++)
         {
             // premature end
-            if (lexer.peekToken().getKind() != Token.LITERAL)
+            if (lexer.peekToken() == null || lexer.peekToken().getKind() != Token.LITERAL)
             {
                 break;
             }
@@ -487,34 +541,44 @@ final class Type1Parser
             // key/value
             String key = read(Token.LITERAL).getText();
 
-            if (key.equals("Subrs"))
+            if ("Subrs".equals(key))
             {
                 readSubrs(lenIV);
             }
-            else if (key.equals("OtherSubrs"))
+            else if ("OtherSubrs".equals(key))
             {
                 readOtherSubrs();
             }
-            else if (key.equals("lenIV"))
+            else if ("lenIV".equals(key))
             {
                 lenIV = readDictValue().get(0).intValue();
             }
-            else if (key.equals("ND"))
+            else if ("ND".equals(key))
             {
                 read(Token.START_PROC);
-                read(Token.NAME, "noaccess");
+                // the access restrictions are not mandatory
+                readMaybe(Token.NAME, "noaccess");
                 read(Token.NAME, "def");
                 read(Token.END_PROC);
-                read(Token.NAME, "executeonly");
+                readMaybe(Token.NAME, "executeonly");
                 read(Token.NAME, "def");
             }
-            else if (key.equals("NP"))
+            else if ("NP".equals(key))
             {
                 read(Token.START_PROC);
-                read(Token.NAME, "noaccess");
+                readMaybe(Token.NAME, "noaccess");
                 read(Token.NAME);
                 read(Token.END_PROC);
-                read(Token.NAME, "executeonly");
+                readMaybe(Token.NAME, "executeonly");
+                read(Token.NAME, "def");
+            }
+            else if ("RD".equals(key))
+            {
+                // /RD {string currentfile exch readstring pop} bind executeonly def
+                read(Token.START_PROC);
+                readProc();
+                readMaybe(Token.NAME, "bind");                
+                readMaybe(Token.NAME, "executeonly");                
                 read(Token.NAME, "def");
             }
             else
@@ -613,6 +677,10 @@ final class Type1Parser
         for (int i = 0; i < length; i++)
         {
             // premature end
+            if (lexer.peekToken() == null)
+            {
+                break;
+            }
             if (!(lexer.peekToken().getKind() == Token.NAME &&
                   lexer.peekToken().getText().equals("dup")))
             {
@@ -663,12 +731,18 @@ final class Type1Parser
     {
         int length = read(Token.INTEGER).intValue();
         read(Token.NAME, "dict");
+        // could actually be a sequence ending in "CharStrings begin", too
+        // instead of the "dup begin"
         read(Token.NAME, "dup");
         read(Token.NAME, "begin");
 
         for (int i = 0; i < length; i++)
         {
             // premature end
+            if (lexer.peekToken() == null)
+            {
+                break;
+            }
             if (lexer.peekToken().getKind() == Token.NAME &&
                 lexer.peekToken().getText().equals("end"))
             {
@@ -686,6 +760,9 @@ final class Type1Parser
 
         // some fonts have one "end", others two
         read(Token.NAME, "end");
+        // since checking ends here, this does not matter ....
+        // more thorough checking would see whether there is "begin" before /Private
+        // and expect a "def" somewhere, otherwise a "put"
     }
 
     /**
@@ -743,7 +820,7 @@ final class Type1Parser
     private Token read(Token.Kind kind) throws IOException
     {
         Token token = lexer.nextToken();
-        if (token.getKind() != kind)
+        if (token == null || token.getKind() != kind)
         {
             throw new IOException("Found " + token + " but expected " + kind);
         }
@@ -770,7 +847,7 @@ final class Type1Parser
     private Token readMaybe(Token.Kind kind, String name) throws IOException
     {
         Token token = lexer.peekToken();
-        if (token.getKind() == kind && token.getText().equals(name))
+        if (token != null && token.getKind() == kind && token.getText().equals(name))
         {
             return lexer.nextToken();
         }
@@ -812,5 +889,60 @@ final class Type1Parser
             r = (cipher + r) * c1 + c2 & 0xffff;
         }
         return plainBytes;
+    }
+
+    // Check whether binary or hex encoded. See Adobe Type 1 Font Format specification
+    // 7.2 eexec encryption
+    private boolean isBinary(byte[] bytes)
+    {
+        if (bytes.length < 4)
+        {
+            return true;
+        }
+        // "At least one of the first 4 ciphertext bytes must not be one of
+        // the ASCII hexadecimal character codes (a code for 0-9, A-F, or a-f)."
+        for (int i = 0; i < 4; ++i)
+        {
+            byte by = bytes[i];
+            if (by != 0x0a && by != 0x0d && by != 0x20 && by != '\t' && 
+                    Character.digit((char) by, 16) == -1)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private byte[] hexToBinary(byte[] bytes)
+    {
+        // calculate needed length
+        int len = 0;
+        for (byte by : bytes)
+        {
+            if (Character.digit((char) by, 16) != -1)
+            {
+                ++len;
+            }
+        }
+        byte[] res = new byte[len / 2];
+        int r = 0;
+        int prev = -1;
+        for (byte by : bytes)
+        {
+            int digit = Character.digit((char) by, 16);
+            if (digit != -1)
+            {
+                if (prev == -1)
+                {
+                    prev = digit;
+                }
+                else
+                {
+                    res[r++] = (byte) (prev * 16 + digit);
+                    prev = -1;
+                }
+            }
+        }
+        return res;
     }
 }

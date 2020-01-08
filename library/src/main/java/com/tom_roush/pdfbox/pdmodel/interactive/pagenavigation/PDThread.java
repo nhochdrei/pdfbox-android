@@ -17,6 +17,7 @@
 package com.tom_roush.pdfbox.pdmodel.interactive.pagenavigation;
 
 import com.tom_roush.pdfbox.cos.COSDictionary;
+
 import com.tom_roush.pdfbox.pdmodel.PDDocumentInformation;
 import com.tom_roush.pdfbox.pdmodel.common.COSObjectable;
 
@@ -121,5 +122,6 @@ public class PDThread implements COSObjectable
         }
         thread.setItem( "F", bead );
     }
+
 
 }

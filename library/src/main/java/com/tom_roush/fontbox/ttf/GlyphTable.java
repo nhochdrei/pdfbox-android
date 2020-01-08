@@ -36,14 +36,14 @@ public class GlyphTable extends TTFTable
     private TTFDataStream data;
     private IndexToLocationTable loca;
     private int numGlyphs;
-
+    
     private int cached = 0;
-
+    
     /**
      * Don't even bother to cache huge fonts.
      */
     private static final int MAX_CACHE_SIZE = 5000;
-
+    
     /**
      * Don't cache more glyphs than this.
      */
@@ -62,7 +62,7 @@ public class GlyphTable extends TTFTable
      * @throws IOException If there is an error reading the data.
      */
     @Override
-    public void read(TrueTypeFont ttf, TTFDataStream data) throws IOException
+    void read(TrueTypeFont ttf, TTFDataStream data) throws IOException
     {
         loca = ttf.getIndexToLocation();
         numGlyphs = ttf.getNumberOfGlyphs();
@@ -73,17 +73,21 @@ public class GlyphTable extends TTFTable
             glyphs = new GlyphData[numGlyphs];
         }
 
-        // we don't actually read the table yet because it can contain tens of thousands of glyphs
+        // we don't actually read the complete table here because it can contain tens of thousands of glyphs
         this.data = data;
         initialized = true;
     }
 
     /**
      * Returns all glyphs. This method can be very slow.
+     *
+     * @throws IOException If there is an error reading the data.
      */
     public GlyphData[] getGlyphs() throws IOException
     {
-        synchronized (font)
+        // PDFBOX-4219: synchronize on data because it is accessed by several threads
+        // when PDFBox is accessing a standard 14 font for the first time
+        synchronized (data)
         {
             // the glyph offsets
             long[] offsets = loca.getOffsets();
@@ -98,7 +102,7 @@ public class GlyphTable extends TTFTable
             {
                 glyphs = new GlyphData[numGlyphs];
             }
-
+         
             for (int gid = 0; gid < numGlyphs; gid++)
             {
                 // end of glyphs reached?
@@ -151,13 +155,15 @@ public class GlyphTable extends TTFTable
         {
             return null;
         }
-
+        
         if (glyphs != null && glyphs[gid] != null)
         {
             return glyphs[gid];
         }
 
-        synchronized (font)
+        // PDFBOX-4219: synchronize on data because it is accessed by several threads
+        // when PDFBox is accessing a standard 14 font for the first time
+        synchronized (data)
         {
             // read a single glyph
             long[] offsets = loca.getOffsets();
@@ -167,7 +173,7 @@ public class GlyphTable extends TTFTable
                 // no outline
                 return null;
             }
-
+            
             // save
             long currentPosition = data.getCurrentPosition();
 

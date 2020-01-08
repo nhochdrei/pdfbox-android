@@ -16,19 +16,19 @@
  */
 package com.tom_roush.pdfbox.pdfparser;
 
-import android.util.Log;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.cos.COSObjectKey;
@@ -59,7 +59,7 @@ public class XrefTrailerResolver
     /**
      * A class which represents a xref/trailer object.
      */
-    private class XrefTrailerObj
+    private static class XrefTrailerObj
     {
         protected COSDictionary trailer = null;
 
@@ -73,6 +73,11 @@ public class XrefTrailerResolver
         private XrefTrailerObj()
         {
             xrefType = XRefType.TABLE;
+        }
+
+        public void reset()
+        {
+            xrefTable.clear();
         }
     }
 
@@ -88,12 +93,15 @@ public class XrefTrailerResolver
         /**
          * XRef stream type.
          */
-        STREAM;
+        STREAM
     }
     
     private final Map<Long, XrefTrailerObj> bytePosToXrefMap = new HashMap<Long, XrefTrailerObj>();
     private XrefTrailerObj curXrefTrailerObj   = null;
     private XrefTrailerObj resolvedXrefTrailer = null;
+
+    /** Log instance. */
+    private static final Log LOG = LogFactory.getLog( XrefTrailerResolver.class );
 
     /**
      * Returns the first trailer if at least one exists.
@@ -126,7 +134,17 @@ public class XrefTrailerResolver
         SortedSet<Long> sortedOffset = new TreeSet<Long>(offsets);
         return bytePosToXrefMap.get(sortedOffset.last()).trailer;
     }
-    
+
+    /**
+     * Returns the count of trailers.
+     *
+     * @return the count of trailers.
+     */
+    public final int getTrailerCount()
+    {
+        return bytePosToXrefMap.size();
+    }
+
     /**
      * Signals that a new XRef object (table or stream) starts.
      * @param startBytePos the offset to start at
@@ -134,7 +152,8 @@ public class XrefTrailerResolver
      */
     public void nextXrefObj( final long startBytePos, XRefType type )
     {
-        bytePosToXrefMap.put( startBytePos, curXrefTrailerObj = new XrefTrailerObj() );
+        curXrefTrailerObj = new XrefTrailerObj();
+        bytePosToXrefMap.put(startBytePos, curXrefTrailerObj);
         curXrefTrailerObj.xrefType = type;
     }
 
@@ -159,11 +178,15 @@ public class XrefTrailerResolver
         if ( curXrefTrailerObj == null )
         {
             // should not happen...
-            Log.w("PdfBox-Android", "Cannot add XRef entry for '" + objKey.getNumber() +
-                "' because XRef start was not signalled.");
+            LOG.warn( "Cannot add XRef entry for '" + objKey.getNumber() + "' because XRef start was not signalled." );
             return;
         }
-        curXrefTrailerObj.xrefTable.put( objKey, offset );
+        // PDFBOX-3506 check before adding to the map, to avoid entries from the table being 
+        // overwritten by obsolete entries in hybrid files (/XRefStm entry)
+        if (!curXrefTrailerObj.xrefTable.containsKey(objKey) )
+        {
+            curXrefTrailerObj.xrefTable.put(objKey, offset);
+        }
     }
 
     /**
@@ -176,7 +199,7 @@ public class XrefTrailerResolver
         if ( curXrefTrailerObj == null )
         {
             // should not happen...
-            Log.w("PdfBox-Android", "Cannot add trailer because XRef start was not signalled.");
+            LOG.warn( "Cannot add trailer because XRef start was not signalled." );
             return;
         }
         curXrefTrailerObj.trailer = trailer;
@@ -211,7 +234,7 @@ public class XrefTrailerResolver
     {
         if ( resolvedXrefTrailer != null )
         {
-            Log.w("PdfBox-Android", "Method must be called only ones with last startxref value.");
+            LOG.warn( "Method must be called only ones with last startxref value." );
             return;
         }
 
@@ -224,8 +247,7 @@ public class XrefTrailerResolver
         if ( curObj == null )
         {
             // no XRef at given position
-            Log.w("PdfBox-Android", "Did not found XRef object at specified startxref position " +
-                startxrefBytePosValue);
+            LOG.warn( "Did not found XRef object at specified startxref position " + startxrefBytePosValue );
 
             // use all objects in byte position order (last entries overwrite previous ones)
             xrefSeqBytePos.addAll( bytePosToXrefMap.keySet() );
@@ -249,9 +271,7 @@ public class XrefTrailerResolver
                 curObj = bytePosToXrefMap.get( prevBytePos );
                 if ( curObj == null )
                 {
-                    Log.w("PdfBox-Android",
-                        "Did not found XRef object pointed to by 'Prev' key at position " +
-                            prevBytePos);
+                    LOG.warn( "Did not found XRef object pointed to by 'Prev' key at position " + prevBytePos );
                     break;
                 }
                 xrefSeqBytePos.add( prevBytePos );
@@ -321,7 +341,7 @@ public class XrefTrailerResolver
             return null;
         }
         final Set<Long> refObjNrs = new HashSet<Long>();
-        final long cmpVal = -objstmObjNr;
+        final long cmpVal = - objstmObjNr;
         
         for ( Entry<COSObjectKey,Long> xrefEntry : resolvedXrefTrailer.xrefTable.entrySet() ) 
         {
@@ -331,5 +351,19 @@ public class XrefTrailerResolver
             }
         }
         return refObjNrs;
+    }
+
+    /**
+     * Reset all data so that it can be used to rebuild the trailer.
+     * 
+     */
+    protected void reset()
+    {
+        for (XrefTrailerObj trailerObj : bytePosToXrefMap.values())
+        {
+            trailerObj.reset();
+        }
+        curXrefTrailerObj = null;
+        resolvedXrefTrailer = null;
     }
 }

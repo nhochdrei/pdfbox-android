@@ -35,7 +35,7 @@ public final class PDRadioButton extends PDButton
      * A Ff flag.
      */
     private static final int FLAG_NO_TOGGLE_TO_OFF = 1 << 14;
-
+    
     /**
      * @see PDField#PDField(PDAcroForm)
      *
@@ -46,10 +46,10 @@ public final class PDRadioButton extends PDButton
         super(acroForm);
         setRadioButton(true);
     }
-
+    
     /**
      * Constructor.
-     *
+     * 
      * @param acroForm The form that this field is part of.
      * @param field the PDF object to represent as a field.
      * @param parent the parent node of the node
@@ -60,7 +60,7 @@ public final class PDRadioButton extends PDButton
     }
 
     /**
-     * From the PDF Spec <br/>
+     * From the PDF Spec <br>
      * If set, a group of radio buttons within a radio button field that use the same value for the on state will turn
      * on and off in unison; that is if one is checked, they are all checked. If clear, the buttons are mutually
      * exclusive (the same behavior as HTML radio buttons).
@@ -85,14 +85,14 @@ public final class PDRadioButton extends PDButton
      * This will get the selected export values.
      * <p>
      * A RadioButton might have an export value to allow field values
-     * which can not be encoded as PDFDocEncoding or for the same export value
-     * being assigned to multiple RadioButtons in a group.<br/>
+     * which can not be encoded as PDFDocEncoding or for the same export value 
+     * being assigned to multiple RadioButtons in a group.<br>
      * To define an export value the RadioButton must define options {@link #setExportValues(List)}
      * which correspond to the individual items within the RadioButton.</p>
      * <p>
      * The method will either return the corresponding values from the options entry or in case there
      * is no such entry the fields value</p>
-     *
+     * 
      * @return the export value of the field.
      * @throws IOException in case the fields value can not be retrieved
      */

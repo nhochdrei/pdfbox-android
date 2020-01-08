@@ -16,11 +16,11 @@
  */
 package com.tom_roush.pdfbox.pdmodel.font.encoding;
 
-import java.util.Map;
-
-import com.tom_roush.fontbox.afm.CharMetric;
-import com.tom_roush.fontbox.afm.FontMetrics;
+import org.apache.fontbox.afm.CharMetric;
+import org.apache.fontbox.afm.FontMetrics;
 import com.tom_roush.pdfbox.cos.COSBase;
+
+import java.util.Map;
 
 /**
  * An encoding for a Type 1 font.
@@ -32,7 +32,7 @@ public class Type1Encoding extends Encoding
      *
      * @param encoding FontBox encoding
      */
-    public static Type1Encoding fromFontBox(com.tom_roush.fontbox.encoding.Encoding encoding)
+    public static Type1Encoding fromFontBox(org.apache.fontbox.encoding.Encoding encoding)
     {
         // todo: could optimise this by looking for specific subclasses
         Map<Integer,String> codeToName = encoding.getCodeToNameMap();

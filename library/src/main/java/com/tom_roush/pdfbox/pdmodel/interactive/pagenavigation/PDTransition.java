@@ -26,7 +26,7 @@ import com.tom_roush.pdfbox.pdmodel.common.PDDictionaryWrapper;
 
 /**
  * Represents a page transition as defined in paragraph 12.4.4.1 of PDF 32000-1:2008
- *
+ * 
  * @author Andrea Vacondio
  *
  */
@@ -43,8 +43,8 @@ public final class PDTransition extends PDDictionaryWrapper
 
     /**
      * creates a new transition with the given style.
-     *
-     * @param style
+     * 
+     * @param style the style to be used.
      */
     public PDTransition(PDTransitionStyle style)
     {
@@ -55,8 +55,8 @@ public final class PDTransition extends PDDictionaryWrapper
 
     /**
      * creates a new transition for an existing dictionary
-     *
-     * @param dictionary
+     * 
+     * @param dictionary the dictionary to be used.
      */
     public PDTransition(COSDictionary dictionary)
     {
@@ -85,6 +85,9 @@ public final class PDTransition extends PDDictionaryWrapper
     /**
      * Sets the dimension in which the specified transition effect shall occur. Only for {@link PDTransitionStyle#Split}
      * and {@link PDTransitionStyle#Blinds}.
+     * 
+     * @param dimension the dimension.
+     * 
      */
     public void setDimension(PDTransitionDimension dimension)
     {
@@ -104,6 +107,8 @@ public final class PDTransition extends PDDictionaryWrapper
     /**
      * Sets the direction of motion for the specified transition effect. Only for {@link PDTransitionStyle#Split},
      * {@link PDTransitionStyle#Blinds} and {@link PDTransitionStyle#Fly}.
+     * 
+     * @param motion the motion for the specified effect.
      */
     public void setMotion(PDTransitionMotion motion)
     {
@@ -114,6 +119,8 @@ public final class PDTransition extends PDDictionaryWrapper
      * @return the direction in which the specified transition effect shall moves. It can be either a {@link COSInteger}
      * or {@link COSName#NONE}. Default to {@link COSInteger#ZERO}
      * @see PDTransitionDirection
+     * 
+     * @return the direction.
      */
     public COSBase getDirection()
     {
@@ -129,6 +136,8 @@ public final class PDTransition extends PDDictionaryWrapper
      * Sets the direction in which the specified transition effect shall moves. Only for {@link PDTransitionStyle#Wipe},
      * {@link PDTransitionStyle#Glitter}, {@link PDTransitionStyle#Fly}, {@link PDTransitionStyle#Cover},
      * {@link PDTransitionStyle#Uncover} and {@link PDTransitionStyle#Push}.
+     * 
+     * @param direction the direction in which the specified transition effect shall move.
      */
     public void setDirection(PDTransitionDirection direction)
     {

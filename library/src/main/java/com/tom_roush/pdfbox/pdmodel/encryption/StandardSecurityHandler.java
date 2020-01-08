@@ -16,8 +16,6 @@
  */
 package com.tom_roush.pdfbox.pdmodel.encryption;
 
-import android.util.Log;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -28,10 +26,12 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
-
+ 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSName;
@@ -48,6 +48,11 @@ import com.tom_roush.pdfbox.util.Charsets;
  */
 public final class StandardSecurityHandler extends SecurityHandler
 {
+    /**
+     * Log instance.
+     */
+    private static final Log LOG = LogFactory.getLog(StandardSecurityHandler.class);
+
     /** Type of security handler. */
     public static final String FILTER = "Standard";
 
@@ -56,18 +61,19 @@ public final class StandardSecurityHandler extends SecurityHandler
 
     /** Standard padding for encryption. */
     private static final byte[] ENCRYPT_PADDING =
-        {
-            (byte)0x28, (byte)0xBF, (byte)0x4E, (byte)0x5E, (byte)0x4E,
-            (byte)0x75, (byte)0x8A, (byte)0x41, (byte)0x64, (byte)0x00,
-            (byte)0x4E, (byte)0x56, (byte)0xFF, (byte)0xFA, (byte)0x01,
-            (byte)0x08, (byte)0x2E, (byte)0x2E, (byte)0x00, (byte)0xB6,
-            (byte)0xD0, (byte)0x68, (byte)0x3E, (byte)0x80, (byte)0x2F,
-            (byte)0x0C, (byte)0xA9, (byte)0xFE, (byte)0x64, (byte)0x53,
-            (byte)0x69, (byte)0x7A
-        };
+    {
+        (byte)0x28, (byte)0xBF, (byte)0x4E, (byte)0x5E, (byte)0x4E,
+        (byte)0x75, (byte)0x8A, (byte)0x41, (byte)0x64, (byte)0x00,
+        (byte)0x4E, (byte)0x56, (byte)0xFF, (byte)0xFA, (byte)0x01,
+        (byte)0x08, (byte)0x2E, (byte)0x2E, (byte)0x00, (byte)0xB6,
+        (byte)0xD0, (byte)0x68, (byte)0x3E, (byte)0x80, (byte)0x2F,
+        (byte)0x0C, (byte)0xA9, (byte)0xFE, (byte)0x64, (byte)0x53,
+        (byte)0x69, (byte)0x7A
+    };
 
     // hashes used for Algorithm 2.B, depending on remainder from E modulo 3
     private static final String[] HASHES_2B = new String[] {"SHA-256", "SHA-384", "SHA-512"};
+
     private static final int DEFAULT_VERSION = 1;
 
     private StandardProtectionPolicy policy;
@@ -92,7 +98,7 @@ public final class StandardSecurityHandler extends SecurityHandler
 
     /**
      * Computes the version number of the StandardSecurityHandler
-     * regarding the encryption key length.
+     * based on the encryption key length.
      * See PDF Spec 1.6 p 93 and PDF 1.7 AEL3
      *
      * @return The computed version number.
@@ -103,8 +109,11 @@ public final class StandardSecurityHandler extends SecurityHandler
         {
             return DEFAULT_VERSION;
         }
-        //TODO return 4 if keyLength is 128 to enable AES128 functionality
-        else if(keyLength == 256)
+        else if (keyLength == 128 && policy.isPreferAES())
+        {
+            return 4;
+        }
+        else if (keyLength == 256)
         {
             return 5;
         }
@@ -116,7 +125,7 @@ public final class StandardSecurityHandler extends SecurityHandler
      * Computes the revision version of the StandardSecurityHandler to
      * use regarding the version number and the permissions bits set.
      * See PDF Spec 1.6 p98
-     *
+     * 
      * @param version The version number.
      *
      * @return The computed revision number.
@@ -130,7 +139,7 @@ public final class StandardSecurityHandler extends SecurityHandler
         if (version == 5)
         {
             // note about revision 5: "Shall not be used. This value was used by a deprecated Adobe extension."
-            return 6;
+            return 6;    
         }
         if (version == 4)
         {
@@ -152,16 +161,23 @@ public final class StandardSecurityHandler extends SecurityHandler
      * @param documentIDArray  document id
      * @param decryptionMaterial Information used to decrypt the document.
      *
+     * @throws InvalidPasswordException If the password is incorrect.
      * @throws IOException If there is an error accessing data.
      */
     @Override
     public void prepareForDecryption(PDEncryption encryption, COSArray documentIDArray,
-        DecryptionMaterial decryptionMaterial)
-        throws IOException
+                                     DecryptionMaterial decryptionMaterial)
+                                     throws IOException
     {
         if(!(decryptionMaterial instanceof StandardDecryptionMaterial))
         {
             throw new IOException("Decryption material is not compatible with the document");
+        }
+        
+        // This is only used with security version 4 and 5.
+        if (encryption.getVersion() >= 4) {
+	        setStreamFilterName(encryption.getStreamFilterName());
+	        setStringFilterName(encryption.getStreamFilterName());
         }
         setDecryptMetadata(encryption.isEncryptMetaData());
         StandardDecryptionMaterial material = (StandardDecryptionMaterial)decryptionMaterial;
@@ -180,7 +196,7 @@ public final class StandardSecurityHandler extends SecurityHandler
 
         // we need to know whether the meta data was encrypted for password calculation
         boolean encryptMetadata = encryption.isEncryptMetaData();
-
+        
         byte[] userKey = encryption.getUserKey();
         byte[] ownerKey = encryption.getOwnerKey();
         byte[] ue = null, oe = null;
@@ -193,15 +209,20 @@ public final class StandardSecurityHandler extends SecurityHandler
             oe = encryption.getOwnerEncryptionKey();
         }
 
+        if (dicRevision == 6)
+        {
+            password = SaslPrep.saslPrepQuery(password); // PDFBOX-4155
+        }
+
         AccessPermission currentAccessPermission;
 
         if( isOwnerPassword(password.getBytes(passwordCharset), userKey, ownerKey,
-            dicPermissions, documentIDBytes, dicRevision,
-            dicLength, encryptMetadata) )
+                                 dicPermissions, documentIDBytes, dicRevision,
+                                 dicLength, encryptMetadata) )
         {
             currentAccessPermission = AccessPermission.getOwnerAccessPermission();
             setCurrentAccessPermission(currentAccessPermission);
-
+            
             byte[] computedPassword;
             if (dicRevision == 6 || dicRevision == 5)
             {
@@ -210,9 +231,9 @@ public final class StandardSecurityHandler extends SecurityHandler
             else
             {
                 computedPassword = getUserPassword(password.getBytes(passwordCharset),
-                    ownerKey, dicRevision, dicLength );
+                        ownerKey, dicRevision, dicLength );
             }
-
+            
             encryptionKey =
                 computeEncryptedKey(
                     computedPassword,
@@ -224,12 +245,13 @@ public final class StandardSecurityHandler extends SecurityHandler
                     encryptMetadata, true );
         }
         else if( isUserPassword(password.getBytes(passwordCharset), userKey, ownerKey,
-            dicPermissions, documentIDBytes, dicRevision,
-            dicLength, encryptMetadata) )
+                           dicPermissions, documentIDBytes, dicRevision,
+                           dicLength, encryptMetadata) )
         {
             currentAccessPermission = new AccessPermission(dicPermissions);
+            currentAccessPermission.setReadOnly();
             setCurrentAccessPermission(currentAccessPermission);
-
+            
             encryptionKey =
                 computeEncryptedKey(
                     password.getBytes(passwordCharset),
@@ -252,7 +274,7 @@ public final class StandardSecurityHandler extends SecurityHandler
 
         if (encryption.getVersion() == 4 || encryption.getVersion() == 5)
         {
-            // detect whether AES encryption is used. This assumes that the encryption algo is
+            // detect whether AES encryption is used. This assumes that the encryption algo is 
             // stored in the PDCryptFilterDictionary
             // However, crypt filters are used only when V is 4 or 5.
             PDCryptFilterDictionary stdCryptFilterDictionary = encryption.getStdCryptFilterDictionary();
@@ -260,8 +282,8 @@ public final class StandardSecurityHandler extends SecurityHandler
             if (stdCryptFilterDictionary != null)
             {
                 COSName cryptFilterMethod = stdCryptFilterDictionary.getCryptFilterMethod();
-                setAES(COSName.AESV2.equals(cryptFilterMethod) ||
-                    COSName.AESV3.equals(cryptFilterMethod));
+                setAES(COSName.AESV2.equals(cryptFilterMethod) || 
+                       COSName.AESV3.equals(cryptFilterMethod));
             }
         }
     }
@@ -283,39 +305,38 @@ public final class StandardSecurityHandler extends SecurityHandler
         return documentIDBytes;
     }
 
-    // Algorithm 13: validate permissions ("Perms" field). Relaxed to accomodate buggy encoders
+    // Algorithm 13: validate permissions ("Perms" field). Relaxed to accommodate buggy encoders
     // https://www.adobe.com/content/dam/Adobe/en/devnet/acrobat/pdfs/adobe_supplement_iso32000.pdf
     private void validatePerms(PDEncryption encryption, int dicPermissions, boolean encryptMetadata) throws IOException
     {
         try
         {
-            // "Decrypt the 16-byte Perms string using AES-256 in ECB mode with an
+            // "Decrypt the 16-byte Perms string using AES-256 in ECB mode with an 
             // initialization vector of zero and the file encryption key as the key."
             Cipher cipher = Cipher.getInstance("AES/ECB/NoPadding");
             cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(encryptionKey, "AES"));
             byte[] perms = cipher.doFinal(encryption.getPerms());
-
+            
             // "Verify that bytes 9-11 of the result are the characters ‘a’, ‘d’, ‘b’."
             if (perms[9] != 'a' || perms[10] != 'd' || perms[11] != 'b')
             {
-                Log.w("PdfBox-Android", "Verification of permissions failed (constant)");
+                LOG.warn("Verification of permissions failed (constant)");
             }
-
-            // "Bytes 0-3 of the decrypted Perms entry, treated as a little-endian integer,
+            
+            // "Bytes 0-3 of the decrypted Perms entry, treated as a little-endian integer, 
             // are the user permissions. They should match the value in the P key."
             int permsP = perms[0] & 0xFF | (perms[1] & 0xFF) << 8 | (perms[2] & 0xFF) << 16 |
-                (perms[3] & 0xFF) << 24;
-
+                    (perms[3] & 0xFF) << 24;
+            
             if (permsP != dicPermissions)
             {
-                Log.w("PdfBox-Android",
-                    "Verification of permissions failed (" + String.format("%08X", permsP) +
-                        " != " + String.format("%08X", dicPermissions) + ")");
+                LOG.warn("Verification of permissions failed (" + String.format("%08X",permsP) +
+                        " != " + String.format("%08X",dicPermissions) + ")");
             }
-
+            
             if (encryptMetadata && perms[8] != 'T' || !encryptMetadata && perms[8] != 'F')
             {
-                Log.w("PdfBox-Android", "Verification of permissions failed (EncryptMetadata)");
+                LOG.warn("Verification of permissions failed (EncryptMetadata)");
             }
         }
         catch (GeneralSecurityException e)
@@ -324,11 +345,11 @@ public final class StandardSecurityHandler extends SecurityHandler
             throw new IOException(e);
         }
     }
-
+    
     /**
      * Prepare document for encryption.
      *
-     * @param document The documeent to encrypt.
+     * @param document The document to encrypt.
      *
      * @throws IOException If there is an error accessing data.
      */
@@ -377,21 +398,24 @@ public final class StandardSecurityHandler extends SecurityHandler
 
         if (revision == 6)
         {
+            // PDFBOX-4155
+            ownerPassword = SaslPrep.saslPrepStored(ownerPassword);
+            userPassword = SaslPrep.saslPrepStored(userPassword);
             prepareEncryptionDictRev6(ownerPassword, userPassword, encryptionDictionary, permissionInt);
         }
         else
         {
             prepareEncryptionDictRev2345(ownerPassword, userPassword, encryptionDictionary, permissionInt,
-                document, revision, length);
+                    document, revision, length);
         }
 
         document.setEncryptionDictionary( encryptionDictionary );
-        document.getDocument().setEncryptionDictionary(encryptionDictionary.getCOSDictionary());
+        document.getDocument().setEncryptionDictionary(encryptionDictionary.getCOSObject());
     }
 
     private void prepareEncryptionDictRev6(String ownerPassword, String userPassword,
-        PDEncryption encryptionDictionary, int permissionInt)
-        throws IOException
+            PDEncryption encryptionDictionary, int permissionInt)
+            throws IOException
     {
         try
         {
@@ -409,14 +433,14 @@ public final class StandardSecurityHandler extends SecurityHandler
             rnd.nextBytes(userValidationSalt);
             rnd.nextBytes(userKeySalt);
             byte[] hashU = computeHash2B(concat(userPasswordBytes, userValidationSalt),
-                userPasswordBytes, null);
+                    userPasswordBytes, null);
             byte[] u = concat(hashU, userValidationSalt, userKeySalt);
 
             // Algorithm 8b: Compute UE
             byte[] hashUE = computeHash2B(concat(userPasswordBytes, userKeySalt),
-                userPasswordBytes, null);
+                    userPasswordBytes, null);
             cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(hashUE, "AES"),
-                new IvParameterSpec(new byte[16]));
+                    new IvParameterSpec(new byte[16]));
             byte[] ue = cipher.doFinal(encryptionKey);
 
             // Algorithm 9a: Compute O
@@ -426,14 +450,14 @@ public final class StandardSecurityHandler extends SecurityHandler
             rnd.nextBytes(ownerValidationSalt);
             rnd.nextBytes(ownerKeySalt);
             byte[] hashO = computeHash2B(concat(ownerPasswordBytes, ownerValidationSalt, u),
-                ownerPasswordBytes, u);
+                    ownerPasswordBytes, u);
             byte[] o = concat(hashO, ownerValidationSalt, ownerKeySalt);
 
             // Algorithm 9b: Compute OE
             byte[] hashOE = computeHash2B(concat(ownerPasswordBytes, ownerKeySalt, u),
-                ownerPasswordBytes, u);
+                    ownerPasswordBytes, u);
             cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(hashOE, "AES"),
-                new IvParameterSpec(new byte[16]));
+                    new IvParameterSpec(new byte[16]));
             byte[] oe = cipher.doFinal(encryptionKey);
 
             // Set keys and other required constants in encryption dictionary
@@ -454,7 +478,7 @@ public final class StandardSecurityHandler extends SecurityHandler
             perms[5] = (byte) 0xFF;
             perms[6] = (byte) 0xFF;
             perms[7] = (byte) 0xFF;
-            perms[8] = 'T'; // we always encrypt Metadata
+            perms[8] = 'T';    // we always encrypt Metadata
             perms[9] = 'a';
             perms[10] = 'd';
             perms[11] = 'b';
@@ -464,7 +488,7 @@ public final class StandardSecurityHandler extends SecurityHandler
             }
 
             cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(encryptionKey, "AES"),
-                new IvParameterSpec(new byte[16]));
+                    new IvParameterSpec(new byte[16]));
 
             byte[] permsEnc = cipher.doFinal(perms);
 
@@ -478,12 +502,13 @@ public final class StandardSecurityHandler extends SecurityHandler
     }
 
     private void prepareEncryptionDictRev2345(String ownerPassword, String userPassword,
-        PDEncryption encryptionDictionary, int permissionInt, PDDocument document,
-        int revision, int length) throws IOException
+            PDEncryption encryptionDictionary, int permissionInt, PDDocument document, 
+            int revision, int length)
+            throws IOException
     {
         COSArray idArray = document.getDocument().getDocumentID();
 
-        //check if the document has an id yet. If it does not then generate one
+        //check if the document has an id yet.  If it does not then generate one
         if (idArray == null || idArray.size() < 2)
         {
             MessageDigest md = MessageDigests.getMD5();
@@ -504,18 +529,20 @@ public final class StandardSecurityHandler extends SecurityHandler
 
         COSString id = (COSString) idArray.getObject(0);
 
-        byte[] ownerBytes = computeOwnerPassword(ownerPassword.getBytes(Charsets.ISO_8859_1),
-            userPassword.getBytes(Charsets.ISO_8859_1), revision, length);
+        byte[] ownerBytes = computeOwnerPassword(
+                ownerPassword.getBytes(Charsets.ISO_8859_1),
+                userPassword.getBytes(Charsets.ISO_8859_1), revision, length);
 
-        byte[] userBytes = computeUserPassword(userPassword.getBytes(Charsets.ISO_8859_1),
-            ownerBytes, permissionInt, id.getBytes(), revision, length, true);
+        byte[] userBytes = computeUserPassword(
+                userPassword.getBytes(Charsets.ISO_8859_1),
+                ownerBytes, permissionInt, id.getBytes(), revision, length, true);
 
         encryptionKey = computeEncryptedKey(userPassword.getBytes(Charsets.ISO_8859_1), ownerBytes,
-            null, null, null, permissionInt, id.getBytes(), revision, length, true, false);
+                null, null, null, permissionInt, id.getBytes(), revision, length, true, false);
 
         encryptionDictionary.setOwnerKey(ownerBytes);
         encryptionDictionary.setUserKey(userBytes);
-
+        
         if (revision == 4)
         {
             prepareEncryptionDictAES(encryptionDictionary, COSName.AESV2);
@@ -542,7 +569,7 @@ public final class StandardSecurityHandler extends SecurityHandler
      * @param permissions The set of permissions on the document.
      * @param id The document id.
      * @param encRevision The encryption algorithm revision.
-     * @param length The encryption key length.
+     * @param keyLengthInBytes The encryption key length in bytes.
      * @param encryptMetadata The encryption metadata
      *
      * @return True If the ownerPassword param is the owner password.
@@ -550,18 +577,18 @@ public final class StandardSecurityHandler extends SecurityHandler
      * @throws IOException If there is an error accessing data.
      */
     public boolean isOwnerPassword(byte[] ownerPassword, byte[] user, byte[] owner,
-        int permissions, byte[] id, int encRevision, int length,
-        boolean encryptMetadata) throws IOException
+                                   int permissions, byte[] id, int encRevision, int keyLengthInBytes,
+                                   boolean encryptMetadata) throws IOException
     {
         if (encRevision == 6 || encRevision == 5)
-        {
+        {            
             byte[] truncatedOwnerPassword = truncate127(ownerPassword);
-
+            
             byte[] oHash = new byte[32];
             byte[] oValidationSalt = new byte[8];
             System.arraycopy(owner, 0, oHash, 0, 32);
             System.arraycopy(owner, 32, oValidationSalt, 0, 8);
-
+            
             byte[] hash;
             if (encRevision == 5)
             {
@@ -576,9 +603,9 @@ public final class StandardSecurityHandler extends SecurityHandler
         }
         else
         {
-            byte[] userPassword = getUserPassword( ownerPassword, owner, encRevision, length );
-            return isUserPassword( userPassword, user, owner, permissions, id, encRevision, length,
-                encryptMetadata );
+            byte[] userPassword = getUserPassword( ownerPassword, owner, encRevision, keyLengthInBytes );
+            return isUserPassword( userPassword, user, owner, permissions, id, encRevision, keyLengthInBytes,
+                                   encryptMetadata );
         }
     }
 
@@ -595,7 +622,7 @@ public final class StandardSecurityHandler extends SecurityHandler
      * @throws IOException If there is an error accessing data while generating the user password.
      */
     public byte[] getUserPassword( byte[] ownerPassword,  byte[] owner, int encRevision,
-        int length ) throws IOException
+                                   int length ) throws IOException
     {
         ByteArrayOutputStream result = new ByteArrayOutputStream();
         byte[] rc4Key = computeRC4key(ownerPassword, encRevision, length);
@@ -609,7 +636,7 @@ public final class StandardSecurityHandler extends SecurityHandler
             byte[] iterationKey = new byte[ rc4Key.length ];
             byte[] otemp = new byte[ owner.length ];
             System.arraycopy( owner, 0, otemp, 0, owner.length );
-
+            
             for( int i=19; i>=0; i-- )
             {
                 System.arraycopy( rc4Key, 0, iterationKey, 0, rc4Key.length );
@@ -636,7 +663,7 @@ public final class StandardSecurityHandler extends SecurityHandler
      * @param permissions The permissions for the document.
      * @param id The document id.
      * @param encRevision The revision of the encryption algorithm.
-     * @param length The length of the encryption key.
+     * @param keyLengthInBytes The length of the encryption key in bytes.
      * @param encryptMetadata The encryption metadata
      * @param isOwnerPassword whether the password given is the owner password (for revision 6)
      *
@@ -645,9 +672,9 @@ public final class StandardSecurityHandler extends SecurityHandler
      * @throws IOException If there is an error with encryption.
      */
     public byte[] computeEncryptedKey(byte[] password, byte[] o, byte[] u, byte[] oe, byte[] ue,
-        int permissions, byte[] id, int encRevision, int length,
-        boolean encryptMetadata, boolean isOwnerPassword)
-        throws IOException
+                                      int permissions, byte[] id, int encRevision, int keyLengthInBytes,
+                                      boolean encryptMetadata, boolean isOwnerPassword)
+                                      throws IOException
     {
         if (encRevision == 6 || encRevision == 5)
         {
@@ -655,12 +682,12 @@ public final class StandardSecurityHandler extends SecurityHandler
         }
         else
         {
-            return computeEncryptedKeyRev234(password, o, permissions, id, encryptMetadata, length, encRevision);
+            return computeEncryptedKeyRev234(password, o, permissions, id, encryptMetadata, keyLengthInBytes, encRevision);
         }
     }
 
-    private byte[] computeEncryptedKeyRev234(byte[] password, byte[] o, int permissions,
-        byte[] id, boolean encryptMetadata, int length, int encRevision)
+    private byte[] computeEncryptedKeyRev234(byte[] password, byte[] o, int permissions, 
+            byte[] id, boolean encryptMetadata, int length, int encRevision)
     {
         //Algorithm 2, based on MD5
 
@@ -702,9 +729,9 @@ public final class StandardSecurityHandler extends SecurityHandler
         return result;
     }
 
-    private byte[] computeEncryptedKeyRev56(byte[] password, boolean isOwnerPassword,
-        byte[] o, byte[] u, byte[] oe, byte[] ue, int encRevision)
-        throws IOException
+    private byte[] computeEncryptedKeyRev56(byte[] password, boolean isOwnerPassword, 
+            byte[] o, byte[] u, byte[] oe, byte[] ue, int encRevision) 
+            throws IOException
     {
         byte[] hash, fileKeyEnc;
 
@@ -761,7 +788,7 @@ public final class StandardSecurityHandler extends SecurityHandler
      * @param permissions The document permissions.
      * @param id The document id.
      * @param encRevision The revision of the encryption.
-     * @param length The length of the encryption key.
+     * @param keyLengthInBytes The length of the encryption key in bytes.
      * @param encryptMetadata The encryption metadata
      *
      * @return The user password.
@@ -769,13 +796,13 @@ public final class StandardSecurityHandler extends SecurityHandler
      * @throws IOException if the password could not be computed
      */
     public byte[] computeUserPassword(byte[] password, byte[] owner, int permissions,
-        byte[] id, int encRevision, int length,
-        boolean encryptMetadata) throws IOException
+                                      byte[] id, int encRevision, int keyLengthInBytes,
+                                      boolean encryptMetadata) throws IOException
     {
         ByteArrayOutputStream result = new ByteArrayOutputStream();
         byte[] encKey = computeEncryptedKey( password, owner, null, null, null, permissions,
-            id, encRevision, length, encryptMetadata, true );
-
+                id, encRevision, keyLengthInBytes, encryptMetadata, true );
+        
         if( encRevision == 2 )
         {
             encryptDataRC4(encKey, ENCRYPT_PADDING, result );
@@ -823,13 +850,13 @@ public final class StandardSecurityHandler extends SecurityHandler
      * @throws IOException if the owner password could not be computed
      */
     public byte[] computeOwnerPassword(byte[] ownerPassword, byte[] userPassword,
-        int encRevision,  int length ) throws IOException
+                                       int encRevision,  int length ) throws IOException
     {
         if( encRevision == 2 && length != 5 )
         {
             throw new IOException("Expected length=5 actual=" + length );
         }
-
+        
         byte[] rc4Key = computeRC4key(ownerPassword, encRevision, length);
         byte[] paddedUser = truncateOrPad( userPassword );
 
@@ -848,14 +875,14 @@ public final class StandardSecurityHandler extends SecurityHandler
                 }
                 ByteArrayInputStream input = new ByteArrayInputStream( encrypted.toByteArray() );
                 encrypted.reset();
-                encryptDataRC4(iterationKey, input, encrypted);
+                encryptDataRC4(iterationKey, input, encrypted );
             }
         }
 
         return encrypted.toByteArray();
     }
 
-    // steps (a) to (d) of "Algorithm 3: Computing the encryption dictionary?s O (owner password) value".
+    // steps (a) to (d) of "Algorithm 3: Computing the encryption dictionary’s O (owner password) value".
     private byte[] computeRC4key(byte[] ownerPassword, int encRevision, int length)
     {
         MessageDigest md = MessageDigests.getMD5();
@@ -876,6 +903,7 @@ public final class StandardSecurityHandler extends SecurityHandler
         return rc4Key;
     }
 
+
     /**
      * This will take the password and truncate or pad it as necessary.
      *
@@ -889,7 +917,7 @@ public final class StandardSecurityHandler extends SecurityHandler
         int bytesBeforePad = Math.min( password.length, padded.length );
         System.arraycopy( password, 0, padded, 0, bytesBeforePad );
         System.arraycopy( ENCRYPT_PADDING, 0, padded, bytesBeforePad,
-            ENCRYPT_PADDING.length-bytesBeforePad );
+                          ENCRYPT_PADDING.length-bytesBeforePad );
         return padded;
     }
 
@@ -902,55 +930,68 @@ public final class StandardSecurityHandler extends SecurityHandler
      * @param permissions The permissions set in the PDF.
      * @param id The document id used for encryption.
      * @param encRevision The revision of the encryption algorithm.
-     * @param length The length of the encryption key.
-     * @param encryptMetadata The encryption metadata
+     * @param keyLengthInBytes The length of the encryption key in bytes.
+     * @param encryptMetadata The encryption metadata.
      *
      * @return true If the plaintext password is the user password.
      *
      * @throws IOException If there is an error accessing data.
      */
     public boolean isUserPassword(byte[] password, byte[] user, byte[] owner, int permissions,
-        byte[] id, int encRevision, int length, boolean encryptMetadata)
-        throws IOException
+                                  byte[] id, int encRevision, int keyLengthInBytes, boolean encryptMetadata)
+                                  throws IOException
     {
-        if( encRevision == 2 )
+        switch (encRevision)
         {
-            byte[] passwordBytes = computeUserPassword( password, owner, permissions, id, encRevision,
-                length, encryptMetadata );
+            case 2:
+            case 3:
+            case 4:
+                return isUserPassword234(password, user, owner, permissions, id, encRevision,
+                                         keyLengthInBytes, encryptMetadata);
+            case 5:
+            case 6:
+                return isUserPassword56(password, user, encRevision);
+            default:
+                throw new IOException("Unknown Encryption Revision " + encRevision);
+        }
+    }
+
+    private boolean isUserPassword234(byte[] password, byte[] user, byte[] owner, int permissions,
+            byte[] id, int encRevision, int length, boolean encryptMetadata)
+            throws IOException
+    {
+        byte[] passwordBytes = computeUserPassword(password, owner, permissions, id, encRevision,
+                                                   length, encryptMetadata);
+        if (encRevision == 2)
+        {
             return Arrays.equals(user, passwordBytes);
-        }
-        else if( encRevision == 3 || encRevision == 4 )
-        {
-            byte[] passwordBytes = computeUserPassword( password, owner, permissions, id, encRevision,
-                length, encryptMetadata );
-            // compare first 16 bytes only
-            return Arrays.equals(Arrays.copyOf(user, 16), Arrays.copyOf(passwordBytes, 16));
-        }
-        else if (encRevision == 6 || encRevision == 5)
-        {
-            byte[] truncatedPassword = truncate127(password);
-
-            byte[] uHash = new byte[32];
-            byte[] uValidationSalt = new byte[8];
-            System.arraycopy(user, 0, uHash, 0, 32);
-            System.arraycopy(user, 32, uValidationSalt, 0, 8);
-
-            byte[] hash;
-            if (encRevision == 5)
-            {
-                hash = computeSHA256(truncatedPassword, uValidationSalt, null);
-            }
-            else
-            {
-                hash = computeHash2A(truncatedPassword, uValidationSalt, null);
-            }
-
-            return Arrays.equals(hash, uHash);
         }
         else
         {
-            throw new IOException( "Unknown Encryption Revision " + encRevision );
+            // compare first 16 bytes only
+            return Arrays.equals(Arrays.copyOf(user, 16), Arrays.copyOf(passwordBytes, 16));
         }
+    }
+
+    private boolean isUserPassword56(byte[] password, byte[] user, int encRevision) throws IOException
+    {
+        byte[] truncatedPassword = truncate127(password);
+        byte[] uHash = new byte[32];
+        byte[] uValidationSalt = new byte[8];
+        System.arraycopy(user, 0, uHash, 0, 32);
+        System.arraycopy(user, 32, uValidationSalt, 0, 8);
+
+        byte[] hash;
+        if (encRevision == 5)
+        {
+            hash = computeSHA256(truncatedPassword, uValidationSalt, null);
+        }
+        else
+        {
+            hash = computeHash2A(truncatedPassword, uValidationSalt, null);
+        }
+
+        return Arrays.equals(hash, uHash);
     }
 
     /**
@@ -962,7 +1003,7 @@ public final class StandardSecurityHandler extends SecurityHandler
      * @param permissions The permissions set in the PDF.
      * @param id The document id used for encryption.
      * @param encRevision The revision of the encryption algorithm.
-     * @param length The length of the encryption key.
+     * @param keyLengthInBytes The length of the encryption key in bytes.
      * @param encryptMetadata The encryption metadata
      *
      * @return true If the plaintext password is the user password.
@@ -970,18 +1011,18 @@ public final class StandardSecurityHandler extends SecurityHandler
      * @throws IOException If there is an error accessing data.
      */
     public boolean isUserPassword(String password, byte[] user, byte[] owner, int permissions,
-        byte[] id, int encRevision,  int length, boolean encryptMetadata)
-        throws IOException
+                                  byte[] id, int encRevision, int keyLengthInBytes, boolean encryptMetadata)
+                                  throws IOException
     {
         if (encRevision == 6 || encRevision == 5)
         {
             return isUserPassword(password.getBytes(Charsets.UTF_8), user, owner, permissions, id,
-                encRevision, length, encryptMetadata);
+                    encRevision, keyLengthInBytes, encryptMetadata);
         }
         else
         {
             return isUserPassword(password.getBytes(Charsets.ISO_8859_1), user, owner, permissions, id,
-                encRevision, length, encryptMetadata);
+                    encRevision, keyLengthInBytes, encryptMetadata);
         }
     }
 
@@ -994,7 +1035,7 @@ public final class StandardSecurityHandler extends SecurityHandler
      * @param permissions The set of permissions on the document.
      * @param id The document id.
      * @param encRevision The encryption algorithm revision.
-     * @param length The encryption key length.
+     * @param keyLengthInBytes The encryption key length in bytes.
      * @param encryptMetadata The encryption metadata
      *
      * @return True If the ownerPassword param is the owner password.
@@ -1002,11 +1043,11 @@ public final class StandardSecurityHandler extends SecurityHandler
      * @throws IOException If there is an error accessing data.
      */
     public boolean isOwnerPassword(String password, byte[] user, byte[] owner, int permissions,
-        byte[] id, int encRevision, int length, boolean encryptMetadata)
-        throws IOException
+                                   byte[] id, int encRevision, int keyLengthInBytes, boolean encryptMetadata)
+                                   throws IOException
     {
         return isOwnerPassword(password.getBytes(Charsets.ISO_8859_1), user,owner,permissions, id,
-            encRevision, length, encryptMetadata);
+                               encRevision, keyLengthInBytes, encryptMetadata);
     }
 
     // Algorithm 2.A from ISO 32000-1
@@ -1027,7 +1068,6 @@ public final class StandardSecurityHandler extends SecurityHandler
             userKey = new byte[48];
             System.arraycopy(u, 0, userKey, 0, 48);
         }
-
         else
         {
             userKey = u;
@@ -1037,19 +1077,19 @@ public final class StandardSecurityHandler extends SecurityHandler
         byte[] input = concat(truncatedPassword, salt, userKey);
         return computeHash2B(input, truncatedPassword, userKey);
     }
-
+    
     // Algorithm 2.B from ISO 32000-2
     private static byte[] computeHash2B(byte[] input, byte[] password, byte[] userKey)
-        throws IOException
+            throws IOException
     {
         try
         {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             byte[] k = md.digest(input);
-
+            
             byte[] e = null;
             for (int round = 0; round < 64 || ((int)e[e.length-1] & 0xFF) > round - 32; round++)
-            {
+            {                
                 byte[] k1;
                 if (userKey != null && userKey.length >= 48)
                 {
@@ -1059,7 +1099,7 @@ public final class StandardSecurityHandler extends SecurityHandler
                 {
                     k1 = new byte[64*(password.length + k.length)];
                 }
-
+                
                 int pos = 0;
                 for (int i = 0; i < 64; i++)
                 {
@@ -1073,28 +1113,28 @@ public final class StandardSecurityHandler extends SecurityHandler
                         pos += 48;
                     }
                 }
-
+                
                 byte[] kFirst = new byte[16];
                 byte[] kSecond = new byte[16];
                 System.arraycopy(k, 0, kFirst, 0, 16);
                 System.arraycopy(k, 16, kSecond, 0, 16);
-
+                
                 Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
                 SecretKeySpec keySpec = new SecretKeySpec(kFirst, "AES");
                 IvParameterSpec ivSpec = new IvParameterSpec(kSecond);
                 cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec);
                 e = cipher.doFinal(k1);
-
+                
                 byte[] eFirst = new byte[16];
                 System.arraycopy(e, 0, eFirst, 0, 16);
                 BigInteger bi = new BigInteger(1, eFirst);
                 BigInteger remainder = bi.mod(new BigInteger("3"));
                 String nextHash = HASHES_2B[remainder.intValue()];
-
+                
                 md = MessageDigest.getInstance(nextHash);
                 k = md.digest(e);
             }
-
+            
             if (k.length > 32)
             {
                 byte[] kTrunc = new byte[32];
@@ -1104,7 +1144,7 @@ public final class StandardSecurityHandler extends SecurityHandler
             else
             {
                 return k;
-            }
+            }            
         }
         catch (GeneralSecurityException e)
         {
@@ -1113,8 +1153,8 @@ public final class StandardSecurityHandler extends SecurityHandler
         }
     }
 
-    private static byte[] computeSHA256(byte[] input, byte[] password, byte[] userKey)
-        throws IOException
+    private static byte[] computeSHA256(byte[] input, byte[] password, byte[] userKey) 
+            throws IOException
     {
         try
         {
@@ -1128,7 +1168,7 @@ public final class StandardSecurityHandler extends SecurityHandler
             throw new IOException(e);
         }
     }
-
+    
     private static byte[] concat(byte[] a, byte[] b)
     {
         byte[] o = new byte[a.length + b.length];
@@ -1136,7 +1176,7 @@ public final class StandardSecurityHandler extends SecurityHandler
         System.arraycopy(b, 0, o, a.length, b.length);
         return o;
     }
-
+    
     private static byte[] concat(byte[] a, byte[] b, byte[] c)
     {
         byte[] o = new byte[a.length + b.length + c.length];
@@ -1145,7 +1185,7 @@ public final class StandardSecurityHandler extends SecurityHandler
         System.arraycopy(c, 0, o, a.length + b.length, c.length);
         return o;
     }
-
+    
     private static byte[] truncate127(byte[] in)
     {
         if (in.length <= 127)
@@ -1163,7 +1203,7 @@ public final class StandardSecurityHandler extends SecurityHandler
         {
             if (Cipher.getMaxAllowedKeyLength("AES") != Integer.MAX_VALUE)
             {
-                Log.w("PdfBox-Android", "JCE unlimited strength jurisdiction policy files are not installed");
+                LOG.warn("JCE unlimited strength jurisdiction policy files are not installed");
             }
         }
         catch (NoSuchAlgorithmException ex)

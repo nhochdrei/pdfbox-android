@@ -16,26 +16,27 @@
  */
 package com.tom_roush.pdfbox.contentstream;
 
-import android.graphics.Path;
-import android.graphics.PointF;
-import android.graphics.RectF;
-import android.util.Log;
-
+import java.awt.geom.GeneralPath;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import com.tom_roush.pdfbox.contentstream.operator.MissingOperandException;
-import com.tom_roush.pdfbox.contentstream.operator.Operator;
-import com.tom_roush.pdfbox.contentstream.operator.OperatorProcessor;
 import com.tom_roush.pdfbox.contentstream.operator.state.EmptyGraphicsStackException;
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
+import com.tom_roush.pdfbox.cos.COSDictionary;
+import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.cos.COSNumber;
 import com.tom_roush.pdfbox.cos.COSObject;
 import com.tom_roush.pdfbox.cos.COSString;
@@ -46,7 +47,7 @@ import com.tom_roush.pdfbox.pdmodel.PDPage;
 import com.tom_roush.pdfbox.pdmodel.PDResources;
 import com.tom_roush.pdfbox.pdmodel.common.PDRectangle;
 import com.tom_roush.pdfbox.pdmodel.font.PDFont;
-import com.tom_roush.pdfbox.pdmodel.font.PDFontFactory;
+import com.tom_roush.pdfbox.pdmodel.font.PDType1Font;
 import com.tom_roush.pdfbox.pdmodel.font.PDType3CharProc;
 import com.tom_roush.pdfbox.pdmodel.font.PDType3Font;
 import com.tom_roush.pdfbox.pdmodel.graphics.PDLineDashPattern;
@@ -61,27 +62,34 @@ import com.tom_roush.pdfbox.pdmodel.interactive.annotation.PDAnnotation;
 import com.tom_roush.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
 import com.tom_roush.pdfbox.util.Matrix;
 import com.tom_roush.pdfbox.util.Vector;
+import com.tom_roush.pdfbox.contentstream.operator.Operator;
+import com.tom_roush.pdfbox.contentstream.operator.OperatorProcessor;
+import com.tom_roush.pdfbox.pdmodel.graphics.blend.BlendMode;
 
 /**
  * Processes a PDF content stream and executes certain operations.
  * Provides a callback interface for clients that want to do things with the stream.
- *
+ * 
  * @author Ben Litchfield
  */
 public abstract class PDFStreamEngine
 {
-    private final Map<String, OperatorProcessor> operators = new HashMap<String, OperatorProcessor>(
-        80);
+    private static final Log LOG = LogFactory.getLog(PDFStreamEngine.class);
+
+    private final Map<String, OperatorProcessor> operators = new HashMap<String, OperatorProcessor>(80);
 
     private Matrix textMatrix;
     private Matrix textLineMatrix;
 
-    private Stack<PDGraphicsState> graphicsStack = new Stack<PDGraphicsState>();
+    private Deque<PDGraphicsState> graphicsStack = new ArrayDeque<PDGraphicsState>();
 
     private PDResources resources;
     private PDPage currentPage;
     private boolean isProcessingPage;
     private Matrix initialMatrix;
+
+    // used to monitor potentially recursive operations.
+    private int level = 0;
 
     /**
      * Creates a new PDFStreamEngine.
@@ -92,7 +100,7 @@ public abstract class PDFStreamEngine
 
     /**
      * Register a custom operator processor with the engine.
-     *
+     * 
      * @param operator The operator as a string.
      * @param op Processor instance.
      * @deprecated Use {@link #addOperator(OperatorProcessor)} instead
@@ -116,7 +124,7 @@ public abstract class PDFStreamEngine
     }
 
     /**
-     * Initialises the stream engine for the given page.
+     * Initializes the stream engine for the given page.
      */
     private void initPage(PDPage page)
     {
@@ -134,7 +142,7 @@ public abstract class PDFStreamEngine
     }
 
     /**
-     * This will initialise and process the contents of the stream.
+     * This will initialize and process the contents of the stream.
      *
      * @param page the page to process
      * @throws IOException if there is an error accessing the stream
@@ -172,44 +180,70 @@ public abstract class PDFStreamEngine
         if (currentPage == null)
         {
             throw new IllegalStateException("No current page, call " +
-                "#processChildStream(PDContentStream, PDPage) instead");
+                    "#processChildStream(PDContentStream, PDPage) instead");
         }
-        processStream(form);
+        if (form.getCOSObject().getLength() > 0)
+        {
+            processStream(form);
+        }
     }
 
     /**
      * Processes a soft mask transparency group stream.
+     * 
+     * @param group the transparency group.
+     * 
+     * @throws IOException
      */
     protected void processSoftMask(PDTransparencyGroup group) throws IOException
     {
-        // clear the current soft mask (this mask) to avoid recursion
         saveGraphicsState();
-        getGraphicsState().setSoftMask(null);
+        Matrix softMaskCTM = getGraphicsState().getSoftMask().getInitialTransformationMatrix();
+        getGraphicsState().setCurrentTransformationMatrix(softMaskCTM);
         processTransparencyGroup(group);
         restoreGraphicsState();
     }
 
     /**
      * Processes a transparency group stream.
+     * 
+     * @param group the transparency group.
+     * 
+     * @throws IOException
      */
     protected void processTransparencyGroup(PDTransparencyGroup group) throws IOException
     {
         if (currentPage == null)
         {
             throw new IllegalStateException("No current page, call " +
-                "#processChildStream(PDContentStream, PDPage) instead");
+                    "#processChildStream(PDContentStream, PDPage) instead");
         }
 
         PDResources parent = pushResources(group);
-        Stack<PDGraphicsState> savedStack = saveGraphicsStack();
+        Deque<PDGraphicsState> savedStack = saveGraphicsStack();
+        
+        Matrix parentMatrix = initialMatrix;
+
+        // the stream's initial matrix includes the parent CTM, e.g. this allows a scaled form
+        initialMatrix = getGraphicsState().getCurrentTransformationMatrix().clone();
 
         // transform the CTM using the stream's matrix
         getGraphicsState().getCurrentTransformationMatrix().concatenate(group.getMatrix());
+
+        // Before execution of the transparency group XObject’s content stream, 
+        // the current blend mode in the graphics state shall be initialized to Normal, 
+        // the current stroking and nonstroking alpha constants to 1.0, and the current soft mask to None.
+        getGraphicsState().setBlendMode(BlendMode.NORMAL);
+        getGraphicsState().setAlphaConstant(1);
+        getGraphicsState().setNonStrokeAlphaConstant(1);
+        getGraphicsState().setSoftMask(null);
 
         // clip to bounding box
         clipToRect(group.getBBox());
 
         processStreamOperators(group);
+        
+        initialMatrix = parentMatrix;
 
         restoreGraphicsStack(savedStack);
         popResources(parent);
@@ -223,16 +257,16 @@ public abstract class PDFStreamEngine
      * @throws IOException if there is an error reading or parsing the character content stream.
      */
     protected void processType3Stream(PDType3CharProc charProc, Matrix textRenderingMatrix)
-        throws IOException
+            throws IOException
     {
         if (currentPage == null)
         {
             throw new IllegalStateException("No current page, call " +
-                "#processChildStream(PDContentStream, PDPage) instead");
+                    "#processChildStream(PDContentStream, PDPage) instead");
         }
 
         PDResources parent = pushResources(charProc);
-        Stack<PDGraphicsState> savedStack = saveGraphicsStack();
+        Deque<PDGraphicsState> savedStack = saveGraphicsStack();
 
         // replace the CTM with the TRM
         getGraphicsState().setCurrentTransformationMatrix(textRenderingMatrix);
@@ -266,10 +300,10 @@ public abstract class PDFStreamEngine
      * @throws IOException If there is an error reading or parsing the appearance content stream.
      */
     protected void processAnnotation(PDAnnotation annotation, PDAppearanceStream appearance)
-        throws IOException
+            throws IOException
     {
         PDResources parent = pushResources(appearance);
-        Stack<PDGraphicsState> savedStack = saveGraphicsStack();
+        Deque<PDGraphicsState> savedStack = saveGraphicsStack();
 
         PDRectangle bbox = appearance.getBBox();
         PDRectangle rect = annotation.getRectangle();
@@ -278,22 +312,21 @@ public abstract class PDFStreamEngine
         // zero-sized rectangles are not valid
         if (rect != null && rect.getWidth() > 0 && rect.getHeight() > 0 && bbox != null)
         {
-            // transformed appearance box fixme: may be an arbitrary shape
-            RectF transformedBox = new RectF();
-            bbox.transform(matrix).computeBounds(transformedBox, true);
+            // transformed appearance box  fixme: may be an arbitrary shape
+            Rectangle2D transformedBox = bbox.transform(matrix).getBounds2D();
 
             // compute a matrix which scales and translates the transformed appearance box to align
             // with the edges of the annotation's rectangle
             Matrix a = Matrix.getTranslateInstance(rect.getLowerLeftX(), rect.getLowerLeftY());
-            a.concatenate(Matrix.getScaleInstance(rect.getWidth() / transformedBox.width(),
-                rect.getHeight() / transformedBox.height()));
-            a.concatenate(Matrix.getTranslateInstance(-transformedBox.left,
-                -transformedBox.top));
+            a.concatenate(Matrix.getScaleInstance((float)(rect.getWidth() / transformedBox.getWidth()),
+                    (float)(rect.getHeight() / transformedBox.getHeight())));
+            a.concatenate(Matrix.getTranslateInstance((float) -transformedBox.getX(),
+                    (float) -transformedBox.getY()));
 
             // Matrix shall be concatenated with A to form a matrix AA that maps from the appearance's
             // coordinate system to the annotation's rectangle in default user space
             //
-            // HOWEVER only the opposite order works for rotated pages with
+            // HOWEVER only the opposite order works for rotated pages with 
             // filled fields / annotations that have a matrix in the appearance stream, see PDFBOX-3083
             Matrix aa = Matrix.concatenate(a, matrix);
 
@@ -303,13 +336,15 @@ public abstract class PDFStreamEngine
             // clip to bounding box
             clipToRect(bbox);
 
+            // needed for patterns in appearance streams, e.g. PDFBOX-2182
+            initialMatrix = aa.clone();
+
             processStreamOperators(appearance);
         }
-
+        
         restoreGraphicsStack(savedStack);
         popResources(parent);
     }
-
 
     /**
      * Process the given tiling pattern.
@@ -320,7 +355,7 @@ public abstract class PDFStreamEngine
      * @throws IOException if there is an error reading or parsing the tiling pattern content stream.
      */
     protected final void processTilingPattern(PDTilingPattern tilingPattern, PDColor color,
-        PDColorSpace colorSpace) throws IOException
+                                              PDColorSpace colorSpace) throws IOException
     {
         processTilingPattern(tilingPattern, color, colorSpace, tilingPattern.getMatrix());
     }
@@ -336,7 +371,8 @@ public abstract class PDFStreamEngine
      * @throws IOException if there is an error reading or parsing the tiling pattern content stream.
      */
     protected final void processTilingPattern(PDTilingPattern tilingPattern, PDColor color,
-        PDColorSpace colorSpace, Matrix patternMatrix) throws IOException
+                                              PDColorSpace colorSpace, Matrix patternMatrix)
+            throws IOException
     {
         PDResources parent = pushResources(tilingPattern);
 
@@ -344,13 +380,12 @@ public abstract class PDFStreamEngine
         initialMatrix = Matrix.concatenate(initialMatrix, patternMatrix);
 
         // save the original graphics state
-        Stack<PDGraphicsState> savedStack = saveGraphicsStack();
+        Deque<PDGraphicsState> savedStack = saveGraphicsStack();
 
         // save a clean state (new clipping path, line path, etc.)
-        RectF bbox = new RectF();
-        tilingPattern.getBBox().transform(patternMatrix).computeBounds(bbox, true);
-        PDRectangle rect = new PDRectangle(bbox.left, bbox.top,
-            bbox.width(), bbox.height());
+        Rectangle2D bbox = tilingPattern.getBBox().transform(patternMatrix).getBounds2D();
+        PDRectangle rect = new PDRectangle((float)bbox.getX(), (float)bbox.getY(),
+                (float)bbox.getWidth(), (float)bbox.getHeight());
         graphicsStack.push(new PDGraphicsState(rect));
 
         // non-colored patterns have to be given a color
@@ -407,7 +442,8 @@ public abstract class PDFStreamEngine
      * Process a child stream of the given page. Cannot be used with {@link #processPage(PDPage)}.
      *
      * @param contentStream the child content stream
-     * @param page
+     * @param page the current page
+     * 
      * @throws IOException if there is an exception while processing the stream
      */
     protected void processChildStream(PDContentStream contentStream, PDPage page) throws IOException
@@ -415,7 +451,7 @@ public abstract class PDFStreamEngine
         if (isProcessingPage)
         {
             throw new IllegalStateException("Current page has already been set via " +
-                " #processPage(PDPage) call #processChildStream(PDContentStream) instead");
+                    " #processPage(PDPage) call #processChildStream(PDContentStream) instead");
         }
         initPage(page);
         processStream(contentStream);
@@ -431,7 +467,7 @@ public abstract class PDFStreamEngine
     private void processStream(PDContentStream contentStream) throws IOException
     {
         PDResources parent = pushResources(contentStream);
-        Stack<PDGraphicsState> savedStack = saveGraphicsStack();
+        Deque<PDGraphicsState> savedStack = saveGraphicsStack();
         Matrix parentMatrix = initialMatrix;
 
         // transform the CTM using the stream's matrix
@@ -527,7 +563,7 @@ public abstract class PDFStreamEngine
     {
         if (rectangle != null)
         {
-            Path clip = rectangle.transform(getGraphicsState().getCurrentTransformationMatrix());
+            GeneralPath clip = rectangle.transform(getGraphicsState().getCurrentTransformationMatrix());
             getGraphicsState().intersectClippingPath(clip);
         }
     }
@@ -590,7 +626,8 @@ public abstract class PDFStreamEngine
                 float tj = ((COSNumber)obj).floatValue();
 
                 // calculate the combined displacements
-                float tx, ty;
+                float tx;
+                float ty;
                 if (isVertical)
                 {
                     tx = 0;
@@ -621,6 +658,8 @@ public abstract class PDFStreamEngine
      *
      * @param tx x-translation
      * @param ty y-translation
+     * 
+     * @throws IOException if something went wrong
      */
     protected void applyTextAdjustment(float tx, float ty) throws IOException
     {
@@ -644,8 +683,8 @@ public abstract class PDFStreamEngine
         PDFont font = textState.getFont();
         if (font == null)
         {
-            Log.w("PdfBox-Android", "No current font, will use default");
-            font = PDFontFactory.createDefaultFont();
+            LOG.warn("No current font, will use default");
+            font = PDType1Font.HELVETICA;
         }
 
         float fontSize = textState.getFontSize();
@@ -654,9 +693,9 @@ public abstract class PDFStreamEngine
 
         // put the text state parameters into matrix form
         Matrix parameters = new Matrix(
-            fontSize * horizontalScaling, 0, // 0
-            0, fontSize,                     // 0
-            0, textState.getRise());         // 1
+                fontSize * horizontalScaling, 0, // 0
+                0, fontSize,                     // 0
+                0, textState.getRise());         // 1
 
         // read the stream until it is empty
         InputStream in = new ByteArrayInputStream(string);
@@ -705,7 +744,8 @@ public abstract class PDFStreamEngine
             restoreGraphicsState();
 
             // calculate the combined displacements
-            float tx, ty;
+            float tx;
+            float ty;
             if (font.isVertical())
             {
                 tx = 0;
@@ -734,7 +774,7 @@ public abstract class PDFStreamEngine
      * @throws IOException if the glyph cannot be processed
      */
     protected void showGlyph(Matrix textRenderingMatrix, PDFont font, int code, String unicode,
-        Vector displacement) throws IOException
+                             Vector displacement) throws IOException
     {
         if (font instanceof PDType3Font)
         {
@@ -758,7 +798,7 @@ public abstract class PDFStreamEngine
      * @throws IOException if the glyph cannot be processed
      */
     protected void showFontGlyph(Matrix textRenderingMatrix, PDFont font, int code, String unicode,
-        Vector displacement) throws IOException
+                                 Vector displacement) throws IOException
     {
         // overridden in subclasses
     }
@@ -775,7 +815,7 @@ public abstract class PDFStreamEngine
      * @throws IOException if the glyph cannot be processed
      */
     protected void showType3Glyph(Matrix textRenderingMatrix, PDType3Font font, int code,
-        String unicode, Vector displacement) throws IOException
+                                  String unicode, Vector displacement) throws IOException
     {
         PDType3CharProc charProc = font.getCharProc(code);
         if (charProc != null)
@@ -785,8 +825,27 @@ public abstract class PDFStreamEngine
     }
 
     /**
-     * This is used to handle an operation.
+     * Called when a marked content group begins
      *
+     * @param tag indicates the role or significance of the sequence
+     * @param properties optional properties
+     */
+    public void beginMarkedContentSequence(COSName tag, COSDictionary properties)
+    {
+        // overridden in subclasses
+    }
+
+    /**
+     * Called when a a marked content group ends
+     */
+    public void endMarkedContentSequence()
+    {
+        // overridden in subclasses
+    }
+
+    /**
+     * This is used to handle an operation.
+     * 
      * @param operation The operation to perform.
      * @param arguments The list of arguments.
      * @throws IOException If there is an error processing the operation.
@@ -799,7 +858,7 @@ public abstract class PDFStreamEngine
 
     /**
      * This is used to handle an operation.
-     *
+     * 
      * @param operator The operation to perform.
      * @param operands The list of arguments.
      * @throws IOException If there is an error processing the operation.
@@ -831,6 +890,8 @@ public abstract class PDFStreamEngine
      *
      * @param operator The unknown operator.
      * @param operands The list of operands.
+     * 
+     * @throws IOException if something went wrong
      */
     protected void unsupportedOperator(Operator operator, List<COSBase> operands) throws IOException
     {
@@ -842,25 +903,28 @@ public abstract class PDFStreamEngine
      *
      * @param operator The unknown operator.
      * @param operands The list of operands.
+     * @param e the thrown exception.
+     * 
+     * @throws IOException if something went wrong
      */
     protected void operatorException(Operator operator, List<COSBase> operands, IOException e)
-        throws IOException
+            throws IOException
     {
         if (e instanceof MissingOperandException ||
             e instanceof MissingResourceException ||
             e instanceof MissingImageReaderException)
         {
-            Log.e("PdfBox-Android", e.getMessage());
+            LOG.error(e.getMessage());
         }
         else if (e instanceof EmptyGraphicsStackException)
         {
-            Log.w("PdfBox-Android", e.getMessage());
+            LOG.warn(e.getMessage());
         }
         else if (operator.getName().equals("Do"))
         {
             // todo: this too forgiving, but PDFBox has always worked this way for DrawObject
-            // some careful refactoring is needed
-            Log.w("PdfBox-Android", e.getMessage());
+            //       some careful refactoring is needed
+            LOG.warn(e.getMessage());
         }
         else
         {
@@ -886,23 +950,27 @@ public abstract class PDFStreamEngine
 
     /**
      * Saves the entire graphics stack.
+     * 
+     * @return the saved graphics state stack.
      */
-    protected final Stack<PDGraphicsState> saveGraphicsStack()
+    protected final Deque<PDGraphicsState> saveGraphicsStack()
     {
-        Stack<PDGraphicsState> savedStack = graphicsStack;
-        graphicsStack = new Stack<PDGraphicsState>();
+        Deque<PDGraphicsState> savedStack = graphicsStack;
+        graphicsStack = new ArrayDeque<PDGraphicsState>();
         graphicsStack.add(savedStack.peek().clone());
         return savedStack;
     }
 
     /**
      * Restores the entire graphics stack.
+     * 
+     * @param snapshot the graphics state stack to be restored.
      */
-    protected final void restoreGraphicsStack(Stack<PDGraphicsState> snapshot)
+    protected final void restoreGraphicsStack(Deque<PDGraphicsState> snapshot)
     {
         graphicsStack = snapshot;
     }
-
+    
     /**
      * @return Returns the size of the graphicsStack.
      */
@@ -959,7 +1027,7 @@ public abstract class PDFStreamEngine
     {
         if (phase < 0)
         {
-            Log.w("PdfBox-Android", "Dash phase has negative value " + phase + ", set to 0");
+            LOG.warn("Dash phase has negative value " + phase + ", set to 0");
             phase = 0;
         }
         PDLineDashPattern lineDash = new PDLineDashPattern(array, phase);
@@ -967,7 +1035,8 @@ public abstract class PDFStreamEngine
     }
 
     /**
-     * Returns the stream' resources.
+     * @return the stream' resources. This is mainly to be used by the {@link OperatorProcessor}
+     * classes.
      */
     public PDResources getResources()
     {
@@ -975,7 +1044,7 @@ public abstract class PDFStreamEngine
     }
 
     /**
-     * Returns the current page.
+     * @return the current page.
      */
     public PDPage getCurrentPage()
     {
@@ -984,6 +1053,8 @@ public abstract class PDFStreamEngine
 
     /**
      * Gets the stream's initial matrix.
+     * 
+     * @return the initial matrix.
      */
     public Matrix getInitialMatrix()
     {
@@ -992,16 +1063,26 @@ public abstract class PDFStreamEngine
 
     /**
      * Transforms a point using the CTM.
+     * 
+     * @param x x-coordinate of the point to be transformed.
+     * @param y y-coordinate of the point to be transformed.
+     * 
+     * @return the transformed point.
      */
-    public PointF transformedPoint(float x, float y)
+    public Point2D.Float transformedPoint(float x, float y)
     {
         float[] position = { x, y };
-        getGraphicsState().getCurrentTransformationMatrix().createAffineTransform().transform(position, 0, position, 0, 1);
-        return new PointF(position[0], position[1]);
+        getGraphicsState().getCurrentTransformationMatrix().createAffineTransform()
+                .transform(position, 0, position, 0, 1);
+        return new Point2D.Float(position[0], position[1]);
     }
 
     /**
-     * Transforms a width using the CTM
+     * Transforms a width using the CTM.
+     * 
+     * @param width the width value to be transformed.
+     * 
+     * @return the transformed width value.
      */
     protected float transformWidth(float width)
     {
@@ -1009,5 +1090,38 @@ public abstract class PDFStreamEngine
         float x = ctm.getScaleX() + ctm.getShearX();
         float y = ctm.getScaleY() + ctm.getShearY();
         return width * (float)Math.sqrt((x * x + y * y) * 0.5);
+    }
+
+    /**
+     * Get the current level. This can be used to decide whether a recursion has done too deep and
+     * an operation should be skipped to avoid a stack overflow.
+     *
+     * @return the current level.
+     */
+    public int getLevel()
+    {
+        return level;
+    }
+
+    /**
+     * Increase the level. Call this before running a potentially recursive operation.
+     */
+    public void increaseLevel()
+    {
+        ++level;
+    }
+
+    /**
+     * Decrease the level. Call this after running a potentially recursive operation. A log message
+     * is shown if the level is below 0. This can happen if the level is not decreased after an
+     * operation is done, e.g. by using a "finally" block.
+     */
+    public void decreaseLevel()
+    {
+        --level;
+        if (level < 0)
+        {
+            LOG.error("level is " + level);
+        }
     }
 }

@@ -19,12 +19,15 @@ package com.tom_roush.pdfbox.contentstream.operator.state;
 import java.io.IOException;
 import java.util.List;
 
-import com.tom_roush.pdfbox.contentstream.operator.MissingOperandException;
-import com.tom_roush.pdfbox.contentstream.operator.Operator;
-import com.tom_roush.pdfbox.contentstream.operator.OperatorProcessor;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
+import com.tom_roush.pdfbox.contentstream.operator.Operator;
+import com.tom_roush.pdfbox.contentstream.operator.OperatorName;
+import com.tom_roush.pdfbox.contentstream.operator.OperatorProcessor;
+import com.tom_roush.pdfbox.contentstream.operator.MissingOperandException;
 
 /**
  * gs: Set parameters from graphics state parameter dictionary.
@@ -33,10 +36,12 @@ import com.tom_roush.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
  */
 public class SetGraphicsStateParameters extends OperatorProcessor
 {
+    private static final Log LOG = LogFactory.getLog(SetGraphicsStateParameters.class);
+
     @Override
     public void process(Operator operator, List<COSBase> arguments) throws IOException
     {
-        if (arguments.size() < 1)
+        if (arguments.isEmpty())
         {
             throw new MissingOperandException(operator, arguments);
         }
@@ -45,14 +50,14 @@ public class SetGraphicsStateParameters extends OperatorProcessor
         {
             return;
         }
-
+        
         // set parameters from graphics state parameter dictionary
-        COSName graphicsName = (COSName)base0;
+        COSName graphicsName = (COSName) base0;
         PDExtendedGraphicsState gs = context.getResources().getExtGState(graphicsName);
         if (gs == null)
         {
-            throw new IOException(
-                "name for 'gs' operator not found in resources: /" + graphicsName.getName());
+            LOG.error("name for 'gs' operator not found in resources: /" + graphicsName.getName());
+            return;
         }
         gs.copyIntoGraphicsState( context.getGraphicsState() );
     }
@@ -60,6 +65,6 @@ public class SetGraphicsStateParameters extends OperatorProcessor
     @Override
     public String getName()
     {
-        return "gs";
+        return OperatorName.SET_GRAPHICS_STATE_PARAMS;
     }
 }

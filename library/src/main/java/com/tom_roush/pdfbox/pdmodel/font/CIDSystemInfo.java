@@ -34,7 +34,7 @@ public final class CIDSystemInfo
         this.ordering = ordering;
         this.supplement = supplement;
     }
-
+    
     public String getRegistry()
     {
         return registry;

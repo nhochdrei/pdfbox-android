@@ -22,6 +22,7 @@ import java.io.IOException;
  * A table in a true type font.
  * 
  * @author Ben Litchfield
+ * 
  */
 public class OS2WindowsMetricsTable extends TTFTable
 {
@@ -154,16 +155,16 @@ public class OS2WindowsMetricsTable extends TTFTable
     public static final short FSTYPE_RESTRICTED = 0x0001;
 
     /**
-     * Preview & Print embedding: the font may be embedded, and temporarily loaded on the
+     * Preview and Print embedding: the font may be embedded, and temporarily loaded on the
      * remote system. No edits can be applied to the document.
      */
     public static final short FSTYPE_PREVIEW_AND_PRINT = 0x0004;
 
     /**
      * Editable embedding: the font may be embedded but must only be installed temporarily on other
-     * systems. Documents may be editied and changes saved.
+     * systems. Documents may be edited and changes saved.
      */
-    public static final short FSTYPE_EDITIBLE = 0x0004;
+    public static final short FSTYPE_EDITIBLE = 0x0008;
 
     /**
      * No subsetting: the font must not be subsetted prior to embedding.
@@ -175,6 +176,44 @@ public class OS2WindowsMetricsTable extends TTFTable
      * may be embedded. Other embedding restrictions specified in bits 0-3 and 8 also apply.
      */
     public static final short FSTYPE_BITMAP_ONLY = 0x0200;
+
+    private int version;
+    private short averageCharWidth;
+    private int weightClass;
+    private int widthClass;
+    private short fsType;
+    private short subscriptXSize;
+    private short subscriptYSize;
+    private short subscriptXOffset;
+    private short subscriptYOffset;
+    private short superscriptXSize;
+    private short superscriptYSize;
+    private short superscriptXOffset;
+    private short superscriptYOffset;
+    private short strikeoutSize;
+    private short strikeoutPosition;
+    private int familyClass;
+    private byte[] panose = new byte[10];
+    private long unicodeRange1;
+    private long unicodeRange2;
+    private long unicodeRange3;
+    private long unicodeRange4;
+    private String achVendId = "XXXX";
+    private int fsSelection;
+    private int firstCharIndex;
+    private int lastCharIndex;
+    private int typoAscender;
+    private int typoDescender;
+    private int typoLineGap;
+    private int winAscent;
+    private int winDescent;
+    private long codePageRange1 = 0;
+    private long codePageRange2 = 0;
+    private int sxHeight;
+    private int sCapHeight;
+    private int usDefaultChar;
+    private int usBreakChar;
+    private int usMaxContext;
 
     OS2WindowsMetricsTable(TrueTypeFont font)
     {
@@ -260,7 +299,7 @@ public class OS2WindowsMetricsTable extends TTFTable
     {
         this.familyClass = familyClassValue;
     }
-
+    
     /**
      * @return Returns the firstCharIndex.
      */
@@ -510,11 +549,11 @@ public class OS2WindowsMetricsTable extends TTFTable
     }
 
     /**
-     * @param typoLineGapValue The typoLineGap to set.
+     * @param typeLineGapValue The typoLineGap to set.
      */
-    public void setTypoLineGap(int typoLineGapValue)
+    public void setTypoLineGap(int typeLineGapValue)
     {
-        this.typoLineGap = typoLineGapValue;
+        this.typoLineGap = typeLineGapValue;
     }
 
     /**
@@ -733,44 +772,6 @@ public class OS2WindowsMetricsTable extends TTFTable
         return usMaxContext;
     }
 
-    private int version;
-    private short averageCharWidth;
-    private int weightClass;
-    private int widthClass;
-    private short fsType;
-    private short subscriptXSize;
-    private short subscriptYSize;
-    private short subscriptXOffset;
-    private short subscriptYOffset;
-    private short superscriptXSize;
-    private short superscriptYSize;
-    private short superscriptXOffset;
-    private short superscriptYOffset;
-    private short strikeoutSize;
-    private short strikeoutPosition;
-    private int familyClass;
-    private byte[] panose = new byte[10];
-    private long unicodeRange1;
-    private long unicodeRange2;
-    private long unicodeRange3;
-    private long unicodeRange4;
-    private String achVendId = "XXXX";
-    private int fsSelection;
-    private int firstCharIndex;
-    private int lastCharIndex;
-    private int typoAscender;
-    private int typoDescender;
-    private int typoLineGap;
-    private int winAscent;
-    private int winDescent;
-    private long codePageRange1 = -1;
-    private long codePageRange2 = -1;
-    private int sxHeight;
-    private int sCapHeight;
-    private int usDefaultChar;
-    private int usBreakChar;
-    private int usMaxContext;
-
     /**
      * A tag that identifies this table type.
      */
@@ -783,7 +784,8 @@ public class OS2WindowsMetricsTable extends TTFTable
      * @param data The stream to read the data from.
      * @throws IOException If there is an error reading the data.
      */
-    public void read(TrueTypeFont ttf, TTFDataStream data) throws IOException
+    @Override
+    void read(TrueTypeFont ttf, TTFDataStream data) throws IOException
     {
         version = data.readUnsignedShort();
         averageCharWidth = data.readSignedShort();

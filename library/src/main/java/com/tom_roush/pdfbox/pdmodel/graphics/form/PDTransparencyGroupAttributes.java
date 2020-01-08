@@ -20,13 +20,14 @@ import java.io.IOException;
 
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
+import com.tom_roush.pdfbox.pdmodel.PDResources;
 import com.tom_roush.pdfbox.pdmodel.common.COSObjectable;
 import com.tom_roush.pdfbox.pdmodel.graphics.color.PDColorSpace;
 
 /**
  * Transparency group attributes.
- *
- * @author Kühn & Weyh Software, GmbH
+ * 
+ * @author Kühn &amp; Weyh Software GmbH
  */
 public final class PDTransparencyGroupAttributes implements COSObjectable
 {
@@ -34,8 +35,16 @@ public final class PDTransparencyGroupAttributes implements COSObjectable
     private PDColorSpace colorSpace;
 
     /**
+     * Creates a group object with /Transparency subtype entry.
+     */
+    public PDTransparencyGroupAttributes()
+    {
+        dictionary = new COSDictionary();
+        dictionary.setItem(COSName.S, COSName.TRANSPARENCY);
+    }
+
+    /**
      * Creates a group object from a given dictionary
-     *
      * @param dic {@link COSDictionary} object
      */
     public PDTransparencyGroupAttributes(COSDictionary dic)
@@ -50,16 +59,28 @@ public final class PDTransparencyGroupAttributes implements COSObjectable
     }
 
     /**
-     * Returns the blending color space
+     * Returns the group color space or null if it isn't defined.
      *
-     * @return color space
+     * @return the group color space.
      * @throws IOException
      */
     public PDColorSpace getColorSpace() throws IOException
     {
-        if (colorSpace == null)
+        return getColorSpace(null);
+    }
+
+    /**
+     * Returns the group color space or null if it isn't defined.
+     *
+     * @param resources useful for its cache. Can be null.
+     * @return the group color space.
+     * @throws IOException
+     */
+    public PDColorSpace getColorSpace(PDResources resources) throws IOException
+    {
+        if (colorSpace == null && getCOSObject().containsKey(COSName.CS))
         {
-            colorSpace = PDColorSpace.create(getCOSObject().getDictionaryObject(COSName.CS));
+            colorSpace = PDColorSpace.create(getCOSObject().getDictionaryObject(COSName.CS), resources);
         }
         return colorSpace;
     }

@@ -20,9 +20,15 @@ import java.util.Stack;
 
 /**
  * Provides the arithmetic operators such as "add" and "sub".
+ *
  */
 class ArithmeticOperators
 {
+
+    private ArithmeticOperators()
+    {
+        // Private constructor.
+    }
 
     /** Implements the "abs" operator. */
     static class Abs implements Operator

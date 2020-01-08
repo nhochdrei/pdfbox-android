@@ -17,14 +17,15 @@
 
 package com.tom_roush.pdfbox.pdmodel.interactive.action;
 
-import java.io.IOException;
-
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;
-import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.pdmodel.common.filespecification.PDFileSpecification;
 
+import java.io.IOException;
+import com.tom_roush.pdfbox.cos.COSName;
+
 /**
+ *
  * This represents a thread action that can be executed in a PDF document.
  *
  * @author Evgeniy Muravitskiy

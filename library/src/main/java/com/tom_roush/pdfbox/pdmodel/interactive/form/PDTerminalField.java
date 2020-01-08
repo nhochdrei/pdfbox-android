@@ -19,7 +19,6 @@ package com.tom_roush.pdfbox.pdmodel.interactive.form;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;
@@ -40,7 +39,7 @@ public abstract class PDTerminalField extends PDField
 {
     /**
      * Constructor.
-     *
+     * 
      * @param acroForm The form that this field is part of.
      */
     protected PDTerminalField(PDAcroForm acroForm)
@@ -50,7 +49,7 @@ public abstract class PDTerminalField extends PDField
 
     /**
      * Constructor.
-     *
+     * 
      * @param acroForm The form that this field is part of.
      * @param field the PDF object to represent as a field.
      * @param parent the parent node of the node
@@ -62,19 +61,19 @@ public abstract class PDTerminalField extends PDField
 
     /**
      * Set the actions of the field.
-     *
+     * 
      * @param actions The field actions.
      */
     public void setActions(PDFormFieldAdditionalActions actions)
     {
         getCOSObject().setItem(COSName.AA, actions);
     }
-
+    
     @Override
     public int getFieldFlags()
     {
         int retval = 0;
-        COSInteger ff = (COSInteger)getCOSObject().getDictionaryObject(COSName.FF);
+        COSInteger ff = (COSInteger) getCOSObject().getDictionaryObject(COSName.FF);
         if (ff != null)
         {
             retval = ff.intValue();
@@ -85,7 +84,7 @@ public abstract class PDTerminalField extends PDField
         }
         return retval;
     }
-
+    
     @Override
     public String getFieldType()
     {
@@ -101,7 +100,7 @@ public abstract class PDTerminalField extends PDField
     public void importFDF(FDFField fdfField) throws IOException
     {
         super.importFDF(fdfField);
-
+        
         PDAnnotationWidget widget = getWidgets().get(0); // fixme: ignores multiple widgets
         if (widget != null)
         {
@@ -150,14 +149,17 @@ public abstract class PDTerminalField extends PDField
 
         // fixme: the old code which was here assumed that Kids were PDField instances,
         //        which is never true. They're annotation widgets.
-
+        
         return fdfField;
     }
 
     /**
      * Returns the widget annotations associated with this field.
      *
-     * @return The list of widget annotations.
+     * @return The list of widget annotations. Be aware that this list is <i>not</i> backed by the
+     * actual widget collection of the field, so adding or deleting has no effect on the PDF
+     * document until you call {@link #setWidgets(java.util.List) setWidgets()} with the modified
+     * list.
      */
     @Override
     public List<PDAnnotationWidget> getWidgets()
@@ -177,7 +179,7 @@ public abstract class PDTerminalField extends PDField
                 COSBase kid = kids.getObject(i);
                 if (kid instanceof COSDictionary)
                 {
-                    widgets.add(new PDAnnotationWidget((COSDictionary) kid));
+                    widgets.add(new PDAnnotationWidget((COSDictionary)kid));
                 }
             }
         }
@@ -193,14 +195,18 @@ public abstract class PDTerminalField extends PDField
     {
         COSArray kidsArray = COSArrayList.converterToCOSArray(children);
         getCOSObject().setItem(COSName.KIDS, kidsArray);
+        for (PDAnnotationWidget widget : children)
+        {
+            widget.getCOSObject().setItem(COSName.PARENT, this);
+        }
     }
-
+    
     /**
      * This will get the single associated widget that is part of this field. This occurs when the
      * Widget is embedded in the fields dictionary. Sometimes there are multiple sub widgets
      * associated with this field, in which case you want to use getWidgets(). If the kids entry is
      * specified, then the first entry in that list will be returned.
-     *
+     * 
      * @return The widget that is associated with this field.
      * @deprecated Fields may have more than one widget, call {@link #getWidgets()} instead.
      */
@@ -212,22 +218,22 @@ public abstract class PDTerminalField extends PDField
 
     /**
      * Applies a value change to the field. Generates appearances if required and raises events.
-     *
+     * 
      * @throws IOException if the appearance couldn't be generated
      */
     protected final void applyChange() throws IOException
     {
-        if(!getAcroForm().getNeedAppearances())
+        if (!getAcroForm().getNeedAppearances())
         {
             constructAppearances();
         }
         // if we supported JavaScript we would raise a field changed event here
     }
-
+    
     /**
      * Constructs appearance streams and appearance dictionaries for all widget annotations.
      * Subclasses should not call this method directly but via {@link #applyChange()}.
-     *
+     * 
      * @throws IOException if the appearance couldn't be generated
      */
     abstract void constructAppearances() throws IOException;

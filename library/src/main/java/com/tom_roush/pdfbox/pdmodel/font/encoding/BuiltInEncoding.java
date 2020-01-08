@@ -18,7 +18,6 @@
 package com.tom_roush.pdfbox.pdmodel.font.encoding;
 
 import java.util.Map;
-
 import com.tom_roush.pdfbox.cos.COSBase;
 
 /**
@@ -40,7 +39,7 @@ public class BuiltInEncoding extends Encoding
             add(entry.getKey(), entry.getValue());
         }
     }
-
+    
     @Override
     public COSBase getCOSObject()
     {

@@ -23,6 +23,9 @@ import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
+import com.tom_roush.pdfbox.cos.COSStream;
+import com.tom_roush.pdfbox.cos.COSString;
+import com.tom_roush.pdfbox.pdmodel.common.COSArrayList;
 import com.tom_roush.pdfbox.pdmodel.common.COSObjectable;
 import com.tom_roush.pdfbox.pdmodel.fdf.FDFField;
 import com.tom_roush.pdfbox.pdmodel.interactive.action.PDFormFieldAdditionalActions;
@@ -40,10 +43,10 @@ public abstract class PDField implements COSObjectable
     private final PDAcroForm acroForm;
     private final PDNonTerminalField parent;
     private final COSDictionary dictionary;
-
+   
     /**
      * Constructor.
-     *
+     * 
      * @param acroForm The form that this field is part of.
      */
     PDField(PDAcroForm acroForm)
@@ -53,8 +56,7 @@ public abstract class PDField implements COSObjectable
 
     /**
      * Constructor.
-     *
-     * @param acroForm The form that this field is part of.
+     *  @param acroForm The form that this field is part of.
      * @param field the PDF object to represent as a field.
      * @param parent the parent node of the node
      */
@@ -64,14 +66,13 @@ public abstract class PDField implements COSObjectable
         this.dictionary = field;
         this.parent = parent;
     }
-
+    
     /**
      * Creates a COSField subclass from the given COS field. This is for reading fields from PDFs.
      *
      * @param form the form that the field is part of
      * @param field the dictionary representing a field element
      * @param parent the parent node of the node to be created, or null if root.
-     *
      * @return a new PDField instance
      */
     static PDField fromDictionary(PDAcroForm form, COSDictionary field, PDNonTerminalField parent)
@@ -100,19 +101,20 @@ public abstract class PDField implements COSObjectable
             return acroForm.getCOSObject().getDictionaryObject(key);
         }
     }
-
+    
     /**
      * Get the FT entry of the field. This is a read only field and is set depending on the actual type. The field type
      * is an inheritable attribute.
-     *
-     * @return The list of widget annotations.
+     * 
+     * @return The Field type.
+     * 
      */
     public abstract String getFieldType();
 
     /**
      * Returns a string representation of the "V" entry, or an empty string.
-     *
-     * @return A non-null string.
+     * 
+     * @return The list of widget annotations.
      */
     public abstract String getValueAsString();
 
@@ -120,25 +122,28 @@ public abstract class PDField implements COSObjectable
      * Sets the value of the field.
      *
      * @param value the new field value.
-     *
+     * 
      * @throws IOException if the value could not be set
      */
     public abstract void setValue(String value) throws IOException;
-
-
+    
+    
     /**
      * Returns the widget annotations associated with this field.
-     *
+     * 
      * For {@link PDNonTerminalField} the list will be empty as non terminal fields
      * have no visual representation in the form.
-     *
-     * @return A non-null string.
+     * 
+     * @return a List of {@link PDAnnotationWidget} annotations. Be aware that this list is
+     * <i>not</i> backed by the actual widget collection of the field, so adding or deleting has no
+     * effect on the PDF document. For {@link PDTerminalField} you'd have to call
+     * {@link PDTerminalField#setWidgets(java.util.List) setWidgets()} with the modified list.
      */
     public abstract List<PDAnnotationWidget> getWidgets();
-
+    
     /**
      * sets the field to be read-only.
-     *
+     * 
      * @param readonly The new flag for readonly.
      */
     public void setReadOnly(boolean readonly)
@@ -147,7 +152,7 @@ public abstract class PDField implements COSObjectable
     }
 
     /**
-     *
+     * 
      * @return true if the field is readonly
      */
     public boolean isReadOnly()
@@ -156,7 +161,8 @@ public abstract class PDField implements COSObjectable
     }
 
     /**
-     * sets the field to be required.
+     * sets the flag whether the field is to be required to have a value at the time it is exported
+     * by a submit-form action.
      *
      * @param required The new flag for required.
      */
@@ -166,8 +172,8 @@ public abstract class PDField implements COSObjectable
     }
 
     /**
-     *
-     * @return true if the field is required
+     * @return true if the field is required to have a value at the time it is exported by a
+     * submit-form action.
      */
     public boolean isRequired()
     {
@@ -176,7 +182,7 @@ public abstract class PDField implements COSObjectable
 
     /**
      * sets the field to be not exported.
-     *
+     * 
      * @param noExport The new flag for noExport.
      */
     public void setNoExport(boolean noExport)
@@ -185,7 +191,7 @@ public abstract class PDField implements COSObjectable
     }
 
     /**
-     *
+     * 
      * @return true if the field is not to be exported.
      */
     public boolean isNoExport()
@@ -195,14 +201,14 @@ public abstract class PDField implements COSObjectable
 
     /**
      * This will get the flags for this field.
-     *
+     * 
      * @return flags The set of flags.
      */
     public abstract int getFieldFlags();
 
     /**
      * This will set the flags for this field.
-     *
+     * 
      * @param flags The new flags.
      */
     public void setFieldFlags(int flags)
@@ -226,19 +232,46 @@ public abstract class PDField implements COSObjectable
         return null;
     }
 
-    /**
+   /**
      * This will import a fdf field from a fdf document.
-     *
+     * 
      * @param fdfField The fdf field to import.
      * @throws IOException If there is an error importing the data for this field.
      */
     void importFDF(FDFField fdfField) throws IOException
     {
         COSBase fieldValue = fdfField.getCOSValue();
-        if (fieldValue != null)
+        
+        if (fieldValue != null && this instanceof PDTerminalField)
+        {
+            PDTerminalField currentField = (PDTerminalField) this;
+            
+            if (fieldValue instanceof COSName)
+            {
+                currentField.setValue(((COSName) fieldValue).getName());
+            }
+            else if (fieldValue instanceof COSString)
+            {
+                currentField.setValue(((COSString) fieldValue).getString());
+            }
+            else if (fieldValue instanceof COSStream)
+            {
+                currentField.setValue(((COSStream) fieldValue).toTextString());
+            }
+            else if (fieldValue instanceof COSArray && this instanceof PDChoice)
+            {
+                ((PDChoice) this).setValue(COSArrayList.convertCOSStringCOSArrayToList((COSArray) fieldValue));
+            }
+            else
+            {
+                throw new IOException("Error:Unknown type for field import" + fieldValue);
+            }
+        }
+        else if (fieldValue != null)
         {
             dictionary.setItem(COSName.V, fieldValue);
         }
+        
         Integer ff = fdfField.getFieldFlags();
         if (ff != null)
         {
@@ -249,7 +282,7 @@ public abstract class PDField implements COSObjectable
             // these are suppose to be ignored if the Ff is set.
             Integer setFf = fdfField.getSetFieldFlags();
             int fieldFlags = getFieldFlags();
-
+            
             if (setFf != null)
             {
                 int setFfInt = setFf;
@@ -280,10 +313,10 @@ public abstract class PDField implements COSObjectable
      * Exports this field and its children as FDF.
      */
     abstract FDFField exportFDF() throws IOException;
-
+    
     /**
      * Get the parent field to this field, or null if none exists.
-     *
+     * 
      * @return The parent field.
      */
     public PDNonTerminalField getParent()
@@ -295,7 +328,7 @@ public abstract class PDField implements COSObjectable
      * This will find one of the child elements. The name array are the components of the name to search down the tree
      * of names. The nameIndex is where to start in that array. This method is called recursively until it finds the end
      * point based on the name array.
-     *
+     * 
      * @param name An array that picks the path to the field.
      * @param nameIndex The index into the array.
      * @return The field at the endpoint or null if none is found.
@@ -312,7 +345,7 @@ public abstract class PDField implements COSObjectable
                 if (name[nameIndex].equals(kidDictionary.getString(COSName.T)))
                 {
                     retval = PDField.fromDictionary(acroForm, kidDictionary,
-                        (PDNonTerminalField) this);
+                                                    (PDNonTerminalField)this);
                     if (retval != null && name.length > nameIndex + 1)
                     {
                         retval = retval.findKid(name, nameIndex + 1);
@@ -325,7 +358,7 @@ public abstract class PDField implements COSObjectable
 
     /**
      * This will get the acroform that this field is part of.
-     *
+     * 
      * @return The form this field is on.
      */
     public PDAcroForm getAcroForm()
@@ -335,7 +368,7 @@ public abstract class PDField implements COSObjectable
 
     /**
      * This will get the dictionary associated with this field.
-     *
+     * 
      * @return the dictionary that this class wraps.
      */
     @Override
@@ -346,17 +379,16 @@ public abstract class PDField implements COSObjectable
 
     /**
      * Returns the partial name of the field.
-     *
+     * 
      * @return the name of the field
      */
     public String getPartialName()
     {
         return dictionary.getString(COSName.T);
     }
-
     /**
      * This will set the partial name of the field.
-     *
+     * 
      * @param name The new name for the field.
      */
     public void setPartialName(String name)
@@ -366,7 +398,7 @@ public abstract class PDField implements COSObjectable
 
     /**
      * Returns the fully qualified name of the field, which is a concatenation of the names of all the parents fields.
-     *
+     * 
      * @return the name of the field
      */
     public String getFullyQualifiedName()
@@ -388,7 +420,9 @@ public abstract class PDField implements COSObjectable
     }
 
     /**
-     * Gets the alternate name of the field.
+     * Gets the alternate name of the field ("shall be used in place of the actual field name
+     * wherever the field shall be identified in the user interface (such as in error or status
+     * messages referring to the field)").
      *
      * @return the alternate name of the field
      */
@@ -398,21 +432,24 @@ public abstract class PDField implements COSObjectable
     }
 
     /**
-     * This will set the alternate name of the field.
+     * This will set the alternate name of the field ("shall be used in place of the actual field
+     * name wherever the field shall be identified in the user interface (such as in error or status
+     * messages referring to the field)"). The text appears as a tool tip in Adobe Reader. Because
+     * of the usage for error or status messages, it should be different for each field.
      *
-     * @param alternateFieldName the alternate name of the field
+     * @param alternateFieldName the alternate name of the field.
      */
     public void setAlternateFieldName(String alternateFieldName)
     {
         dictionary.setString(COSName.TU, alternateFieldName);
     }
-
+    
     /**
      * Gets the mapping name of the field.
-     *
+     * 
      * The mapping name shall be used when exporting interactive form field
      * data from the document.
-     *
+     * 
      * @return the mapping name of the field
      */
     public String getMappingName()
@@ -422,7 +459,7 @@ public abstract class PDField implements COSObjectable
 
     /**
      * This will set the mapping name of the field.
-     *
+     * 
      * @param mappingName the mapping name of the field
      */
     public void setMappingName(String mappingName)
@@ -434,6 +471,6 @@ public abstract class PDField implements COSObjectable
     public String toString()
     {
         return getFullyQualifiedName() + "{type: " + getClass().getSimpleName() + " value: " +
-            getInheritableAttribute(COSName.V) + "}";
+                getInheritableAttribute(COSName.V) + "}";
     }
 }

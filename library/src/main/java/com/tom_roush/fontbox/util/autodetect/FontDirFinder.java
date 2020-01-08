@@ -24,7 +24,7 @@ import java.util.List;
  * Implementers provide find method for searching native operating system for available fonts.
  * This class is based on a class provided by Apache FOP.
  *
- * See com.tom_roush.fop.fonts.autodetect.FontDirFinder
+ * See org.apache.fop.fonts.autodetect.FontDirFinder
  */
 public interface FontDirFinder
 {

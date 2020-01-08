@@ -16,13 +16,14 @@
  */
 package com.tom_roush.pdfbox.contentstream.operator.color;
 
-import java.io.IOException;
-import java.util.List;
-
-import com.tom_roush.pdfbox.contentstream.operator.Operator;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.pdmodel.graphics.color.PDColorSpace;
+import com.tom_roush.pdfbox.contentstream.operator.Operator;
+import com.tom_roush.pdfbox.contentstream.operator.OperatorName;
+
+import java.io.IOException;
+import java.util.List;
 
 /**
  * K: Set the stroking colour space to DeviceCMYK and set the colour to use for stroking operations.
@@ -42,6 +43,6 @@ public class SetStrokingDeviceCMYKColor extends SetStrokingColor
     @Override
     public String getName()
     {
-        return "K";
+        return OperatorName.STROKING_COLOR_CMYK;
     }
 }

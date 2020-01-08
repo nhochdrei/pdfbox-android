@@ -16,12 +16,13 @@
  */
 package com.tom_roush.pdfbox.contentstream.operator.text;
 
-import android.util.Log;
-
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import com.tom_roush.pdfbox.contentstream.operator.MissingOperandException;
 import com.tom_roush.pdfbox.contentstream.operator.Operator;
+import com.tom_roush.pdfbox.contentstream.operator.OperatorName;
 import com.tom_roush.pdfbox.contentstream.operator.OperatorProcessor;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSNumber;
@@ -34,6 +35,8 @@ import com.tom_roush.pdfbox.util.Matrix;
  */
 public class MoveText extends OperatorProcessor
 {
+    private static final Log LOG = LogFactory.getLog(MoveText.class);
+
     @Override
     public void process(Operator operator, List<COSBase> arguments) throws MissingOperandException
     {
@@ -44,10 +47,10 @@ public class MoveText extends OperatorProcessor
         Matrix textLineMatrix = context.getTextLineMatrix();
         if (textLineMatrix == null)
         {
-            Log.w("PdfBox-Android", "TextLineMatrix is null, " + getName() + " operator will be ignored");
+            LOG.warn("TextLineMatrix is null, " + getName() + " operator will be ignored");
             return;
-        }
-
+        }        
+        
         COSBase base0 = arguments.get(0);
         COSBase base1 = arguments.get(1);
         if (!(base0 instanceof COSNumber))
@@ -58,8 +61,8 @@ public class MoveText extends OperatorProcessor
         {
             return;
         }
-        COSNumber x = (COSNumber)base0;
-        COSNumber y = (COSNumber)base1;
+        COSNumber x = (COSNumber) base0;
+        COSNumber y = (COSNumber) base1;
 
         Matrix matrix = new Matrix(1, 0, 0, 1, x.floatValue(), y.floatValue());
         textLineMatrix.concatenate(matrix);
@@ -69,6 +72,6 @@ public class MoveText extends OperatorProcessor
     @Override
     public String getName()
     {
-        return "Td";
+        return OperatorName.MOVE_TEXT;
     }
 }

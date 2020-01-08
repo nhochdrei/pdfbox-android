@@ -16,12 +16,12 @@
  */
 package com.tom_roush.pdfbox.pdmodel.graphics.color;
 
-import java.io.IOException;
-import java.util.Arrays;
-
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.cos.COSNumber;
+
+import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * A color value, consisting of one or more color components, or for pattern color spaces,
@@ -109,11 +109,19 @@ public final class PDColor
 
     /**
      * Returns the components of this color value.
-     * @return the components of this color value
+     * @return the components of this color value, never null.
      */
     public float[] getComponents()
     {
-        return components.clone();
+        if (colorSpace instanceof PDPattern || colorSpace == null)
+        {
+            // colorspace of the pattern color isn't known, so just clone
+            // null colorspace can happen with empty annotation color
+            // see PDFBOX-3351-538928-p4.pdf
+            return components.clone();
+        }
+        // PDFBOX-4279: copyOf instead of clone in case array is too small
+        return Arrays.copyOf(components, colorSpace.getNumberOfComponents());
     }
 
     /**
@@ -179,6 +187,6 @@ public final class PDColor
     public String toString()
     {
         return "PDColor{components=" + Arrays.toString(components) +
-            ", patternName=" + patternName + "}";
+                ", patternName=" + patternName + "}";
     }
 }

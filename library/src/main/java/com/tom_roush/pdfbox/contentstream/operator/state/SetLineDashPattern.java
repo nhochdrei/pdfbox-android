@@ -16,12 +16,14 @@
  */
 package com.tom_roush.pdfbox.contentstream.operator.state;
 
-import android.util.Log;
-
 import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import com.tom_roush.pdfbox.contentstream.operator.MissingOperandException;
 import com.tom_roush.pdfbox.contentstream.operator.Operator;
+import com.tom_roush.pdfbox.contentstream.operator.OperatorName;
 import com.tom_roush.pdfbox.contentstream.operator.OperatorProcessor;
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
@@ -34,6 +36,8 @@ import com.tom_roush.pdfbox.cos.COSNumber;
  */
 public class SetLineDashPattern extends OperatorProcessor
 {
+    private static final Log LOG = LogFactory.getLog(SetLineDashPattern.class);
+    
     @Override
     public void process(Operator operator, List<COSBase> arguments) throws MissingOperandException
     {
@@ -51,15 +55,15 @@ public class SetLineDashPattern extends OperatorProcessor
         {
             return;
         }
-        COSArray dashArray = (COSArray)base0;
-        int dashPhase = ((COSNumber)base1).intValue();
-
+        COSArray dashArray = (COSArray) base0;
+        int dashPhase = ((COSNumber) base1).intValue();
+        
         boolean allZero = true;
         for (COSBase base : dashArray)
         {
             if (base instanceof COSNumber)
             {
-                COSNumber num = (COSNumber)base;
+                COSNumber num = (COSNumber) base;
                 if (num.floatValue() != 0)
                 {
                     allZero = false;
@@ -68,14 +72,14 @@ public class SetLineDashPattern extends OperatorProcessor
             }
             else
             {
-                Log.e("PdfBox-Android", "dash array has non number element " + base + ", ignored");
+                LOG.warn("dash array has non number element " + base + ", ignored");
                 dashArray = new COSArray();
                 break;
             }
         }
         if (dashArray.size() > 0 && allZero)
         {
-            Log.e("PdfBox-Android", "dash lengths all zero, ignored");
+            LOG.warn("dash lengths all zero, ignored");
             dashArray = new COSArray();
         }
         context.setLineDashPattern(dashArray, dashPhase);
@@ -84,6 +88,6 @@ public class SetLineDashPattern extends OperatorProcessor
     @Override
     public String getName()
     {
-        return "d";
+        return OperatorName.SET_LINE_DASHPATTERN;
     }
 }

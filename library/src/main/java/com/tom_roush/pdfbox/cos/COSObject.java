@@ -22,6 +22,7 @@ import java.io.IOException;
  * This class represents a PDF object.
  *
  * @author Ben Litchfield
+ * 
  */
 public class COSObject extends COSBase implements COSUpdateInfo
 {
@@ -105,11 +106,10 @@ public class COSObject extends COSBase implements COSUpdateInfo
     @Override
     public String toString()
     {
-        return "COSObject{" + Long.toString(objectNumber) + ", " + Integer.toString(
-            generationNumber) + "}";
+        return "COSObject{" + Long.toString(objectNumber) + ", " + Integer.toString(generationNumber) + "}";
     }
 
-    /**
+    /** 
      * Getter for property objectNumber.
      * @return Value of property objectNumber.
      */
@@ -118,7 +118,7 @@ public class COSObject extends COSBase implements COSUpdateInfo
         return objectNumber;
     }
 
-    /**
+    /** 
      * Setter for property objectNumber.
      * @param objectNum New value of property objectNumber.
      */
@@ -127,7 +127,7 @@ public class COSObject extends COSBase implements COSUpdateInfo
         objectNumber = objectNum;
     }
 
-    /**
+    /** 
      * Getter for property generationNumber.
      * @return Value of property generationNumber.
      */
@@ -136,7 +136,7 @@ public class COSObject extends COSBase implements COSUpdateInfo
         return generationNumber;
     }
 
-    /**
+    /** 
      * Setter for property generationNumber.
      * @param generationNumberValue New value of property generationNumber.
      */
@@ -157,26 +157,27 @@ public class COSObject extends COSBase implements COSUpdateInfo
     {
         return getObject() != null ? getObject().accept( visitor ) : COSNull.NULL.accept( visitor );
     }
-
+    
     /**
      * Get the update state for the COSWriter.
-     *
+     * 
      * @return the update state.
      */
     @Override
-    public boolean isNeedToBeUpdated()
+    public boolean isNeedToBeUpdated() 
     {
         return needToBeUpdated;
     }
-
+    
     /**
      * Set the update state of the dictionary for the COSWriter.
-     *
+     * 
      * @param flag the update state.
      */
     @Override
-    public void setNeedToBeUpdated(boolean flag)
+    public void setNeedToBeUpdated(boolean flag) 
     {
         needToBeUpdated = flag;
     }
+
 }

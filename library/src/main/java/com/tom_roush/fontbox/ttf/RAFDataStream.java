@@ -27,18 +27,18 @@ import java.io.RandomAccessFile;
  * 
  * @author Ben Litchfield
  */
-class RAFDataStream extends TTFDataStream
+class RAFDataStream extends TTFDataStream 
 {
     private RandomAccessFile raf = null;
     private File ttfFile = null;
-    private static final int BUFFERSIZE = 16834;
+    private static final int BUFFERSIZE = 16384;
     
     /**
      * Constructor.
      * 
      * @param name The raf file.
      * @param mode The mode to open the RAF.
-     *
+     * 
      * @throws IOException If there is a problem creating the RAF.
      * 
      * @see RandomAccessFile#RandomAccessFile( String, String )
@@ -53,7 +53,7 @@ class RAFDataStream extends TTFDataStream
      * 
      * @param file The raf file.
      * @param mode The mode to open the RAF.
-     *
+     * 
      * @throws IOException If there is a problem creating the RAF.
      * 
      * @see RandomAccessFile#RandomAccessFile( File, String )
@@ -65,10 +65,11 @@ class RAFDataStream extends TTFDataStream
     }
     
     /**
-     * Read an signed short.
+     * Read a signed short.
      * 
      * @return An signed short.
      * @throws IOException If there is an error reading the data.
+     * @see RandomAccessFile#readShort()
      */
     @Override
     public short readSignedShort() throws IOException
@@ -95,14 +96,18 @@ class RAFDataStream extends TTFDataStream
     @Override
     public void close() throws IOException
     {
-        raf.close();
-        raf = null;
+        if (raf != null)
+        {
+            raf.close();
+            raf = null;
+        }
     }
     
     /**
      * Read an unsigned byte.
      * @return An unsigned byte.
      * @throws IOException If there is an error reading the data.
+     * @see RandomAccessFile#read()
      */
     @Override
     public int read() throws IOException
@@ -115,6 +120,7 @@ class RAFDataStream extends TTFDataStream
      * 
      * @return An unsigned short.
      * @throws IOException If there is an error reading the data.
+     * @see RandomAccessFile#readUnsignedShort()
      */
     @Override
     public int readUnsignedShort() throws IOException
@@ -123,9 +129,11 @@ class RAFDataStream extends TTFDataStream
     }
     
     /**
-     * Read an unsigned byte.
-     * @return An unsigned byte.
+     * Read a signed 64-bit integer.
+     * 
+     * @return eight bytes interpreted as a long.
      * @throws IOException If there is an error reading the data.
+     * @see RandomAccessFile#readLong()    
      */
     @Override
     public long readLong() throws IOException
@@ -169,5 +177,14 @@ class RAFDataStream extends TTFDataStream
     public InputStream getOriginalData() throws IOException
     {
         return new FileInputStream( ttfFile );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long getOriginalDataSize()
+    {
+        return ttfFile.length();
     }
 }

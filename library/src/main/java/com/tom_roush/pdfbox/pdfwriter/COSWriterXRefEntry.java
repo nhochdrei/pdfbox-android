@@ -16,8 +16,9 @@
  */
 package com.tom_roush.pdfbox.pdfwriter;
 
-import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSObjectKey;
+
+import com.tom_roush.pdfbox.cos.COSBase;
 
 /**
  * this is en entry in the xref section of the physical pdf document
@@ -32,11 +33,25 @@ public class COSWriterXRefEntry implements Comparable<COSWriterXRefEntry>
     private COSObjectKey key;
     private boolean free = false;
     private static final COSWriterXRefEntry NULLENTRY;
-
-    static
+    
+    static 
     {
         NULLENTRY = new COSWriterXRefEntry(0, null, new COSObjectKey(0, 65535));
         NULLENTRY.setFree(true);
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param start The start attribute.
+     * @param obj The COS object that this entry represents.
+     * @param keyValue The key to the COS object.
+     */
+    public COSWriterXRefEntry(long start, COSBase obj, COSObjectKey keyValue)
+    {
+        setOffset(start);
+        setObject(obj);
+        setKey(keyValue);
     }
 
     /**
@@ -59,7 +74,7 @@ public class COSWriterXRefEntry implements Comparable<COSWriterXRefEntry>
         }
         return -1;
     }
-
+    
     /**
      * This will return a null entry: 0000000000 65535 f.
      * 
@@ -128,21 +143,6 @@ public class COSWriterXRefEntry implements Comparable<COSWriterXRefEntry>
     public final void setOffset(long newOffset)
     {
         offset = newOffset;
-    }
-
-    /**
-     * COSWriterXRefEntry constructor comment.
-     *
-     * @param start The start attribute.
-     * @param obj The COS object that this entry represents.
-     * @param keyValue The key to the COS object.
-     */
-    public COSWriterXRefEntry(long start, COSBase obj, COSObjectKey keyValue)
-    {
-        super();
-        setOffset(start);
-        setObject(obj);
-        setKey(keyValue);
     }
 
     /**

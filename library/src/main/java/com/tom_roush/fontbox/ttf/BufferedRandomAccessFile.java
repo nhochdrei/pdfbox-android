@@ -39,12 +39,12 @@ public class BufferedRandomAccessFile extends RandomAccessFile
     private final byte buffer[];
     private int bufend = 0;
     private int bufpos = 0;
-
+    
     /**
      * The position inside the actual file.
      */
     private long realpos = 0;
-
+    
     /**
      * Buffer size.
      */
@@ -63,7 +63,7 @@ public class BufferedRandomAccessFile extends RandomAccessFile
      * if some other error occurs while opening or creating the file.
      */
     public BufferedRandomAccessFile(String filename, String mode, int bufsize)
-        throws FileNotFoundException
+            throws FileNotFoundException
     {
         super(filename, mode);
         BUFSIZE = bufsize;
@@ -83,7 +83,7 @@ public class BufferedRandomAccessFile extends RandomAccessFile
      * if some other error occurs while opening or creating the file.
      */
     public BufferedRandomAccessFile(File file, String mode, int bufsize)
-        throws FileNotFoundException
+            throws FileNotFoundException
     {
         super(file, mode);
         BUFSIZE = bufsize;
@@ -165,7 +165,7 @@ public class BufferedRandomAccessFile extends RandomAccessFile
                 leftover += bytesRead;
             }
         }
-        return leftover;
+        return leftover > 0 ? leftover : -1;
     }
 
     /**
@@ -183,7 +183,7 @@ public class BufferedRandomAccessFile extends RandomAccessFile
     @Override
     public void seek(long pos) throws IOException
     {
-        int n = (int)(realpos - pos);
+        int n = (int) (realpos - pos);
         if (n >= 0 && n <= bufend)
         {
             bufpos = bufend - n;

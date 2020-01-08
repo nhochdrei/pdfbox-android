@@ -22,6 +22,7 @@ import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.cos.COSString;
+
 import com.tom_roush.pdfbox.pdmodel.common.PDDestinationOrAction;
 
 /**
@@ -49,9 +50,9 @@ public abstract class PDDestination implements PDDestinationOrAction
         {
             //this is ok, just return null.
         }
-        else if (base instanceof COSArray
-            && ((COSArray)base).size() > 1
-            && ((COSArray)base).getObject(1) instanceof COSName)
+        else if (base instanceof COSArray 
+                && ((COSArray) base).size() > 1 
+                && ((COSArray) base).getObject(1) instanceof COSName)
         {
             COSArray array = (COSArray)base;
             COSName type = (COSName) array.getObject(1);
@@ -81,7 +82,7 @@ public abstract class PDDestination implements PDDestinationOrAction
             }
             else
             {
-                throw new IOException("Unknown destination type: " + type.getName());
+                throw new IOException( "Unknown destination type: " + type.getName() );
             }
         }
         else if( base instanceof COSString )
@@ -98,4 +99,5 @@ public abstract class PDDestination implements PDDestinationOrAction
         }
         return retval;
     }
+
 }

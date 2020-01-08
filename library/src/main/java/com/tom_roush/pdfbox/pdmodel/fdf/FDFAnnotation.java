@@ -16,17 +16,15 @@
  */
 package com.tom_roush.pdfbox.pdmodel.fdf;
 
-import android.util.Log;
-
+import java.awt.Color;
 import java.io.IOException;
 import java.util.Calendar;
-
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-
-import com.tom_roush.harmony.awt.AWTColor;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;
@@ -39,20 +37,24 @@ import com.tom_roush.pdfbox.pdmodel.common.PDRectangle;
 import com.tom_roush.pdfbox.pdmodel.interactive.annotation.PDBorderEffectDictionary;
 import com.tom_roush.pdfbox.pdmodel.interactive.annotation.PDBorderStyleDictionary;
 import com.tom_roush.pdfbox.util.DateConverter;
-
+import org.w3c.dom.CDATASection;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.w3c.dom.Text;
 
 /**
  * This represents an FDF annotation that is part of the FDF document.
  *
  * @author Ben Litchfield
  * @author Johanneke Lamberink
- */
+ * 
+ * */
 public abstract class FDFAnnotation implements COSObjectable
 {
+    private static final Log LOG = LogFactory.getLog(FDFAnnotation.class);
+
     /**
      * An annotation flag.
      */
@@ -89,6 +91,10 @@ public abstract class FDFAnnotation implements COSObjectable
      * An annotation flag.
      */
     private static final int FLAG_TOGGLE_NO_VIEW = 1 << 8;
+    /**
+     * An annotation flag.
+     */
+    private static final int FLAG_LOCKED_CONTENTS = 1 << 9;
 
     /**
      * Annotation dictionary.
@@ -136,7 +142,7 @@ public abstract class FDFAnnotation implements COSObjectable
         if (color != null && color.length() == 7 && color.charAt(0) == '#')
         {
             int colorValue = Integer.parseInt(color.substring(1, 7), 16);
-            setColor(new AWTColor(colorValue));
+            setColor(new Color(colorValue));
         }
 
         setDate(element.getAttribute("date"));
@@ -235,14 +241,13 @@ public abstract class FDFAnnotation implements COSObjectable
         }
         catch (XPathExpressionException e)
         {
-            Log.d("PdfBox-Android",
-                "Error while evaluating XPath expression for richtext contents");
+            LOG.debug("Error while evaluating XPath expression for richtext contents");
         }
 
         try
         {
             Node richContents = (Node) xpath.evaluate("contents-richtext[1]", element,
-                XPathConstants.NODE);
+                    XPathConstants.NODE);
             if (richContents != null)
             {
                 setRichContents(richContentsToString(richContents, true));
@@ -251,8 +256,7 @@ public abstract class FDFAnnotation implements COSObjectable
         }
         catch (XPathExpressionException e)
         {
-            Log.d("PdfBox-Android",
-                "Error while evaluating XPath expression for richtext contents");
+            LOG.debug("Error while evaluating XPath expression for richtext contents");
         }
 
         PDBorderStyleDictionary borderStyle = new PDBorderStyleDictionary();
@@ -291,7 +295,7 @@ public abstract class FDFAnnotation implements COSObjectable
                     if (intensity != null && !intensity.isEmpty())
                     {
                         borderEffect.setIntensity(Float.parseFloat(element
-                            .getAttribute("intensity")));
+                                .getAttribute("intensity")));
                     }
                     setBorderEffect(borderEffect);
                 }
@@ -321,6 +325,7 @@ public abstract class FDFAnnotation implements COSObjectable
      * @param fdfDic The FDF dictionary.
      *
      * @return A newly created FDFAnnotation
+     *
      * @throws IOException If there is an error accessing the FDF information.
      */
     public static FDFAnnotation create(COSDictionary fdfDic) throws IOException
@@ -340,7 +345,8 @@ public abstract class FDFAnnotation implements COSObjectable
             {
                 retval = new FDFAnnotationFreeText(fdfDic);
             }
-            else if (FDFAnnotationFileAttachment.SUBTYPE.equals(fdfDic.getNameAsString(COSName.SUBTYPE)))
+            else if (FDFAnnotationFileAttachment.SUBTYPE.equals(fdfDic
+                    .getNameAsString(COSName.SUBTYPE)))
             {
                 retval = new FDFAnnotationFileAttachment(fdfDic);
             }
@@ -398,7 +404,8 @@ public abstract class FDFAnnotation implements COSObjectable
             }
             else
             {
-                Log.w("PdfBox-Android", "Unknown or unsupported annotation type '" + fdfDic.getNameAsString(COSName.SUBTYPE) + "'");
+                LOG.warn("Unknown or unsupported annotation type '"
+                        + fdfDic.getNameAsString(COSName.SUBTYPE) + "'");
             }
         }
         return retval;
@@ -423,7 +430,7 @@ public abstract class FDFAnnotation implements COSObjectable
     public Integer getPage()
     {
         Integer retval = null;
-        COSNumber page = (COSNumber)annot.getDictionaryObject(COSName.PAGE);
+        COSNumber page = (COSNumber) annot.getDictionaryObject(COSName.PAGE);
         if (page != null)
         {
             retval = page.intValue();
@@ -446,16 +453,16 @@ public abstract class FDFAnnotation implements COSObjectable
      *
      * @return The annotation color, or null if there is none.
      */
-    public AWTColor getColor()
+    public Color getColor()
     {
-        AWTColor retval = null;
+        Color retval = null;
         COSArray array = (COSArray) annot.getDictionaryObject(COSName.C);
         if (array != null)
         {
             float[] rgb = array.toFloatArray();
             if (rgb.length >= 3)
             {
-                retval = new AWTColor(rgb[0], rgb[1], rgb[2]);
+                retval = new Color(rgb[0], rgb[1], rgb[2]);
             }
         }
         return retval;
@@ -466,7 +473,7 @@ public abstract class FDFAnnotation implements COSObjectable
      *
      * @param c The annotation color.
      */
-    public final void setColor(AWTColor c)
+    public final void setColor(Color c)
     {
         COSArray color = null;
         if (c != null)
@@ -679,6 +686,26 @@ public abstract class FDFAnnotation implements COSObjectable
     }
 
     /**
+     * Get the LockedContents flag.
+     *
+     * @return The LockedContents flag.
+     */
+    public boolean isLockedContents()
+    {
+        return annot.getFlag(COSName.F, FLAG_LOCKED_CONTENTS);
+    }
+
+    /**
+     * Set the LockedContents flag.
+     * 
+     * @param lockedContents The new LockedContents flag.
+     */
+    public void setLockedContents(boolean lockedContents)
+    {
+        annot.setFlag(COSName.F, FLAG_LOCKED_CONTENTS, lockedContents);
+    }
+
+    /**
      * Set a unique name for an annotation.
      *
      * @param name The unique annotation name.
@@ -716,12 +743,11 @@ public abstract class FDFAnnotation implements COSObjectable
     public PDRectangle getRectangle()
     {
         PDRectangle retval = null;
-        COSArray rectArray = (COSArray)annot.getDictionaryObject(COSName.RECT);
+        COSArray rectArray = (COSArray) annot.getDictionaryObject(COSName.RECT);
         if (rectArray != null)
         {
             retval = new PDRectangle(rectArray);
         }
-
         return retval;
     }
 
@@ -769,6 +795,7 @@ public abstract class FDFAnnotation implements COSObjectable
      * The annotation create date.
      *
      * @return The date of the creation of the annotation date
+     *
      * @throws IOException If there is an error converting the string to a Calendar object.
      */
     public Calendar getCreationDate() throws IOException
@@ -829,7 +856,7 @@ public abstract class FDFAnnotation implements COSObjectable
 
     /**
      * The intent of the annotation.
-     *
+     * 
      * @param intent The annotation's intent.
      */
     public final void setIntent(String intent)
@@ -839,7 +866,7 @@ public abstract class FDFAnnotation implements COSObjectable
 
     /**
      * Get the intent of the annotation.
-     *
+     * 
      * @return The intent of the annotation.
      */
     public String getIntent()
@@ -871,6 +898,7 @@ public abstract class FDFAnnotation implements COSObjectable
      * This will set the border style dictionary, specifying the width and dash pattern used in drawing the annotation.
      *
      * @param bs the border style dictionary to set.
+     *
      */
     public final void setBorderStyle(PDBorderStyleDictionary bs)
     {
@@ -901,6 +929,7 @@ public abstract class FDFAnnotation implements COSObjectable
      * entry.
      *
      * @param be the border effect dictionary to set.
+     *
      */
     public final void setBorderEffect(PDBorderEffectDictionary be)
     {
@@ -946,7 +975,7 @@ public abstract class FDFAnnotation implements COSObjectable
         }
         else if (base instanceof COSStream)
         {
-            return ((COSStream)base).toTextString();
+            return ((COSStream) base).toTextString();
         }
         else
         {
@@ -956,44 +985,49 @@ public abstract class FDFAnnotation implements COSObjectable
 
     private String richContentsToString(Node node, boolean root)
     {
-        String retval = "";
-        XPath xpath = XPathFactory.newInstance().newXPath();
-        try
+        String subString = "";
+
+        NodeList nodelist = node.getChildNodes();
+        for (int i = 0; i < nodelist.getLength(); i++)
         {
-            NodeList nodelist = (NodeList) xpath.evaluate("*", node, XPathConstants.NODESET);
-            String subString = "";
-            if (nodelist.getLength() == 0)
+            Node child = nodelist.item(i);
+            if (child instanceof Element)
             {
-                subString = node.getFirstChild().getNodeValue();
+                subString += richContentsToString(child, false);
             }
-            for (int i = 0; i < nodelist.getLength(); i++)
+            else if (child instanceof CDATASection)
             {
-                Node child = nodelist.item(i);
-                if (child instanceof Element)
-                {
-                    subString += richContentsToString(child, false);
-                }
+            	subString += "<![CDATA[" + ((CDATASection) child).getData() + "]]>";
             }
-            NamedNodeMap attributes = node.getAttributes();
-            StringBuilder builder = new StringBuilder();
-            for (int i = 0; i < attributes.getLength(); i++)
+            else if (child instanceof Text)
             {
-                Node attribute = attributes.item(i);
-                builder.append(String.format(" %s=\"%s\"", attribute.getNodeName(),
-                    attribute.getNodeValue()));
+            	String cdata = ((Text) child).getData();
+            	if (cdata!=null)
+            	{
+            		cdata = cdata.replace("&", "&amp;").replace("<", "&lt;");
+            	}
+            	subString += cdata;
             }
-            if (root)
+        }
+        if (root)
+        {
+            return subString;
+        }
+
+        NamedNodeMap attributes = node.getAttributes();
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < attributes.getLength(); i++)
+        {
+            Node attribute = attributes.item(i);
+            String attributeNodeValue = attribute.getNodeValue();
+            if (attributeNodeValue!=null)
             {
-                return subString;
+            	attributeNodeValue = attributeNodeValue.replace("\"", "&quot;");
             }
-            retval = String.format("<%s%s>%s</%s>", node.getNodeName(), builder.toString(),
+            builder.append(String.format(" %s=\"%s\"", attribute.getNodeName(),
+                    attributeNodeValue));
+        }
+        return String.format("<%s%s>%s</%s>", node.getNodeName(), builder.toString(),
                 subString, node.getNodeName());
-        }
-        catch (XPathExpressionException e)
-        {
-            Log.d("PdfBox-Android",
-                "Error while evaluating XPath expression for richtext contents");
-        }
-        return retval;
     }
 }

@@ -25,7 +25,7 @@ class CIDRange
 
     private final char from;
 
-    private final char to;
+    private char to;
 
     private final int cid;
 
@@ -65,4 +65,24 @@ class CIDRange
         }
         return -1;
     }
+
+    /**
+     * Check if the given values represent a consecutive range of the given range. If so, extend the given range instead
+     * of creating a new one.
+     * 
+     * @param newFrom start value of the new range
+     * @param newTo end value of the new range
+     * @param newCid start CID value of the range
+     * @return true if the given range was extended
+     */
+    public boolean extend(char newFrom, char newTo, int newCid)
+    {
+        if ((newFrom == to + 1) && (newCid == cid + to - from + 1))
+        {
+            to = newTo;
+            return true;
+        }
+        return false;
+    }
+
 }

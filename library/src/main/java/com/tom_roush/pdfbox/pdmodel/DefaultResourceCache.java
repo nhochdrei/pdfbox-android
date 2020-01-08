@@ -17,6 +17,10 @@
 
 package com.tom_roush.pdfbox.pdmodel;
 
+import java.io.IOException;
+import java.lang.ref.SoftReference;
+import java.util.HashMap;
+import java.util.Map;
 import com.tom_roush.pdfbox.cos.COSObject;
 import com.tom_roush.pdfbox.pdmodel.documentinterchange.markedcontent.PDPropertyList;
 import com.tom_roush.pdfbox.pdmodel.font.PDFont;
@@ -25,11 +29,6 @@ import com.tom_roush.pdfbox.pdmodel.graphics.color.PDColorSpace;
 import com.tom_roush.pdfbox.pdmodel.graphics.pattern.PDAbstractPattern;
 import com.tom_roush.pdfbox.pdmodel.graphics.shading.PDShading;
 import com.tom_roush.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
-
-import java.io.IOException;
-import java.lang.ref.SoftReference;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * A resource cached based on SoftReference, retains resources until memory pressure causes them
@@ -40,25 +39,25 @@ import java.util.Map;
 public class DefaultResourceCache implements ResourceCache
 {
     private final Map<COSObject, SoftReference<PDFont>> fonts =
-        new HashMap<COSObject, SoftReference<PDFont>>();
-
+            new HashMap<COSObject, SoftReference<PDFont>>();
+    
     private final Map<COSObject, SoftReference<PDColorSpace>> colorSpaces =
-        new HashMap<COSObject, SoftReference<PDColorSpace>>();
+            new HashMap<COSObject, SoftReference<PDColorSpace>>();
 
     private final Map<COSObject, SoftReference<PDXObject>> xobjects =
-        new HashMap<COSObject, SoftReference<PDXObject>>();
+            new HashMap<COSObject, SoftReference<PDXObject>>();
 
     private final Map<COSObject, SoftReference<PDExtendedGraphicsState>> extGStates =
-        new HashMap<COSObject, SoftReference<PDExtendedGraphicsState>>();
+            new HashMap<COSObject, SoftReference<PDExtendedGraphicsState>>();
 
     private final Map<COSObject, SoftReference<PDShading>> shadings =
-        new HashMap<COSObject, SoftReference<PDShading>>();
+            new HashMap<COSObject, SoftReference<PDShading>>();
 
     private final Map<COSObject, SoftReference<PDAbstractPattern>> patterns =
-        new HashMap<COSObject, SoftReference<PDAbstractPattern>>();
+            new HashMap<COSObject, SoftReference<PDAbstractPattern>>();
 
     private final Map<COSObject, SoftReference<PDPropertyList>> properties =
-        new HashMap<COSObject, SoftReference<PDPropertyList>>();
+            new HashMap<COSObject, SoftReference<PDPropertyList>>();
 
     @Override
     public PDFont getFont(COSObject indirect) throws IOException
@@ -144,7 +143,7 @@ public class DefaultResourceCache implements ResourceCache
     {
         patterns.put(indirect, new SoftReference<PDAbstractPattern>(pattern));
     }
-
+    
     @Override
     public PDPropertyList getProperties(COSObject indirect)
     {

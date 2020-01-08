@@ -16,22 +16,22 @@
  */
 package com.tom_roush.pdfbox.pdmodel.common;
 
+import com.tom_roush.pdfbox.cos.COSArray;
+import com.tom_roush.pdfbox.cos.COSBase;
+import com.tom_roush.pdfbox.cos.COSDictionary;
+import com.tom_roush.pdfbox.cos.COSInteger;
+import com.tom_roush.pdfbox.cos.COSFloat;
+import com.tom_roush.pdfbox.cos.COSString;
+import com.tom_roush.pdfbox.cos.COSName;
+import com.tom_roush.pdfbox.cos.COSNull;
+import com.tom_roush.pdfbox.cos.COSNumber;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-
-import com.tom_roush.pdfbox.cos.COSArray;
-import com.tom_roush.pdfbox.cos.COSBase;
-import com.tom_roush.pdfbox.cos.COSDictionary;
-import com.tom_roush.pdfbox.cos.COSFloat;
-import com.tom_roush.pdfbox.cos.COSInteger;
-import com.tom_roush.pdfbox.cos.COSName;
-import com.tom_roush.pdfbox.cos.COSNull;
-import com.tom_roush.pdfbox.cos.COSNumber;
 import com.tom_roush.pdfbox.cos.COSObject;
-import com.tom_roush.pdfbox.cos.COSString;
 
 /**
  * This is an implementation of a List that will sync its contents to a COSArray.
@@ -67,6 +67,22 @@ public class COSArrayList<E> implements List<E>
         array = cosArray;
     }
 
+    /**
+     * This constructor is to be used if the array doesn't exist, but is to be created and added to
+     * the parent dictionary as soon as the first element is added to the array.
+     *
+     * @param dictionary The dictionary that holds the item, and will hold the array if an item is
+     * added.
+     * @param dictionaryKey The key into the dictionary to set the item.
+     */
+    public COSArrayList(COSDictionary dictionary, COSName dictionaryKey)
+    {
+        array = new COSArray();
+        actual = new ArrayList<E>();
+        parentDict = dictionary;
+        dictKey = dictionaryKey;
+    }
+    
     /**
      * This is a really special constructor.  Sometimes the PDF spec says
      * that a dictionary entry can either be a single item or an array of those
@@ -188,8 +204,12 @@ public class COSArrayList<E> implements List<E>
         int index = actual.indexOf( o );
         if( index >= 0 )
         {
-            actual.remove( index );
-            array.remove( index );
+            retval = actual.remove( o );
+
+            if (o instanceof COSObjectable) {
+                COSBase cosBase = ((COSObjectable) o).getCOSObject();
+                retval = array.remove(cosBase);
+            }
         }
         else
         {
@@ -242,7 +262,7 @@ public class COSArrayList<E> implements List<E>
             parentDict = null;
         }
 
-        array.addAll(index, toCOSObjectList(c));
+        array.addAll( index, toCOSObjectList( c ) );
         return actual.addAll( index, c );
     }
 
@@ -291,10 +311,18 @@ public class COSArrayList<E> implements List<E>
         List<Float> retval = null;
         if( floatArray != null )
         {
-            List<Float> numbers = new ArrayList<Float>();
+            List<Float> numbers = new ArrayList<Float>(floatArray.size());
             for( int i=0; i<floatArray.size(); i++ )
             {
-                numbers.add(((COSNumber)floatArray.getObject(i)).floatValue());
+                COSBase base = floatArray.getObject(i);
+                if (base instanceof COSNumber)
+                {
+                    numbers.add(((COSNumber) base).floatValue());
+                }
+                else
+                {
+                    numbers.add(null);
+                }
             }
             retval = new COSArrayList<Float>( numbers, floatArray );
         }
@@ -405,10 +433,8 @@ public class COSArrayList<E> implements List<E>
             else
             {
                 array = new COSArray();
-                Iterator<?> iter = cosObjectableList.iterator();
-                while( iter.hasNext() )
+                for (Object next : cosObjectableList)
                 {
-                    Object next = iter.next();
                     if( next instanceof String )
                     {
                         array.add( new COSString( (String)next ) );
@@ -432,8 +458,7 @@ public class COSArrayList<E> implements List<E>
                     }
                     else
                     {
-                        throw new IllegalArgumentException(
-                            "Error: Don't know how to convert type to COSBase '" +
+                        throw new IllegalArgumentException( "Error: Don't know how to convert type to COSBase '" +
                         next.getClass().getName() + "'" );
                     }
                 }
@@ -445,10 +470,8 @@ public class COSArrayList<E> implements List<E>
     private List<COSBase> toCOSObjectList( Collection<?> list )
     {
         List<COSBase> cosObjects = new ArrayList<COSBase>();
-        Iterator<?> iter = list.iterator();
-        while( iter.hasNext() )
+        for (Object next : list)
         {
-            Object next = iter.next();
             if( next instanceof String )
             {
                 cosObjects.add( new COSString( (String)next ) );
@@ -492,7 +515,7 @@ public class COSArrayList<E> implements List<E>
         //in the dictionary from a single item to an array.
         if( parentDict != null )
         {
-            parentDict.setItem(dictKey, null);
+            parentDict.setItem( dictKey, null );
         }
         actual.clear();
         array.clear();
@@ -584,8 +607,9 @@ public class COSArrayList<E> implements List<E>
     @Override
     public E remove(int index)
     {
-        array.remove(index);
-        return actual.remove( index );
+        E toBeRemoved = actual.get(index);
+        remove(toBeRemoved);
+        return toBeRemoved;
     }
 
     /**
@@ -603,8 +627,7 @@ public class COSArrayList<E> implements List<E>
     @Override
     public int lastIndexOf(Object o)
     {
-        return actual.indexOf( o );
-
+        return actual.lastIndexOf( o );
     }
 
     /**
@@ -644,10 +667,22 @@ public class COSArrayList<E> implements List<E>
     }
     
     /**
-     * This will return then underlying COSArray.
+     * This will return the underlying COSArray.
      * 
      * @return the COSArray
      */
+    public COSArray getCOSArray() 
+    {
+        return array;
+    }
+
+    /**
+     * This will return the underlying COSArray.
+     * 
+     * @deprecated use {@link #getCOSArray()} instead.
+     * @return the COSArray
+     */
+    @Deprecated
     public COSArray toList() 
     {
         return array;

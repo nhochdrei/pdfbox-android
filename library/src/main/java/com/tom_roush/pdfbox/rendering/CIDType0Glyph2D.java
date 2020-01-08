@@ -16,13 +16,12 @@
  */
 package com.tom_roush.pdfbox.rendering;
 
-import android.graphics.Path;
-import android.util.Log;
-
+import java.awt.geom.GeneralPath;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import com.tom_roush.pdfbox.pdmodel.font.PDCIDFontType0;
 
 /**
@@ -32,9 +31,12 @@ import com.tom_roush.pdfbox.pdmodel.font.PDCIDFontType0;
  */
 final class CIDType0Glyph2D implements Glyph2D
 {
-    private final Map<Integer, Path> cache = new HashMap<Integer, Path>();
+    private static final Log LOG = LogFactory.getLog(CIDType0Glyph2D.class);
+
+    private final Map<Integer, GeneralPath> cache = new HashMap<Integer, GeneralPath>();
     private final PDCIDFontType0 font;
     private final String fontName;
+
     /**
      * Constructor.
      *
@@ -45,32 +47,36 @@ final class CIDType0Glyph2D implements Glyph2D
         this.font = font;
         fontName = font.getBaseFont();
     }
+
     @Override
-    public Path getPathForCharacterCode(int code)
+    public GeneralPath getPathForCharacterCode(int code)
     {
-        if (cache.containsKey(code))
+        GeneralPath path = cache.get(code);
+        if (path == null)
         {
-            return cache.get(code);
-        }
-        try
-        {
-            if (!font.hasGlyph(code))
+            try
             {
-                int cid = font.getParent().codeToCID(code);
-                String cidHex = String.format("%04x", cid);
-                Log.w("PdfBox-Android", "No glyph for " + code + " (CID " + cidHex + ") in font " + fontName);
+                if (!font.hasGlyph(code))
+                {
+                    int cid = font.getParent().codeToCID(code);
+                    String cidHex = String.format("%04x", cid);
+                    LOG.warn("No glyph for " + code + " (CID " + cidHex + ") in font " + fontName);
+                }
+    
+                path = font.getPath(code);
+                cache.put(code, path);
+                return path;
             }
-            Path path = font.getPath(code);
-            cache.put(code, path);
-            return path;
+            catch (IOException e)
+            {
+                // todo: escalate this error?
+                LOG.error("Glyph rendering failed", e);
+                path = new GeneralPath();
+            }
         }
-        catch (IOException e)
-        {
-            // TODO: escalate this error?
-            Log.w("PdfBox-Android", "Glyph rendering failed", e);
-            return new Path();
-        }
+        return path;
     }
+
     @Override
     public void dispose()
     {

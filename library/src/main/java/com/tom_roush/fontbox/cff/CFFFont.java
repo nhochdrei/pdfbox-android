@@ -138,7 +138,7 @@ public abstract class CFFFont implements FontBoxFont
     {
         this.source = source;
     }
-
+    
     /**
      * Returns the CFF data.
      */
@@ -146,7 +146,7 @@ public abstract class CFFFont implements FontBoxFont
     {
         return source.getBytes();
     }
-
+    
     /**
      * Returns the number of charstrings in the font.
      */
@@ -157,8 +157,8 @@ public abstract class CFFFont implements FontBoxFont
 
     /**
      * Sets the global subroutine index data.
-     *
-     * @param globalSubrIndexValue a list containing the global subroutines
+     * 
+     * @param globalSubrIndexValue an list containing the global subroutines
      */
     void setGlobalSubrIndex(byte[][] globalSubrIndexValue)
     {
@@ -167,7 +167,7 @@ public abstract class CFFFont implements FontBoxFont
 
     /**
      * Returns the list containing the global subroutine .
-     *
+     * 
      * @return the dictionary
      */
     public List<byte[]> getGlobalSubrIndex()
@@ -186,8 +186,8 @@ public abstract class CFFFont implements FontBoxFont
     @Override
     public String toString()
     {
-        return getClass().getSimpleName() + "[name=" + fontName + ", topDict=" + topDict +
-            ", charset=" + charset + ", charStrings=" + Arrays.deepToString(charStrings)
+        return getClass().getSimpleName() + "[name=" + fontName + ", topDict=" + topDict
+                + ", charset=" + charset + ", charStrings=" + Arrays.deepToString(charStrings)
                 + "]";
     }
 }

@@ -18,9 +18,10 @@ package com.tom_roush.pdfbox.pdmodel.interactive.form;
 
 import java.util.ArrayDeque;
 import java.util.Iterator;
+import java.util.Queue;
+
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Queue;
 
 /**
  * The field tree.
@@ -58,7 +59,7 @@ public class PDFieldTree implements Iterable<PDField>
     private static final class FieldIterator implements Iterator<PDField>
     {
         private final Queue<PDField> queue = new ArrayDeque<PDField>();
-
+        
         private FieldIterator(PDAcroForm form)
         {
             List<PDField> fields = form.getFields();
@@ -77,11 +78,10 @@ public class PDFieldTree implements Iterable<PDField>
         @Override
         public PDField next()
         {
-            if (!hasNext())
-            {
+            if(!hasNext()){
                 throw new NoSuchElementException();
             }
-
+            
             return queue.poll();
         }
 
@@ -90,13 +90,13 @@ public class PDFieldTree implements Iterable<PDField>
         {
             throw new UnsupportedOperationException();
         }
-
+        
         private void enqueueKids(PDField node)
         {
             queue.add(node);
             if (node instanceof PDNonTerminalField)
             {
-                List<PDField> kids = ((PDNonTerminalField)node).getChildren();
+                List<PDField> kids = ((PDNonTerminalField) node).getChildren();
                 for (PDField kid : kids)
                 {
                     enqueueKids(kid);

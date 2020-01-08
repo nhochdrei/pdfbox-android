@@ -19,23 +19,23 @@ package com.tom_roush.fontbox.util.autodetect;
 
 /**
  * Mac font directory finder. This class is based on a class provided by Apache FOP. see
- * com.tom_roush.fop.fonts.autodetect.MacFontDirFinder
+ * org.apache.fop.fonts.autodetect.MacFontDirFinder
  */
 public class MacFontDirFinder extends NativeFontDirFinder
 {
 
     /**
      * Some guesses at possible unix font directory locations.
-     *
+     * 
      * @return a array of possible font directory locations
      */
     @Override
     protected String[] getSearchableDirectories()
     {
         return new String[] { System.getProperty("user.home") + "/Library/Fonts/", // user
-            "/Library/Fonts/", // local
-            "/System/Library/Fonts/", // system
-            "/Network/Library/Fonts/" // network
+                "/Library/Fonts/", // local
+                "/System/Library/Fonts/", // system
+                "/Network/Library/Fonts/" // network
         };
     }
 }

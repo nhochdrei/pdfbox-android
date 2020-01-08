@@ -16,6 +16,7 @@
  */
 package com.tom_roush.fontbox.util;
 
+
 import java.util.List;
 
 /**
@@ -194,4 +195,5 @@ public class BoundingBox
         return "[" + getLowerLeftX() + "," + getLowerLeftY() + "," +
                      getUpperRightX() + "," + getUpperRightY() +"]";
     }
+
 }

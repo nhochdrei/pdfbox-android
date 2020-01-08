@@ -16,8 +16,6 @@
  */
 package com.tom_roush.pdfbox.pdmodel.common.function;
 
-import java.io.IOException;
-
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.pdmodel.common.PDRange;
 import com.tom_roush.pdfbox.pdmodel.common.function.type4.ExecutionContext;
@@ -25,10 +23,13 @@ import com.tom_roush.pdfbox.pdmodel.common.function.type4.InstructionSequence;
 import com.tom_roush.pdfbox.pdmodel.common.function.type4.InstructionSequenceBuilder;
 import com.tom_roush.pdfbox.pdmodel.common.function.type4.Operators;
 
+import java.io.IOException;
+
 /**
  * This class represents a Type 4 (PostScript calculator) function in a PDF document.
  * <p>
  * See section 3.9.4 of the PDF 1.4 Reference.
+ *
  */
 public class PDFunctionType4 extends PDFunction
 {
@@ -47,10 +48,10 @@ public class PDFunctionType4 extends PDFunction
     {
         super( functionStream );
         byte[] bytes = getPDStream().toByteArray();
-        String string = new String(bytes, "ISO-8859-1");
+        String string =  new String(bytes, "ISO-8859-1");
         this.instructions = InstructionSequenceBuilder.parse(string);
     }
-
+    
     /**
      * {@inheritDoc}
      */

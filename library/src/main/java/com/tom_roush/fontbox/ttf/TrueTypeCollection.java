@@ -25,7 +25,7 @@ import java.io.InputStream;
 /**
  * A TrueType Collection, now more properly known as a "Font Collection" as it may contain either
  * TrueType or OpenType fonts.
- *
+ * 
  * @author John Hewson
  */
 public class TrueTypeCollection implements Closeable
@@ -87,12 +87,12 @@ public class TrueTypeCollection implements Closeable
             int ulDsigOffset = stream.readUnsignedShort();
         }
     }
-
+    
     /**
      * Run the callback for each TT font in the collection.
-     *
+     * 
      * @param trueTypeFontProcessor the object with the callback method.
-     * @throws IOException
+     * @throws IOException 
      */
     public void processAllFonts(TrueTypeFontProcessor trueTypeFontProcessor) throws IOException
     {
@@ -102,7 +102,7 @@ public class TrueTypeCollection implements Closeable
             trueTypeFontProcessor.process(font);
         }
     }
-
+    
     private TrueTypeFont getFontAtIndex(int idx) throws IOException
     {
         stream.seek(fontOffsets[idx]);
@@ -121,10 +121,10 @@ public class TrueTypeCollection implements Closeable
 
     /**
      * Get a TT font from a collection.
-     *
+     * 
      * @param name The postscript name of the font.
      * @return The found font, nor null if none is found.
-     * @throws IOException
+     * @throws IOException 
      */
     public TrueTypeFont getFontByName(String name) throws IOException
     {
@@ -146,7 +146,7 @@ public class TrueTypeCollection implements Closeable
     {
         void process(TrueTypeFont ttf) throws IOException;
     }
-
+    
     @Override
     public void close() throws IOException
     {

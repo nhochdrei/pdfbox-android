@@ -19,6 +19,7 @@ package com.tom_roush.fontbox.cff;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * This class represents a converter for a mapping into a Type2-sequence.
@@ -53,7 +54,7 @@ public class Type2CharStringParser
     public Type2CharStringParser(String fontName, int cid)
     {
         this.fontName = fontName;
-        this.glyphName = String.format("%04x", cid); // for debugging only
+        this.glyphName = String.format(Locale.US, "%04x", cid); // for debugging only
     }
 
     /**
@@ -65,14 +66,12 @@ public class Type2CharStringParser
      * @return the Type2 sequence
      * @throws IOException if an error occurs during reading
      */
-    public List<Object> parse(byte[] bytes, byte[][] globalSubrIndex, byte[][] localSubrIndex)
-        throws IOException
+    public List<Object> parse(byte[] bytes, byte[][] globalSubrIndex, byte[][] localSubrIndex) throws IOException
     {
         return parse(bytes, globalSubrIndex, localSubrIndex, true);
     }
-
-    private List<Object> parse(byte[] bytes, byte[][] globalSubrIndex, byte[][] localSubrIndex,
-        boolean init) throws IOException
+    
+    private List<Object> parse(byte[] bytes, byte[][] globalSubrIndex, byte[][] localSubrIndex, boolean init) throws IOException
     {
         if (init) 
         {
@@ -82,15 +81,14 @@ public class Type2CharStringParser
         }
         DataInput input = new DataInput(bytes);
         boolean localSubroutineIndexProvided = localSubrIndex != null && localSubrIndex.length > 0;
-        boolean globalSubroutineIndexProvided =
-            globalSubrIndex != null && globalSubrIndex.length > 0;
+        boolean globalSubroutineIndexProvided = globalSubrIndex != null && globalSubrIndex.length > 0;
 
         while (input.hasRemaining())
         {
             int b0 = input.readUnsignedByte();
             if (b0 == 10 && localSubroutineIndexProvided) 
             { // process subr command
-                Integer operand = (Integer)sequence.remove(sequence.size() - 1);
+                Integer operand=(Integer)sequence.remove(sequence.size()-1);
                 //get subrbias
                 int bias = 0;
                 int nSubrs = localSubrIndex.length;
@@ -124,7 +122,7 @@ public class Type2CharStringParser
             { // process globalsubr command
                 Integer operand=(Integer)sequence.remove(sequence.size()-1);
                 //get subrbias
-                int bias = 0;
+                int bias;
                 int nSubrs = globalSubrIndex.length;
                 
                 if (nSubrs < 1240)
@@ -211,12 +209,12 @@ public class Type2CharStringParser
         return new CharStringCommand(b0);
     }
 
-    private Integer readNumber(int b0, DataInput input) throws IOException
+    private Number readNumber(int b0, DataInput input) throws IOException
     {
 
         if (b0 == 28)
         {
-            return (int)input.readShort();
+            return (int) input.readShort();
         } 
         else if (b0 >= 32 && b0 <= 246)
         {
@@ -233,15 +231,13 @@ public class Type2CharStringParser
             int b1 = input.readUnsignedByte();
 
             return -(b0 - 251) * 256 - b1 - 108;
-        } 
+        }
         else if (b0 == 255)
         {
             short value = input.readShort();
-            // The lower bytes are representing the digits after 
-            // the decimal point and aren't needed in this context
-            input.readUnsignedByte();
-            input.readUnsignedByte();
-            return (int)value;
+            // The lower bytes are representing the digits after the decimal point
+            double fraction = input.readUnsignedShort() / 65535d;
+            return value + fraction;
         } 
         else
         {
@@ -252,7 +248,7 @@ public class Type2CharStringParser
     private int getMaskLength()
     {
         int hintCount = hstemCount + vstemCount;
-        int length = (int)(hintCount / 8);
+        int length = hintCount / 8; 
         if (hintCount % 8 > 0)
         {
             length++;
@@ -267,12 +263,11 @@ public class Type2CharStringParser
         {
             Object object = sequence.get(i);
 
-            if (object instanceof Number)
+            if (!(object instanceof Number))
             {
-                numbers.add(0, (Number) object);
-                continue;
+                return numbers;
             }
-            return numbers;
+            numbers.add(0, (Number) object);
         }
         return numbers;
     }

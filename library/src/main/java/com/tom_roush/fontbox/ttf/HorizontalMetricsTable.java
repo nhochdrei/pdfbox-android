@@ -20,7 +20,7 @@ import java.io.IOException;
 
 /**
  * A table in a true type font.
- *
+ * 
  * @author Ben Litchfield
  */
 public class HorizontalMetricsTable extends TTFTable
@@ -29,7 +29,7 @@ public class HorizontalMetricsTable extends TTFTable
      * A tag that identifies this table type.
      */
     public static final String TAG = "hmtx";
-
+    
     private int[] advanceWidth;
     private short[] leftSideBearing;
     private short[] nonHorizontalLeftSideBearing;
@@ -42,14 +42,18 @@ public class HorizontalMetricsTable extends TTFTable
 
     /**
      * This will read the required data from the stream.
-     *
+     * 
      * @param ttf The font that is being read.
      * @param data The stream to read the data from.
      * @throws IOException If there is an error reading the data.
      */
-    public void read(TrueTypeFont ttf, TTFDataStream data) throws IOException
+    void read(TrueTypeFont ttf, TTFDataStream data) throws IOException
     {
         HorizontalHeaderTable hHeader = ttf.getHorizontalHeader();
+        if (hHeader == null)
+        {
+            throw new IOException("Could not get hhea table");
+        }
         numHMetrics = hHeader.getNumberOfHMetrics();
         int numGlyphs = ttf.getNumberOfGlyphs();
 
@@ -63,17 +67,20 @@ public class HorizontalMetricsTable extends TTFTable
             bytesRead += 4;
         }
 
+        int numberNonHorizontal = numGlyphs - numHMetrics;
+
+        // handle bad fonts with too many hmetrics
+        if (numberNonHorizontal < 0)
+        {
+            numberNonHorizontal = numGlyphs;
+        }
+
+        // make sure that table is never null and correct size, even with bad fonts that have no
+        // "leftSideBearing" table although they should
+        nonHorizontalLeftSideBearing = new short[numberNonHorizontal];
+
         if (bytesRead < getLength())
         {
-            int numberNonHorizontal = numGlyphs - numHMetrics;
-
-            // handle bad fonts with too many hmetrics
-            if (numberNonHorizontal < 0)
-            {
-                numberNonHorizontal = numGlyphs;
-            }
-
-            nonHorizontalLeftSideBearing = new short[ numberNonHorizontal ];
             for( int i=0; i<numberNonHorizontal; i++ )
             {
                 if (bytesRead < getLength())
@@ -105,7 +112,7 @@ public class HorizontalMetricsTable extends TTFTable
             return advanceWidth[advanceWidth.length -1];
         }
     }
-
+    
     /**
      * Returns the left side bearing for the given GID.
      *
@@ -121,5 +128,5 @@ public class HorizontalMetricsTable extends TTFTable
         {
             return nonHorizontalLeftSideBearing[gid - numHMetrics];
         }
-    }
+   }
 }

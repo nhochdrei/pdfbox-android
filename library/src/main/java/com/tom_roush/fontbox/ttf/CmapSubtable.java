@@ -16,22 +16,27 @@
  */
 package com.tom_roush.fontbox.ttf;
 
-import android.util.Log;
-
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 /**
  * A "cmap" subtable.
- *
+ * 
  * @author Ben Litchfield
  */
-public class CmapSubtable
+public class CmapSubtable implements CmapLookup
 {
+    private static final Log LOG = LogFactory.getLog(CmapSubtable.class);
+
     private static final long LEAD_OFFSET = 0xD800 - (0x10000 >> 10);
     private static final long SURROGATE_OFFSET = 0x10000 - (0xD800 << 10) - 0xDC00;
 
@@ -39,15 +44,16 @@ public class CmapSubtable
     private int platformEncodingId;
     private long subTableOffset;
     private int[] glyphIdToCharacterCode;
-    private Map<Integer, Integer> characterCodeToGlyphId;
+    private final Map<Integer, List<Integer>> glyphIdToCharacterCodeMultiple = new HashMap<Integer, List<Integer>>();
+    private Map<Integer, Integer> characterCodeToGlyphId= new HashMap<Integer, Integer>();
 
     /**
      * This will read the required data from the stream.
-     *
+     * 
      * @param data The stream to read the data from.
      * @throws IOException If there is an error reading the data.
      */
-    public void initData(TTFDataStream data) throws IOException
+    void initData(TTFDataStream data) throws IOException
     {
         platformId = data.readUnsignedShort();
         platformEncodingId = data.readUnsignedShort();
@@ -56,13 +62,13 @@ public class CmapSubtable
 
     /**
      * This will read the required data from the stream.
-     *
+     * 
      * @param cmap the CMAP this encoding belongs to.
      * @param numGlyphs number of glyphs.
      * @param data The stream to read the data from.
      * @throws IOException If there is an error reading the data.
      */
-    public void initSubtable(CmapTable cmap, int numGlyphs, TTFDataStream data) throws IOException
+    void initSubtable(CmapTable cmap, int numGlyphs, TTFDataStream data) throws IOException
     {
         data.seek(cmap.getOffset() + subTableOffset);
         int subtableFormat = data.readUnsignedShort();
@@ -83,46 +89,46 @@ public class CmapSubtable
 
         switch (subtableFormat)
         {
-            case 0:
-                processSubtype0(data);
-                break;
-            case 2:
-                processSubtype2(data, numGlyphs);
-                break;
-            case 4:
-                processSubtype4(data, numGlyphs);
-                break;
-            case 6:
-                processSubtype6(data, numGlyphs);
-                break;
-            case 8:
-                processSubtype8(data, numGlyphs);
-                break;
-            case 10:
-                processSubtype10(data, numGlyphs);
-                break;
-            case 12:
-                processSubtype12(data, numGlyphs);
-                break;
-            case 13:
-                processSubtype13(data, numGlyphs);
-                break;
-            case 14:
-                processSubtype14(data, numGlyphs);
-                break;
-            default:
-                throw new IOException("Unknown cmap format:" + subtableFormat);
+        case 0:
+            processSubtype0(data);
+            break;
+        case 2:
+            processSubtype2(data, numGlyphs);
+            break;
+        case 4:
+            processSubtype4(data, numGlyphs);
+            break;
+        case 6:
+            processSubtype6(data, numGlyphs);
+            break;
+        case 8:
+            processSubtype8(data, numGlyphs);
+            break;
+        case 10:
+            processSubtype10(data, numGlyphs);
+            break;
+        case 12:
+            processSubtype12(data, numGlyphs);
+            break;
+        case 13:
+            processSubtype13(data, numGlyphs);
+            break;
+        case 14:
+            processSubtype14(data, numGlyphs);
+            break;
+        default:
+            throw new IOException("Unknown cmap format:" + subtableFormat);
         }
     }
 
     /**
      * Reads a format 8 subtable.
-     *
+     * 
      * @param data the data stream of the to be parsed ttf font
      * @param numGlyphs number of glyphs to be read
      * @throws IOException If there is an error parsing the true type font.
      */
-    protected void processSubtype8(TTFDataStream data, int numGlyphs) throws IOException
+    void processSubtype8(TTFDataStream data, int numGlyphs) throws IOException
     {
         // --- is32 is a 65536 BITS array ( = 8192 BYTES)
         int[] is32 = data.readUnsignedByteArray(8192);
@@ -136,6 +142,11 @@ public class CmapSubtable
 
         glyphIdToCharacterCode = newGlyphIdToCharacterCode(numGlyphs);
         characterCodeToGlyphId = new HashMap<Integer, Integer>(numGlyphs);
+        if (numGlyphs == 0)
+        {
+            LOG.warn("subtable has no glyphs");
+            return;
+        }
         // -- Read all sub header
         for (long i = 0; i < nbGroups; ++i)
         {
@@ -154,7 +165,11 @@ public class CmapSubtable
                 // -- Convert the Character code in decimal
                 if (j > Integer.MAX_VALUE)
                 {
-                    throw new IOException("[Sub Format 8] Invalid Character code");
+                    throw new IOException("[Sub Format 8] Invalid character code " + j);
+                }
+                if ((int) j / 8 >= is32.length)
+                {
+                    throw new IOException("[Sub Format 8] Invalid character code " + j);
                 }
 
                 int currentCharCode;
@@ -172,7 +187,7 @@ public class CmapSubtable
                     long codepoint = (lead << 10) + trail + SURROGATE_OFFSET;
                     if (codepoint > Integer.MAX_VALUE)
                     {
-                        throw new IOException("[Sub Format 8] Invalid Character code");
+                        throw new IOException("[Sub Format 8] Invalid character code " + codepoint);
                     }
                     currentCharCode = (int) codepoint;
                 }
@@ -191,12 +206,12 @@ public class CmapSubtable
 
     /**
      * Reads a format 10 subtable.
-     *
+     * 
      * @param data the data stream of the to be parsed ttf font
      * @param numGlyphs number of glyphs to be read
      * @throws IOException If there is an error parsing the true type font.
      */
-    protected void processSubtype10(TTFDataStream data, int numGlyphs) throws IOException
+    void processSubtype10(TTFDataStream data, int numGlyphs) throws IOException
     {
         long startCode = data.readUnsignedInt();
         long numChars = data.readUnsignedInt();
@@ -206,7 +221,7 @@ public class CmapSubtable
         }
 
         if (startCode < 0 || startCode > 0x0010FFFF || (startCode + numChars) > 0x0010FFFF
-            || ((startCode + numChars) >= 0x0000D800 && (startCode + numChars) <= 0x0000DFFF))
+                || ((startCode + numChars) >= 0x0000D800 && (startCode + numChars) <= 0x0000DFFF))
         {
             throw new IOException("Invalid Characters codes");
 
@@ -215,16 +230,21 @@ public class CmapSubtable
 
     /**
      * Reads a format 12 subtable.
-     *
+     * 
      * @param data the data stream of the to be parsed ttf font
      * @param numGlyphs number of glyphs to be read
      * @throws IOException If there is an error parsing the true type font.
      */
-    protected void processSubtype12(TTFDataStream data, int numGlyphs) throws IOException
+    void processSubtype12(TTFDataStream data, int numGlyphs) throws IOException
     {
         long nbGroups = data.readUnsignedInt();
         glyphIdToCharacterCode = newGlyphIdToCharacterCode(numGlyphs);
         characterCodeToGlyphId = new HashMap<Integer, Integer>(numGlyphs);
+        if (numGlyphs == 0)
+        {
+            LOG.warn("subtable has no glyphs");
+            return;
+        }
         for (long i = 0; i < nbGroups; ++i)
         {
             long firstCode = data.readUnsignedInt();
@@ -237,7 +257,8 @@ public class CmapSubtable
                 throw new IOException("Invalid characters codes");
             }
 
-            if (endCode > 0 && endCode < firstCode || endCode > 0x0010FFFF ||
+            if (endCode > 0 && endCode < firstCode ||
+                endCode > 0x0010FFFF ||
                 endCode >= 0x0000D800 && endCode <= 0x0000DFFF)
             {
                 throw new IOException("Invalid characters codes");
@@ -248,13 +269,13 @@ public class CmapSubtable
                 long glyphIndex = startGlyph + j;
                 if (glyphIndex >= numGlyphs)
                 {
-                    Log.w("PdfBox-Android", "Format 12 cmap contains an invalid glyph index");
+                    LOG.warn("Format 12 cmap contains an invalid glyph index");
                     break;
                 }
 
                 if (firstCode + j > 0x10FFFF)
                 {
-                    Log.w("PdfBox-Android", "Format 12 cmap contains character beyond UCS-4");
+                    LOG.warn("Format 12 cmap contains character beyond UCS-4");
                 }
 
                 glyphIdToCharacterCode[(int) glyphIndex] = (int) (firstCode + j);
@@ -265,15 +286,21 @@ public class CmapSubtable
 
     /**
      * Reads a format 13 subtable.
-     *
+     * 
      * @param data the data stream of the to be parsed ttf font
      * @param numGlyphs number of glyphs to be read
      * @throws IOException If there is an error parsing the true type font.
      */
-    protected void processSubtype13(TTFDataStream data, int numGlyphs) throws IOException
+    void processSubtype13(TTFDataStream data, int numGlyphs) throws IOException
     {
         long nbGroups = data.readUnsignedInt();
+        glyphIdToCharacterCode = newGlyphIdToCharacterCode(numGlyphs);
         characterCodeToGlyphId = new HashMap<Integer, Integer>(numGlyphs);
+        if (numGlyphs == 0)
+        {
+            LOG.warn("subtable has no glyphs");
+            return;
+        }
         for (long i = 0; i < nbGroups; ++i)
         {
             long firstCode = data.readUnsignedInt();
@@ -282,7 +309,7 @@ public class CmapSubtable
 
             if (glyphId > numGlyphs)
             {
-                Log.w("PdfBox-Android", "Format 13 cmap contains an invalid glyph index");
+                LOG.warn("Format 13 cmap contains an invalid glyph index");
                 break;
             }
 
@@ -292,7 +319,7 @@ public class CmapSubtable
             }
 
             if ((endCode > 0 && endCode < firstCode) || endCode > 0x0010FFFF
-                || (endCode >= 0x0000D800 && endCode <= 0x0000DFFF))
+                    || (endCode >= 0x0000D800 && endCode <= 0x0000DFFF))
             {
                 throw new IOException("Invalid Characters codes");
             }
@@ -306,7 +333,7 @@ public class CmapSubtable
 
                 if (firstCode + j > 0x10FFFF)
                 {
-                    Log.w("PdfBox-Android", "Format 13 cmap contains character beyond UCS-4");
+                    LOG.warn("Format 13 cmap contains character beyond UCS-4");
                 }
 
                 glyphIdToCharacterCode[(int) glyphId] = (int) (firstCode + j);
@@ -317,59 +344,53 @@ public class CmapSubtable
 
     /**
      * Reads a format 14 subtable.
-     *
+     * 
      * @param data the data stream of the to be parsed ttf font
      * @param numGlyphs number of glyphs to be read
      * @throws IOException If there is an error parsing the true type font.
      */
-    protected void processSubtype14(TTFDataStream data, int numGlyphs) throws IOException
+    void processSubtype14(TTFDataStream data, int numGlyphs) throws IOException
     {
         // Unicode Variation Sequences (UVS)
         // see http://blogs.adobe.com/CCJKType/2013/05/opentype-cmap-table-ramblings.html
-        Log.w("PdfBox-Android", "Format 14 cmap table is not supported and will be ignored");
+        LOG.warn("Format 14 cmap table is not supported and will be ignored");
     }
 
     /**
      * Reads a format 6 subtable.
-     *
+     * 
      * @param data the data stream of the to be parsed ttf font
      * @param numGlyphs number of glyphs to be read
      * @throws IOException If there is an error parsing the true type font.
      */
-    protected void processSubtype6(TTFDataStream data, int numGlyphs) throws IOException
+    void processSubtype6(TTFDataStream data, int numGlyphs) throws IOException
     {
         int firstCode = data.readUnsignedShort();
         int entryCount = data.readUnsignedShort();
-        // skip emtpy tables
+        // skip empty tables
         if (entryCount == 0)
         {
             return;
         }
-        Map<Integer, Integer> tmpGlyphToChar = new HashMap<Integer, Integer>(numGlyphs);
         characterCodeToGlyphId = new HashMap<Integer, Integer>(numGlyphs);
         int[] glyphIdArray = data.readUnsignedShortArray(entryCount);
+        int maxGlyphId = 0;
         for (int i = 0; i < entryCount; i++)
         {
-            tmpGlyphToChar.put(glyphIdArray[i], firstCode + i);
-            characterCodeToGlyphId.put((firstCode + i), glyphIdArray[i]);
+            maxGlyphId = Math.max(maxGlyphId, glyphIdArray[i]);
+            characterCodeToGlyphId.put(firstCode + i, glyphIdArray[i]);
         }
-        glyphIdToCharacterCode = newGlyphIdToCharacterCode(
-            Collections.max(tmpGlyphToChar.keySet()) + 1);
-        for (Entry<Integer, Integer> entry : tmpGlyphToChar.entrySet())
-        {
-            // link the glyphId with the right character code
-            glyphIdToCharacterCode[entry.getKey()] = entry.getValue();
-        }
+        buildGlyphIdToCharacterCodeLookup(maxGlyphId);
     }
 
     /**
      * Reads a format 4 subtable.
-     *
+     * 
      * @param data the data stream of the to be parsed ttf font
      * @param numGlyphs number of glyphs to be read
      * @throws IOException If there is an error parsing the true type font.
      */
-    protected void processSubtype4(TTFDataStream data, int numGlyphs) throws IOException
+    void processSubtype4(TTFDataStream data, int numGlyphs) throws IOException
     {
         int segCountX2 = data.readUnsignedShort();
         int segCount = segCountX2 / 2;
@@ -380,12 +401,11 @@ public class CmapSubtable
         int reservedPad = data.readUnsignedShort();
         int[] startCount = data.readUnsignedShortArray(segCount);
         int[] idDelta = data.readUnsignedShortArray(segCount);
+        long idRangeOffsetPosition = data.getCurrentPosition();
         int[] idRangeOffset = data.readUnsignedShortArray(segCount);
 
-        Map<Integer, Integer> tmpGlyphToChar = new HashMap<Integer, Integer>(numGlyphs);
         characterCodeToGlyphId = new HashMap<Integer, Integer>(numGlyphs);
-
-        long currentPosition = data.getCurrentPosition();
+        int maxGlyphId = 0;
 
         for (int i = 0; i < segCount; i++)
         {
@@ -393,32 +413,27 @@ public class CmapSubtable
             int end = endCount[i];
             int delta = idDelta[i];
             int rangeOffset = idRangeOffset[i];
+            long segmentRangeOffset = idRangeOffsetPosition + (i * 2) + rangeOffset;
             if (start != 65535 && end != 65535)
             {
                 for (int j = start; j <= end; j++)
                 {
                     if (rangeOffset == 0)
                     {
-                        int glyphid = (j + delta) % 65536;
-                        tmpGlyphToChar.put(glyphid, j);
+                        int glyphid = (j + delta) & 0xFFFF;
+                        maxGlyphId = Math.max(glyphid, maxGlyphId);
                         characterCodeToGlyphId.put(j, glyphid);
                     }
                     else
                     {
-                        long glyphOffset = currentPosition + ((rangeOffset / 2) +
-                            (j - start) +
-                            (i - segCount)) * 2;
+                        long glyphOffset = segmentRangeOffset + ((j - start) * 2);
                         data.seek(glyphOffset);
                         int glyphIndex = data.readUnsignedShort();
                         if (glyphIndex != 0)
                         {
-                            glyphIndex += delta;
-                            glyphIndex %= 65536;
-                            if (!tmpGlyphToChar.containsKey(glyphIndex))
-                            {
-                                tmpGlyphToChar.put(glyphIndex, j);
-                                characterCodeToGlyphId.put(j, glyphIndex);
-                            }
+                            glyphIndex = (glyphIndex + delta) & 0xFFFF;
+                            maxGlyphId = Math.max(glyphIndex, maxGlyphId);
+                            characterCodeToGlyphId.put(j, glyphIndex);
                         }
                     }
                 }
@@ -429,27 +444,49 @@ public class CmapSubtable
          * this is the final result key=glyphId, value is character codes Create an array that contains MAX(GlyphIds)
          * element, or -1
          */
-        if (tmpGlyphToChar.isEmpty())
+        if (characterCodeToGlyphId.isEmpty())
         {
-            Log.w("PdfBox-Android", "cmap format 4 subtable is empty");
+            LOG.warn("cmap format 4 subtable is empty");
             return;
         }
-        glyphIdToCharacterCode = newGlyphIdToCharacterCode(Collections.max(tmpGlyphToChar.keySet()) + 1);
-        for (Entry<Integer, Integer> entry : tmpGlyphToChar.entrySet())
+        buildGlyphIdToCharacterCodeLookup(maxGlyphId);
+    }
+
+    private void buildGlyphIdToCharacterCodeLookup(int maxGlyphId)
+    {
+        glyphIdToCharacterCode = newGlyphIdToCharacterCode(maxGlyphId + 1);
+        for (Entry<Integer, Integer> entry : characterCodeToGlyphId.entrySet())
         {
-            // link the glyphId with the right character code
-            glyphIdToCharacterCode[entry.getKey()] = entry.getValue();
+            if (glyphIdToCharacterCode[entry.getValue()] == -1)
+            {
+                // add new value to the array
+                glyphIdToCharacterCode[entry.getValue()] = entry.getKey();
+            }
+            else
+            {
+                // there is already a mapping for the given glyphId
+                List<Integer> mappedValues = glyphIdToCharacterCodeMultiple.get(entry.getValue());
+                if (mappedValues == null)
+                {
+                    mappedValues = new ArrayList<Integer>();
+                    glyphIdToCharacterCodeMultiple.put(entry.getValue(), mappedValues);
+                    mappedValues.add(glyphIdToCharacterCode[entry.getValue()]);
+                    // mark value as multiple mapping
+                    glyphIdToCharacterCode[entry.getValue()] = Integer.MIN_VALUE;
+                }
+                mappedValues.add(entry.getKey());
+            }
         }
     }
 
     /**
      * Read a format 2 subtable.
-     *
+     * 
      * @param data the data stream of the to be parsed ttf font
      * @param numGlyphs number of glyphs to be read
      * @throws IOException If there is an error parsing the true type font.
      */
-    protected void processSubtype2(TTFDataStream data, int numGlyphs) throws IOException
+    void processSubtype2(TTFDataStream data, int numGlyphs) throws IOException
     {
         int[] subHeaderKeys = new int[256];
         // ---- keep the Max Index of the SubHeader array to know its length
@@ -473,6 +510,11 @@ public class CmapSubtable
         long startGlyphIndexOffset = data.getCurrentPosition();
         glyphIdToCharacterCode = newGlyphIdToCharacterCode(numGlyphs);
         characterCodeToGlyphId = new HashMap<Integer, Integer>(numGlyphs);
+        if (numGlyphs == 0)
+        {
+            LOG.warn("subtable has no glyphs");
+            return;
+        }
         for (int i = 0; i <= maxSubHeaderIndex; ++i)
         {
             SubHeader sh = subHeaders[i];
@@ -496,15 +538,18 @@ public class CmapSubtable
                 if (p > 0)
                 {
                     p = (p + idDelta) % 65536;
+                    if (p < 0)
+                    {
+                        p += 65536;
+                    }
                 }
+                
                 if (p >= numGlyphs)
                 {
-                    Log.w("PdfBox-Android",
-                        "glyphId " + p + " for charcode " + charCode + " ignored, numGlyphs is " +
-                            numGlyphs);
+                    LOG.warn("glyphId " + p + " for charcode " + charCode + " ignored, numGlyphs is " + numGlyphs);
                     continue;
                 }
-
+                
                 glyphIdToCharacterCode[p] = charCode;
                 characterCodeToGlyphId.put(charCode, p);
             }
@@ -513,18 +558,18 @@ public class CmapSubtable
 
     /**
      * Initialize the CMapEntry when it is a subtype 0.
-     *
+     * 
      * @param data the data stream of the to be parsed ttf font
      * @throws IOException If there is an error parsing the true type font.
      */
-    protected void processSubtype0(TTFDataStream data) throws IOException
+    void processSubtype0(TTFDataStream data) throws IOException
     {
         byte[] glyphMapping = data.read(256);
         glyphIdToCharacterCode = newGlyphIdToCharacterCode(256);
         characterCodeToGlyphId = new HashMap<Integer, Integer>(glyphMapping.length);
         for (int i = 0; i < glyphMapping.length; i++)
         {
-            int glyphIndex = (glyphMapping[i] + 256) % 256;
+            int glyphIndex = glyphMapping[i] & 0xFF;
             glyphIdToCharacterCode[glyphIndex] = i;
             characterCodeToGlyphId.put(i, glyphIndex);
         }
@@ -579,6 +624,7 @@ public class CmapSubtable
      * @param characterCode the given character code to be mapped
      * @return glyphId the corresponding glyph id for the given character code
      */
+    @Override
     public int getGlyphId(int characterCode)
     {
         Integer glyphId = characterCodeToGlyphId.get(characterCode);
@@ -590,22 +636,71 @@ public class CmapSubtable
      *
      * @param gid glyph id
      * @return character code
+     * 
+     * @deprecated the mapping may be ambiguous, see {@link #getCharCodes(int)}. The first mapped value is returned by
+     * default.
      */
     public Integer getCharacterCode(int gid)
     {
-        if (gid < 0 || gid >= glyphIdToCharacterCode.length)
-        {
-            return null;
-        }
-
-        // workaround for the fact that glyphIdToCharacterCode doesn't distinguish between
-        // missing character codes and code 0.
-        int code = glyphIdToCharacterCode[gid];
+        int code = getCharCode(gid);
         if (code == -1)
         {
             return null;
         }
+        // ambiguous mapping
+        if (code == Integer.MIN_VALUE)
+        {
+            List<Integer> mappedValues = glyphIdToCharacterCodeMultiple.get(gid);
+            if (mappedValues != null)
+            {
+                // use the first mapping
+                return mappedValues.get(0);
+            }
+        }
         return code;
+    }
+
+    private int getCharCode(int gid)
+    {
+        if (gid < 0 || gid >= glyphIdToCharacterCode.length)
+        {
+            return -1;
+        }
+        return glyphIdToCharacterCode[gid];
+    }
+
+    /**
+     * Returns all possible character codes for the given gid, or null if there is none.
+     *
+     * @param gid glyph id
+     * @return a list with all character codes the given gid maps to
+     * 
+     */
+    @Override
+    public List<Integer> getCharCodes(int gid)
+    {
+        int code = getCharCode(gid);
+        if (code == -1)
+        {
+            return null;
+        }
+        List<Integer> codes = null;
+        if (code == Integer.MIN_VALUE)
+        {
+            List<Integer> mappedValues = glyphIdToCharacterCodeMultiple.get(gid);
+            if (mappedValues != null)
+            {
+                codes = new ArrayList<Integer>(mappedValues);
+                // sort the list to provide a reliable order
+                Collections.sort(codes);
+            }
+        }
+        else
+        {
+            codes = new ArrayList<Integer>(1);
+            codes.add(code);
+        }
+        return codes;
     }
 
     @Override
@@ -615,11 +710,11 @@ public class CmapSubtable
     }
 
     /**
-     *
+     * 
      * Class used to manage CMap - Format 2.
-     *
+     * 
      */
-    private class SubHeader
+    private static class SubHeader
     {
         private final int firstCode;
         private final int entryCount;

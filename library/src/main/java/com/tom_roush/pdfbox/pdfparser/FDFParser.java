@@ -16,12 +16,12 @@
  */
 package com.tom_roush.pdfbox.pdfparser;
 
-import android.util.Log;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSDocument;
@@ -32,6 +32,8 @@ import com.tom_roush.pdfbox.io.RandomAccessFile;
 
 public class FDFParser extends COSParser
 {
+    private static final Log LOG = LogFactory.getLog(FDFParser.class);
+
     /**
      * Constructs parser for given file using memory buffer.
      * 
@@ -72,7 +74,19 @@ public class FDFParser extends COSParser
         init();
     }
 
-    private void init() throws IOException
+    /**
+     * Tell if the dictionary is a FDF catalog.
+     *
+     * @param dictionary
+     * @return
+     */
+    @Override
+    protected final boolean isCatalog(COSDictionary dictionary)
+    {
+        return dictionary.containsKey(COSName.FDF);
+    }
+
+    private void init()
     {
         String eofLookupRangeStr = System.getProperty(SYSPROP_EOFLOOKUPRANGE);
         if (eofLookupRangeStr != null)
@@ -83,8 +97,8 @@ public class FDFParser extends COSParser
             }
             catch (NumberFormatException nfe)
             {
-            	Log.w("PdfBox-Android", "System property " + SYSPROP_EOFLOOKUPRANGE
-            			+ " does not contain an integer value, but: '" + eofLookupRangeStr + "'");
+                LOG.warn("System property " + SYSPROP_EOFLOOKUPRANGE
+                        + " does not contain an integer value, but: '" + eofLookupRangeStr + "'");
             }
         }
         document = new COSDocument();
@@ -100,13 +114,32 @@ public class FDFParser extends COSParser
     private void initialParse() throws IOException
     {
         COSDictionary trailer = null;
-        // parse startxref
-        long startXRefOffset = getStartxrefOffset();
-        if (startXRefOffset > 0)
+        boolean rebuildTrailer = false;
+        try
         {
-            trailer = parseXref(startXRefOffset);
+            // parse startxref
+            long startXRefOffset = getStartxrefOffset();
+            if (startXRefOffset > 0)
+            {
+                trailer = parseXref(startXRefOffset);
+            }
+            else if (isLenient())
+            {
+                rebuildTrailer = true;
+            }
         }
-        else
+        catch (IOException exception)
+        {
+            if (isLenient())
+            {
+                rebuildTrailer = true;
+            }
+            else
+            {
+                throw exception;
+            }
+        }
+        if (rebuildTrailer)
         {
             trailer = rebuildTrailer();
         }

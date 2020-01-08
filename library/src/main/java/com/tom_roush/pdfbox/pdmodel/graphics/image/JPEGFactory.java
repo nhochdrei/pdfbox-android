@@ -16,27 +16,46 @@
  */
 package com.tom_roush.pdfbox.pdmodel.graphics.image;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-
+import java.awt.Transparency;
+import java.awt.color.ColorSpace;
+import java.awt.color.ICC_ColorSpace;
+import java.awt.image.BufferedImage;
+import java.awt.image.ColorConvertOp;
+import java.awt.image.Raster;
+import java.awt.image.WritableRaster;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
+import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Iterator;
+import javax.imageio.IIOImage;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.metadata.IIOMetadata;
+import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
+import javax.imageio.stream.ImageInputStream;
+import javax.imageio.stream.ImageOutputStream;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 
-import com.tom_roush.pdfbox.cos.COSDictionary;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import com.tom_roush.pdfbox.cos.COSArray;
+import com.tom_roush.pdfbox.cos.COSInteger;
 import com.tom_roush.pdfbox.cos.COSName;
-import com.tom_roush.pdfbox.filter.Filter;
-import com.tom_roush.pdfbox.filter.FilterFactory;
+import com.tom_roush.pdfbox.filter.MissingImageReaderException;
 import com.tom_roush.pdfbox.io.IOUtils;
 import com.tom_roush.pdfbox.pdmodel.PDDocument;
 import com.tom_roush.pdfbox.pdmodel.graphics.color.PDColorSpace;
+import com.tom_roush.pdfbox.pdmodel.graphics.color.PDDeviceCMYK;
 import com.tom_roush.pdfbox.pdmodel.graphics.color.PDDeviceGray;
 import com.tom_roush.pdfbox.pdmodel.graphics.color.PDDeviceRGB;
+import org.w3c.dom.Element;
 
 /**
  * Factory for creating a PDImageXObject containing a JPEG compressed image.
@@ -44,307 +63,421 @@ import com.tom_roush.pdfbox.pdmodel.graphics.color.PDDeviceRGB;
  */
 public final class JPEGFactory
 {
+    private static final Log LOG = LogFactory.getLog(JPEGFactory.class);
+
     private JPEGFactory()
     {
     }
 
     /**
      * Creates a new JPEG Image XObject from an input stream containing JPEG data.
-     *
+     * 
      * The input stream data will be preserved and embedded in the PDF file without modification.
      * @param document the document where the image will be created
      * @param stream a stream of JPEG data
      * @return a new Image XObject
-     *
+     * 
      * @throws IOException if the input stream cannot be read
      */
     public static PDImageXObject createFromStream(PDDocument document, InputStream stream)
-        throws IOException
+            throws IOException
+    {
+        return createFromByteArray(document, IOUtils.toByteArray(stream));
+    }
+
+    /**
+     * Creates a new JPEG Image XObject from a byte array containing JPEG data.
+     *
+     * @param document the document where the image will be created
+     * @param byteArray bytes of JPEG image
+     * @return a new Image XObject
+     *
+     * @throws IOException if the input stream cannot be read
+     */
+    public static PDImageXObject createFromByteArray(PDDocument document, byte[] byteArray)
+            throws IOException
     {
         // copy stream
-        ByteArrayInputStream byteStream = new ByteArrayInputStream(IOUtils.toByteArray(stream));
+        ByteArrayInputStream byteStream = new ByteArrayInputStream(byteArray);
 
-        // read image
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-        BitmapFactory.decodeStream(byteStream, null, options);
-        byteStream.reset();
+        Dimensions meta = retrieveDimensions(byteStream);
 
-        // create Image XObject from stream
-        PDImageXObject pdImage = new PDImageXObject(document, byteStream,
-            COSName.DCT_DECODE, options.outWidth, options.outHeight,
-            8, //awtImage.getColorModel().getComponentSize(0),
-            PDDeviceRGB.INSTANCE //getColorSpaceFromAWT(awtImage)); // TODO: PdfBox-Android
-        );
+        PDColorSpace colorSpace;
+        switch (meta.numComponents)
+        {
+            case 1:
+                colorSpace = PDDeviceGray.INSTANCE;
+                break;
+            case 3:
+                colorSpace = PDDeviceRGB.INSTANCE;
+                break;
+            case 4:
+                colorSpace = PDDeviceCMYK.INSTANCE;
+                break;
+            default:
+                throw new UnsupportedOperationException("number of data elements not supported: " +
+                        meta.numComponents);
+        }
+
+        // create PDImageXObject from stream
+        PDImageXObject pdImage = new PDImageXObject(document, byteStream, 
+                COSName.DCT_DECODE, meta.width, meta.height, 8, colorSpace);
+
+        if (colorSpace instanceof PDDeviceCMYK)
+        {
+            COSArray decode = new COSArray();
+            decode.add(COSInteger.ONE);
+            decode.add(COSInteger.ZERO);
+            decode.add(COSInteger.ONE);
+            decode.add(COSInteger.ZERO);
+            decode.add(COSInteger.ONE);
+            decode.add(COSInteger.ZERO);
+            decode.add(COSInteger.ONE);
+            decode.add(COSInteger.ZERO);
+            pdImage.setDecode(decode);
+        }
 
         return pdImage;
     }
 
+    private static class Dimensions
+    {
+        private int width;
+        private int height;
+        private int numComponents;
+    }
+
+    private static Dimensions retrieveDimensions(ByteArrayInputStream stream) throws IOException
+    {
+        // find suitable image reader
+        Iterator<ImageReader> readers = ImageIO.getImageReadersByFormatName("JPEG");
+        ImageReader reader = null;
+        while (readers.hasNext())
+        {
+            reader = readers.next();
+            if (reader.canReadRaster())
+            {
+                break;
+            }
+        }
+
+        if (reader == null)
+        {
+            throw new MissingImageReaderException(
+                    "Cannot read JPEG image: a suitable JAI I/O image filter is not installed");
+        }
+
+        ImageInputStream iis = null;
+        try
+        {
+            iis = ImageIO.createImageInputStream(stream);
+            reader.setInput(iis);
+
+            Dimensions meta = new Dimensions();
+            meta.width = reader.getWidth(0);
+            meta.height = reader.getHeight(0);
+            // PDFBOX-4691: get from image metadata (faster because no decoding)
+            try
+            {
+                meta.numComponents = getNumComponentsFromImageMetadata(reader);
+                if (meta.numComponents != 0)
+                {
+                    return meta;
+                }
+                LOG.warn("No image metadata, will decode image and use raster size");
+            }
+            catch (IOException ex)
+            {
+                LOG.warn("Error reading image metadata, will decode image and use raster size", ex);
+            }            
+
+            // Old method: get from raster (slower)
+            ImageIO.setUseCache(false);
+            Raster raster = reader.readRaster(0, null);
+            meta.numComponents = raster.getNumDataElements();
+            return meta;
+        }
+        finally
+        {
+            if (iis != null)
+            {
+                iis.close();
+            }
+            stream.reset();
+            reader.dispose();
+        }
+    }
+
+    private static int getNumComponentsFromImageMetadata(ImageReader reader) throws IOException
+    {
+        IIOMetadata imageMetadata = reader.getImageMetadata(0);
+        if (imageMetadata == null)
+        {
+            return 0;
+        }
+        Element root = (Element) imageMetadata.getAsTree("javax_imageio_jpeg_image_1.0");
+        if (root == null)
+        {
+            return 0;
+        }
+
+        try
+        {
+            XPath xpath = XPathFactory.newInstance().newXPath();
+            String numScanComponents = xpath.evaluate("markerSequence/sos/@numScanComponents", root);
+            if (numScanComponents.isEmpty())
+            {
+                return 0;
+            }
+            return Integer.parseInt(numScanComponents);
+        }
+        catch (NumberFormatException ex)
+        {
+            LOG.warn(ex.getMessage(), ex);
+            return 0;
+        }
+        catch (XPathExpressionException ex)
+        {
+            LOG.warn(ex.getMessage(), ex);
+            return 0;
+        }
+    }
+
     /**
-     * Creates a new JPEG Image XObject from a Buffered Image.
+     * Creates a new JPEG PDImageXObject from a BufferedImage.
+     * <p>
+     * Do not read a JPEG image from a stream/file and call this method; you'll get more speed and
+     * quality by calling {@link #createFromStream(com.tom_roush.pdfbox.pdmodel.PDDocument,
+     * java.io.InputStream) createFromStream()} instead.
+     *
      * @param document the document where the image will be created
-     * @param image the buffered image to embed
+     * @param image the BufferedImage to embed
      * @return a new Image XObject
      * @throws IOException if the JPEG data cannot be written
      */
-    public static PDImageXObject createFromImage(PDDocument document, Bitmap image)
+    public static PDImageXObject createFromImage(PDDocument document, BufferedImage image)
         throws IOException
     {
         return createFromImage(document, image, 0.75f);
     }
 
     /**
-     * Creates a new JPEG Image XObject from a Buffered Image and a given quality.
-     * The image will be created at 72 DPI.
+     * Creates a new JPEG PDImageXObject from a BufferedImage and a given quality.
+     * <p>
+     * Do not read a JPEG image from a stream/file and call this method; you'll get more speed and
+     * quality by calling {@link #createFromStream(com.tom_roush.pdfbox.pdmodel.PDDocument,
+     * java.io.InputStream) createFromStream()} instead.
+     * 
+     * The image will be created with a dpi value of 72 to be stored in metadata.
      * @param document the document where the image will be created
-     * @param image the buffered image to embed
-     * @param quality the desired JPEG compression quality
+     * @param image the BufferedImage to embed
+     * @param quality The desired JPEG compression quality; between 0 (best
+     * compression) and 1 (best image quality). See
+     * {@link ImageWriteParam#setCompressionQuality(float)} for more details.
      * @return a new Image XObject
      * @throws IOException if the JPEG data cannot be written
      */
-    public static PDImageXObject createFromImage(PDDocument document, Bitmap image,
-        float quality) throws IOException
+    public static PDImageXObject createFromImage(PDDocument document, BufferedImage image,
+                                                 float quality) throws IOException
     {
         return createFromImage(document, image, quality, 72);
     }
 
     /**
-     * Creates a new JPEG Image XObject from a Buffered Image, a given quality and DPI.
+     * Creates a new JPEG Image XObject from a BufferedImage, a given quality and dpi metadata.
+     * <p>
+     * Do not read a JPEG image from a stream/file and call this method; you'll get more speed and
+     * quality by calling {@link #createFromStream(com.tom_roush.pdfbox.pdmodel.PDDocument,
+     * java.io.InputStream) createFromStream()} instead.
+     * 
      * @param document the document where the image will be created
-     * @param image the buffered image to embed
-     * @param quality the desired JPEG compression quality
-     * @param dpi the desired DPI (resolution) of the JPEG
+     * @param image the BufferedImage to embed
+     * @param quality The desired JPEG compression quality; between 0 (best
+     * compression) and 1 (best image quality). See
+     * {@link ImageWriteParam#setCompressionQuality(float)} for more details.
+     * @param dpi the desired dpi (resolution) value of the JPEG to be stored in metadata. This
+     * value has no influence on image content or size.
      * @return a new Image XObject
      * @throws IOException if the JPEG data cannot be written
      */
-    public static PDImageXObject createFromImage(PDDocument document, Bitmap image,
-        float quality, int dpi) throws IOException
+    public static PDImageXObject createFromImage(PDDocument document, BufferedImage image,
+                                                 float quality, int dpi) throws IOException
     {
         return createJPEG(document, image, quality, dpi);
     }
-
+    
     // returns the alpha channel of an image
-    private static Bitmap getAlphaImage(Bitmap image) throws IOException
+    private static BufferedImage getAlphaImage(BufferedImage image)
     {
-        if (!image.hasAlpha())
+        if (!image.getColorModel().hasAlpha())
         {
             return null;
         }
-        return image.extractAlpha();
+        if (image.getTransparency() == Transparency.BITMASK)
+        {
+            throw new UnsupportedOperationException("BITMASK Transparency JPEG compression is not" +
+                    " useful, use LosslessImageFactory instead");
+        }
+        WritableRaster alphaRaster = image.getAlphaRaster();
+        if (alphaRaster == null)
+        {
+            // happens sometimes (PDFBOX-2654) despite colormodel claiming to have alpha
+            return null;
+        }
+        BufferedImage alphaImage = new BufferedImage(image.getWidth(), image.getHeight(),
+                BufferedImage.TYPE_BYTE_GRAY);
+        alphaImage.setData(alphaRaster);
+        return alphaImage;
     }
-
-    // Creates an Image XObject from a Buffered Image using JAI Image I/O
-    private static PDImageXObject createJPEG(PDDocument document, Bitmap image,
-        float quality, int dpi) throws IOException
+    
+    // Creates an Image XObject from a BufferedImage using JAI Image I/O
+    private static PDImageXObject createJPEG(PDDocument document, BufferedImage image,
+                                             float quality, int dpi) throws IOException
     {
+        // extract alpha channel (if any)
+        BufferedImage awtColorImage = getColorImage(image);
+        BufferedImage awtAlphaImage = getAlphaImage(image);
+
         // create XObject
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        encodeImageToJPEGStream(image, quality, dpi, baos);
+        encodeImageToJPEGStream(awtColorImage, quality, dpi, baos);
         ByteArrayInputStream byteStream = new ByteArrayInputStream(baos.toByteArray());
-
-        PDImageXObject pdImage = new PDImageXObject(document, byteStream,
-            COSName.DCT_DECODE, image.getWidth(), image.getHeight(),
-            8,
-            PDDeviceRGB.INSTANCE
-        );
+        
+        PDImageXObject pdImage = new PDImageXObject(document, byteStream, 
+                COSName.DCT_DECODE, awtColorImage.getWidth(), awtColorImage.getHeight(), 
+                8,
+                getColorSpaceFromAWT(awtColorImage));
 
         // alpha -> soft mask
-        if (image.hasAlpha())
+        if (awtAlphaImage != null)
         {
-            PDImage xAlpha = createAlphaFromARGBImage(document, image);
+            PDImage xAlpha = JPEGFactory.createFromImage(document, awtAlphaImage, quality);
             pdImage.getCOSObject().setItem(COSName.SMASK, xAlpha);
         }
 
         return pdImage;
     }
 
-    // createAlphaFromARGBImage and prepareImageXObject taken from LosslessFactory
-    /**
-     * Creates a grayscale Flate encoded PDImageXObject from the alpha channel
-     * of an image.
-     *
-     * @param document the document where the image will be created.
-     * @param image an ARGB image.
-     *
-     * @return the alpha channel of an image as a grayscale image.
-     *
-     * @throws IOException if something goes wrong
-     */
-    private static PDImageXObject createAlphaFromARGBImage(PDDocument document, Bitmap image)
-        throws IOException
+    private static ImageWriter getJPEGImageWriter() throws IOException
     {
-        // this implementation makes the assumption that the raster uses
-        // SinglePixelPackedSampleModel, i.e. the values can be used 1:1 for
-        // the stream.
-        // Sadly the type of the databuffer is TYPE_INT and not TYPE_BYTE.
-        if (!image.hasAlpha())
+        ImageWriter writer = null;
+        Iterator<ImageWriter> writers = ImageIO.getImageWritersBySuffix("jpeg");
+        while (writers.hasNext())
         {
-            return null;
+            if (writer != null)
+            {
+                writer.dispose();
+            }
+            writer = writers.next();
+            if (writer == null)
+            {
+                continue;
+            }
+            // PDFBOX-3566: avoid CLibJPEGImageWriter, which is not a JPEGImageWriteParam
+            if (writer.getDefaultWriteParam() instanceof JPEGImageWriteParam)
+            {
+                return writer;
+            }
         }
+        throw new IOException("No ImageWriter found for JPEG format");
+    }
 
-        int[] pixels = new int[image.getHeight() * image.getWidth()];
-        image.getPixels(pixels, 0, image.getWidth(), 0, 0, image.getWidth(), image.getHeight());
-
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        int bpc;
-        //        if (image.getTransparency() == Transparency.BITMASK)
-        //        {
-        //            bpc = 1;
-        //            MemoryCacheImageOutputStream mcios = new MemoryCacheImageOutputStream(bos);
-        //            int width = alphaRaster.getSampleModel().getWidth();
-        //            int p = 0;
-        //            for (int pixel : pixels)
-        //            {
-        //                mcios.writeBit(pixel);
-        //                ++p;
-        //                if (p % width == 0)
-        //                {
-        //                    while (mcios.getBitOffset() != 0)
-        //                    {
-        //                        mcios.writeBit(0);
-        //                    }
-        //                }
-        //            }
-        //            mcios.flush();
-        //            mcios.close();
-        //        }
-        //        else
-        //        {
-        bpc = 8;
-        for (int pixel : pixels)
+    private static void encodeImageToJPEGStream(BufferedImage image, float quality, int dpi,
+                                                OutputStream out) throws IOException
+    {
+        // encode to JPEG
+        ImageOutputStream ios = null;
+        ImageWriter imageWriter = null;
+        try
         {
-            bos.write(Color.alpha(pixel));
+            // find JAI writer
+            imageWriter = getJPEGImageWriter();
+            ios = ImageIO.createImageOutputStream(out);
+            imageWriter.setOutput(ios);
+
+            // add compression
+            ImageWriteParam jpegParam = imageWriter.getDefaultWriteParam();
+            jpegParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+            jpegParam.setCompressionQuality(quality);
+
+            // add metadata
+            ImageTypeSpecifier imageTypeSpecifier = new ImageTypeSpecifier(image);
+            IIOMetadata data = imageWriter.getDefaultImageMetadata(imageTypeSpecifier, jpegParam);
+            Element tree = (Element)data.getAsTree("javax_imageio_jpeg_image_1.0");
+            Element jfif = (Element)tree.getElementsByTagName("app0JFIF").item(0);
+            jfif.setAttribute("Xdensity", Integer.toString(dpi));
+            jfif.setAttribute("Ydensity", Integer.toString(dpi));
+            jfif.setAttribute("resUnits", "1"); // 1 = dots/inch
+
+            // write
+            imageWriter.write(data, new IIOImage(image, null, null), jpegParam);
         }
-        //        }
-
-        PDImageXObject pdImage = prepareImageXObject(document, bos.toByteArray(),
-            image.getWidth(), image.getHeight(), bpc, PDDeviceGray.INSTANCE);
-        return pdImage;
+        finally
+        {
+            // clean up
+            IOUtils.closeQuietly(out);
+            if (ios != null)
+            {
+                ios.close();
+            }
+            if (imageWriter != null)
+            {
+                imageWriter.dispose();
+            }
+        }
     }
-
-    /**
-     * Create a PDImageXObject while making a decision whether not to
-     * compress, use Flate filter only, or Flate and LZW filters.
-     *
-     * @param document The document.
-     * @param byteArray array with data.
-     * @param width the image width
-     * @param height the image height
-     * @param bitsPerComponent the bits per component
-     * @param initColorSpace the color space
-     * @return the newly created PDImageXObject with the data compressed.
-     * @throws IOException
-     */
-    private static PDImageXObject prepareImageXObject(PDDocument document,
-        byte [] byteArray, int width, int height, int bitsPerComponent,
-        PDColorSpace initColorSpace) throws IOException
-    {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
-        Filter filter = FilterFactory.INSTANCE.getFilter(COSName.FLATE_DECODE);
-        filter.encode(new ByteArrayInputStream(byteArray), baos, new COSDictionary(), 0);
-
-        ByteArrayInputStream encodedByteStream = new ByteArrayInputStream(baos.toByteArray());
-        return new PDImageXObject(document, encodedByteStream, COSName.FLATE_DECODE, // TODO: PdfBox-Android should be DCT
-            width, height, bitsPerComponent, initColorSpace);
-    }
-
-    private static void encodeImageToJPEGStream(Bitmap image, float quality, int dpi,
-        OutputStream out) throws IOException
-    {
-        image.compress(Bitmap.CompressFormat.JPEG, (int)(quality * 100), out);
-    //		// encode to JPEG
-    //		ImageOutputStream ios = null;
-    //		ImageWriter imageWriter = null;
-    //		try
-    //		{
-    //			// find JAI writer
-    //			imageWriter = ImageIO.getImageWritersBySuffix("jpeg").next();
-    //			ios = ImageIO.createImageOutputStream(out);
-    //			imageWriter.setOutput(ios);
-    //			// add compression
-    //			JPEGImageWriteParam jpegParam = (JPEGImageWriteParam)imageWriter.getDefaultWriteParam();
-    //			jpegParam.setCompressionMode(JPEGImageWriteParam.MODE_EXPLICIT);
-    //			jpegParam.setCompressionQuality(quality);
-    //			// add metadata
-    //			ImageTypeSpecifier imageTypeSpecifier = new ImageTypeSpecifier(image);
-    //			IIOMetadata data = imageWriter.getDefaultImageMetadata(imageTypeSpecifier, jpegParam);
-    //			Element tree = (Element)data.getAsTree("javax_imageio_jpeg_image_1.0");
-    //			Element jfif = (Element)tree.getElementsByTagName("app0JFIF").item(0);
-    //			jfif.setAttribute("Xdensity", Integer.toString(dpi));
-    //			jfif.setAttribute("Ydensity", Integer.toString(dpi));
-    //			jfif.setAttribute("resUnits", "1"); // 1 = dots/inch
-    //			// write
-    //			imageWriter.write(data, new IIOImage(image, null, null), jpegParam);
-    //		}
-    //		finally
-    //		{
-    //			// clean up
-    //			IOUtils.closeQuietly(out);
-    //			if (ios != null)
-    //			{
-    //				ios.close();
-    //			}
-    //			if (imageWriter != null)
-    //			{
-    //				imageWriter.dispose();
-    //			}
-    //		} TODO: PdfBox-Android
-    }
-
+    
     // returns a PDColorSpace for a given BufferedImage
-    //	private static PDColorSpace getColorSpaceFromAWT(Bitmap awtImage)
-    //	{
-    //		if (awtImage.getColorModel().getNumComponents() == 1)
-    //		{
-    //			// 256 color (gray) JPEG
-    //			return PDDeviceGray.INSTANCE;
-    //		}
-    //
-    //		ColorSpace awtColorSpace = awtImage.getColorModel().getColorSpace();
-    //		if (awtColorSpace instanceof ICC_ColorSpace && !awtColorSpace.isCS_sRGB())
-    //		{
-    //			throw new UnsupportedOperationException("ICC color spaces not implemented");
-    //		}
-    //
-    //		switch (awtColorSpace.getType())
-    //		{
-    //			case ColorSpace.TYPE_RGB:
-    //				return PDDeviceRGB.INSTANCE;
-    //			case ColorSpace.TYPE_GRAY:
-    //				return PDDeviceGray.INSTANCE;
-    //			case ColorSpace.TYPE_CMYK:
-    //				return PDDeviceCMYK.INSTANCE;
-    //			default:
-    //				throw new UnsupportedOperationException("color space not implemented: "
-    //						+ awtColorSpace.getType());
-    //		}
-    //	} TODO: PdfBox-Android
+    private static PDColorSpace getColorSpaceFromAWT(BufferedImage awtImage)
+    {
+        if (awtImage.getColorModel().getNumComponents() == 1)
+        {
+            // 256 color (gray) JPEG
+            return PDDeviceGray.INSTANCE;
+        }
+        
+        ColorSpace awtColorSpace = awtImage.getColorModel().getColorSpace();
+        if (awtColorSpace instanceof ICC_ColorSpace && !awtColorSpace.isCS_sRGB())
+        {
+            throw new UnsupportedOperationException("ICC color spaces not implemented");
+        }
+        
+        switch (awtColorSpace.getType())
+        {
+            case ColorSpace.TYPE_RGB:
+                return PDDeviceRGB.INSTANCE;
+            case ColorSpace.TYPE_GRAY:
+                return PDDeviceGray.INSTANCE;
+            case ColorSpace.TYPE_CMYK:
+                return PDDeviceCMYK.INSTANCE;
+            default:
+                throw new UnsupportedOperationException("color space not implemented: "
+                        + awtColorSpace.getType());
+        }
+    }
 
     // returns the color channels of an image
-    private static Bitmap getColorImage(Bitmap image)
+    private static BufferedImage getColorImage(BufferedImage image)
     {
-        if (!image.hasAlpha())
+        if (!image.getColorModel().hasAlpha())
         {
             return image;
         }
 
-        if (!image.getConfig().name().contains("RGB"))
+        if (image.getColorModel().getColorSpace().getType() != ColorSpace.TYPE_RGB)
         {
             throw new UnsupportedOperationException("only RGB color spaces are implemented");
         }
 
         // create an RGB image without alpha
-        //BEWARE: the previous solution in the history
+        //BEWARE: the previous solution in the history 
         // g.setComposite(AlphaComposite.Src) and g.drawImage()
         // didn't work properly for TYPE_4BYTE_ABGR.
         // alpha values of 0 result in a black dest pixel!!!
-        Bitmap rgbImage = Bitmap.createBitmap(image.getWidth(), image.getHeight(), Bitmap.Config.ARGB_8888);
-        //		return new ColorConvertOp(null).filter(image, rgbImage); TODO: PdfBox-Android
-        Paint alphaPaint = new Paint();
-        alphaPaint.setAlpha(0);
-        Canvas canvas = new Canvas(rgbImage);
-        canvas.drawBitmap(image, 0, 0, alphaPaint);
-        return rgbImage;
+        BufferedImage rgbImage = new BufferedImage(
+                image.getWidth(),
+                image.getHeight(),
+                BufferedImage.TYPE_3BYTE_BGR);
+        return new ColorConvertOp(null).filter(image, rgbImage);
     }
 }

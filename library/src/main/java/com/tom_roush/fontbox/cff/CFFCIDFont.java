@@ -17,14 +17,12 @@
 
 package com.tom_roush.fontbox.cff;
 
-import android.graphics.Path;
-
+import java.awt.geom.GeneralPath;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
 import com.tom_roush.fontbox.type1.Type1CharStringReader;
 
 /**
@@ -203,7 +201,7 @@ public class CFFCIDFont extends CFFFont
      * Returns the LocalSubrIndex for the given GID.
      *
      * @param gid GID
-    */
+     */
     private byte[][] getLocalSubrIndex(int gid)
     {
         int fdArrayIndex = this.fdSelect.getFDIndex(gid);
@@ -237,7 +235,7 @@ public class CFFCIDFont extends CFFFont
             Type2CharStringParser parser = new Type2CharStringParser(fontName, cid);
             List<Object> type2seq = parser.parse(bytes, globalSubrIndex, getLocalSubrIndex(gid));
             type2 = new CIDKeyedType2CharString(reader, fontName, cid, gid, type2seq,
-                getDefaultWidthX(gid), getNominalWidthX(gid));
+                                                getDefaultWidthX(gid), getNominalWidthX(gid));
             charStringCache.put(cid, type2);
         }
         return type2;
@@ -251,7 +249,7 @@ public class CFFCIDFont extends CFFFont
     }
 
     @Override
-    public Path getPath(String selector) throws IOException
+    public GeneralPath getPath(String selector) throws IOException
     {
         int cid = selectorToCID(selector);
         return getType2CharString(cid).getPath();

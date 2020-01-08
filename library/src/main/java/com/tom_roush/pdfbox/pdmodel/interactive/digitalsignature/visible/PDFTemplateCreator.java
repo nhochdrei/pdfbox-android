@@ -16,14 +16,17 @@
  */
 package com.tom_roush.pdfbox.pdmodel.interactive.digitalsignature.visible;
 
-import android.util.Log;
-
+import com.tom_roush.awt.geom.AffineTransform;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import com.tom_roush.harmony.awt.geom.AffineTransform;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import com.tom_roush.pdfbox.cos.COSDocument;
 import com.tom_roush.pdfbox.cos.COSName;
+import com.tom_roush.pdfbox.pdfwriter.COSWriter;
 import com.tom_roush.pdfbox.pdmodel.PDDocument;
 import com.tom_roush.pdfbox.pdmodel.PDPage;
 import com.tom_roush.pdfbox.pdmodel.PDResources;
@@ -32,28 +35,31 @@ import com.tom_roush.pdfbox.pdmodel.common.PDStream;
 import com.tom_roush.pdfbox.pdmodel.graphics.form.PDFormXObject;
 import com.tom_roush.pdfbox.pdmodel.interactive.form.PDAcroForm;
 import com.tom_roush.pdfbox.pdmodel.interactive.form.PDSignatureField;
+
 /**
- * Using that class, we build pdf template.
+ * Class to build PDF template.
+ *
  * @author Vakhtang Koroghlishvili
  */
 public class PDFTemplateCreator
 {
-    PDFTemplateBuilder pdfBuilder;
+    private final PDFTemplateBuilder pdfBuilder;
+    private static final Log LOG = LogFactory.getLog(PDFTemplateCreator.class);
 
     /**
-     * sets PDFBuilder
+     * Constructor.
      * 
-     * @param bookBuilder
+     * @param templateBuilder
      */
-    public PDFTemplateCreator(PDFTemplateBuilder bookBuilder)
+    public PDFTemplateCreator(PDFTemplateBuilder templateBuilder)
     {
-        pdfBuilder = bookBuilder;
+        pdfBuilder = templateBuilder;
     }
 
     /**
-     * that method returns object of PDFStructure
+     * Returns the PDFTemplateStructure object.
      * 
-     * @return PDFStructure
+     * @return the PDFTemplateStructure object.
      */
     public PDFTemplateStructure getPdfStructure()
     {
@@ -61,14 +67,15 @@ public class PDFTemplateCreator
     }
 
     /**
-     * this method builds pdf  step by step, and finally it returns stream of visible signature
+     * Build a PDF with a visible signature step by step, and return it as a stream.
+     *
      * @param properties
      * @return InputStream
      * @throws IOException
      */
     public InputStream buildPDF(PDVisibleSignDesigner properties) throws IOException
     {
-        Log.i("PdfBox-Android", "pdf building has been started");
+        LOG.info("pdf building has been started");
         PDFTemplateStructure pdfStructure = pdfBuilder.getStructure();
 
         // we create array of [Text, ImageB, ImageC, ImageI]
@@ -91,19 +98,23 @@ public class PDFTemplateCreator
         PDSignatureField pdSignatureField = pdfStructure.getSignatureField();
         
         // create signature
-        pdfBuilder.createSignature(pdSignatureField, page, properties.getSignatureFieldName());
+        //TODO 
+        // The line below has no effect with the CreateVisibleSignature example. 
+        // The signature field is needed as a "holder" for the /AP tree, 
+        // but the /P and /V PDSignatureField entries are ignored by PDDocument.addSignature
+        pdfBuilder.createSignature(pdSignatureField, page, "");
        
         // that is /AcroForm/DR entry
         pdfBuilder.createAcroFormDictionary(acroForm, pdSignatureField);
         
         // create AffineTransform
-        pdfBuilder.createAffineTransform(properties.getAffineTransformParams());
+        pdfBuilder.createAffineTransform(properties.getTransform());
         AffineTransform transform = pdfStructure.getAffineTransform();
        
         // rectangle, formatter, image. /AcroForm/DR/XObject contains that form
         pdfBuilder.createSignatureRectangle(pdSignatureField, properties);
-        pdfBuilder.createFormatterRectangle(properties.getFormatterRectangleParams());
-        PDRectangle formatter = pdfStructure.getFormatterRectangle();
+        pdfBuilder.createFormatterRectangle(properties.getFormatterRectangleParameters());
+        PDRectangle bbox = pdfStructure.getFormatterRectangle();
         pdfBuilder.createSignatureImage(template, properties.getImage());
 
         // create form stream, form and  resource. 
@@ -111,50 +122,61 @@ public class PDFTemplateCreator
         PDStream holderFormStream = pdfStructure.getHolderFormStream();
         pdfBuilder.createHolderFormResources();
         PDResources holderFormResources = pdfStructure.getHolderFormResources();
-        pdfBuilder.createHolderForm(holderFormResources, holderFormStream, formatter);
-
+        pdfBuilder.createHolderForm(holderFormResources, holderFormStream, bbox);
+        
         // that is /AP entry the appearance dictionary.
         pdfBuilder.createAppearanceDictionary(pdfStructure.getHolderForm(), pdSignatureField);
-
-        // inner form stream, form and resource (hlder form containts inner form)
+        
+        // inner form stream, form and resource (holder form contains inner form)
         pdfBuilder.createInnerFormStream(template);
         pdfBuilder.createInnerFormResource();
         PDResources innerFormResource = pdfStructure.getInnerFormResources();
-        pdfBuilder.createInnerForm(innerFormResource, pdfStructure.getInnerFormStream(), formatter);
-       PDFormXObject innerForm = pdfStructure.getInnerForm();
+        pdfBuilder.createInnerForm(innerFormResource, pdfStructure.getInnerFormStream(), bbox);
+        PDFormXObject innerForm = pdfStructure.getInnerForm();
        
         // inner form must be in the holder form as we wrote
         pdfBuilder.insertInnerFormToHolderResources(innerForm, holderFormResources);
         
-        //  Image form is in this structure: /AcroForm/DR/FRM0/Resources/XObject/n0
+        //  Image form is in this structure: /AcroForm/DR/FRM/Resources/XObject/n2
         pdfBuilder.createImageFormStream(template);
         PDStream imageFormStream = pdfStructure.getImageFormStream();
         pdfBuilder.createImageFormResources();
         PDResources imageFormResources = pdfStructure.getImageFormResources();
-        pdfBuilder.createImageForm(imageFormResources, innerFormResource, imageFormStream,
-            formatter, transform, pdfStructure.getImage());
+        pdfBuilder.createImageForm(imageFormResources, innerFormResource, imageFormStream, bbox,
+                transform, pdfStructure.getImage());
+        
+        pdfBuilder.createBackgroundLayerForm(innerFormResource, bbox);
        
         // now inject procSetArray
         pdfBuilder.injectProcSetArray(innerForm, page, innerFormResource, imageFormResources,
                 holderFormResources, pdfStructure.getProcSet());
 
-        COSName imgFormName = pdfStructure.getImageFormName();
-        COSName imgName = pdfStructure.getImageName();
+        COSName imageFormName = pdfStructure.getImageFormName();
+        COSName imageName = pdfStructure.getImageName();
         COSName innerFormName = pdfStructure.getInnerFormName();
 
         // now create Streams of AP
         pdfBuilder.injectAppearanceStreams(holderFormStream, imageFormStream, imageFormStream,
-                imgFormName, imgName, innerFormName, properties);
+                imageFormName, imageName, innerFormName, properties);
         pdfBuilder.createVisualSignature(template);
         pdfBuilder.createWidgetDictionary(pdSignatureField, holderFormResources);
         
-        ByteArrayInputStream in = pdfStructure.getTemplateAppearanceStream();
-        Log.i("PdfBox-Android", "stream returning started, size= " + in.available());
+        InputStream in = getVisualSignatureAsStream(pdfStructure.getVisualSignature());
+        LOG.info("stream returning started, size= " + in.available());
         
         // we must close the document
         template.close();
         
         // return result of the stream 
         return in;
+    }
+
+    private InputStream getVisualSignatureAsStream(COSDocument visualSignature) throws IOException
+    {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        COSWriter writer = new COSWriter(baos);
+        writer.write(visualSignature);
+        writer.close();
+        return new ByteArrayInputStream(baos.toByteArray());
     }
 }

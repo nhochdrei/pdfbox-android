@@ -20,12 +20,12 @@ import java.nio.charset.Charset;
 
 /**
  * This class provides an instance of all common charsets used to transform byte arrays into strings. 
- *
+ *  
  */
 public final class Charsets
 {
     private Charsets() {}
-
+    
     /**
      * ISO-8859-1 Charset
      */
@@ -46,5 +46,5 @@ public final class Charsets
      * ISO-10646 Charset
      */
     public static final Charset ISO_10646 = Charset.forName("ISO-10646-UCS-2");
-
+    
 }

@@ -21,19 +21,22 @@ import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSFloat;
 import com.tom_roush.pdfbox.cos.COSName;
+import com.tom_roush.pdfbox.pdmodel.PDDocument;
 import com.tom_roush.pdfbox.pdmodel.graphics.color.PDColor;
+import com.tom_roush.pdfbox.pdmodel.interactive.annotation.handlers.PDAppearanceHandler;
+import com.tom_roush.pdfbox.pdmodel.interactive.annotation.handlers.PDLineAppearanceHandler;
 
 /**
- * This is the class that represents a line annotation.
- * Introduced in PDF 1.3 specification
+ * This is the class that represents a line annotation. Introduced in PDF 1.3 specification
  *
  * @author Paul King
  */
 public class PDAnnotationLine extends PDAnnotationMarkup
 {
+    private PDAppearanceHandler customAppearanceHandler;
+
     /*
-     * The various values for intent (get/setIT, see the PDF 1.6 reference Table
-     * 8.22
+     * The various values for intent (get/setIT, see the PDF 1.6 reference Table 8.22
      */
 
     /**
@@ -47,8 +50,7 @@ public class PDAnnotationLine extends PDAnnotationMarkup
     public static final String IT_LINE_DIMENSION = "LineDimension";
 
     /*
-     * The various values for line ending styles, see the PDF 1.6 reference
-     * Table 8.23
+     * The various values for line ending styles, see the PDF 1.6 reference Table 8.23
      */
 
     /**
@@ -92,7 +94,7 @@ public class PDAnnotationLine extends PDAnnotationMarkup
     public static final String LE_R_OPEN_ARROW = "ROpenArrow";
 
     /**
-     * Constant for a revered closed arrow line ending.
+     * Constant for a reversed closed arrow line ending.
      */
     public static final String LE_R_CLOSED_ARROW = "RClosedArrow";
 
@@ -111,46 +113,37 @@ public class PDAnnotationLine extends PDAnnotationMarkup
      */
     public PDAnnotationLine()
     {
-        super();
-        getCOSObject().setItem(COSName.SUBTYPE, COSName.getPDFName(SUB_TYPE));
-        // Dictionary value L is mandatory, fill in with arbitary value
-        setLine( new float[] { 0, 0, 0, 0 } );
-
+        getCOSObject().setName(COSName.SUBTYPE, SUB_TYPE);
+        // Dictionary value L is mandatory, fill in with arbitrary value
+        setLine(new float[] { 0, 0, 0, 0 });
     }
 
     /**
-     * Creates a Line annotation from a COSDictionary, expected to be a correct
-     * object definition.
+     * Creates a Line annotation from a COSDictionary, expected to be a correct object definition.
      *
-     * @param field
-     *            the PDF object to represent as a field.
+     * @param field the PDF object to represent as a field.
      */
-    public PDAnnotationLine( COSDictionary field )
+    public PDAnnotationLine(COSDictionary field)
     {
-        super( field );
+        super(field);
     }
 
     /**
-     * This will set start and end coordinates of the line (or leader line if LL
-     * entry is set).
+     * This will set start and end coordinates of the line (or leader line if LL entry is set).
      *
-     * @param l
-     *            array of 4 floats [x1, y1, x2, y2] line start and end points
-     *            in default user space.
+     * @param l array of 4 floats [x1, y1, x2, y2] line start and end points in default user space.
      */
-    public void setLine( float[] l )
+    public void setLine(float[] l)
     {
         COSArray newL = new COSArray();
-        newL.setFloatArray( l );
+        newL.setFloatArray(l);
         getCOSObject().setItem(COSName.L, newL);
     }
 
     /**
-     * This will retrieve the start and end coordinates of the line (or leader
-     * line if LL entry is set).
+     * This will retrieve the start and end coordinates of the line (or leader line if LL entry is set).
      *
-     * @return array of floats [x1, y1, x2, y2] line start and end points in
-     *         default user space.
+     * @return array of floats [x1, y1, x2, y2] line start and end points in default user space.
      */
     public float[] getLine()
     {
@@ -159,122 +152,116 @@ public class PDAnnotationLine extends PDAnnotationMarkup
     }
 
     /**
-     * This will set the line ending style for the start point,
-     * see the LE_ constants for the possible values.
+     * This will set the line ending style for the start point, see the LE_ constants for the possible values.
      *
      * @param style The new style.
      */
-    public void setStartPointEndingStyle( String style )
+    public void setStartPointEndingStyle(String style)
     {
-        if( style == null )
+        if (style == null)
         {
             style = LE_NONE;
         }
-        COSArray array = (COSArray) getCOSObject().getDictionaryObject(COSName.LE);
-        if( array == null )
+        COSBase base = getCOSObject().getDictionaryObject(COSName.LE);
+        COSArray array;
+        if (!(base instanceof COSArray) || ((COSArray) base).size() == 0)
         {
             array = new COSArray();
-            array.add( COSName.getPDFName( style ) );
-            array.add( COSName.getPDFName( LE_NONE ) );
+            array.add(COSName.getPDFName(style));
+            array.add(COSName.getPDFName(LE_NONE));
             getCOSObject().setItem(COSName.LE, array);
         }
         else
         {
-            array.setName( 0, style );
+            array = (COSArray) base;
+            array.setName(0, style);
         }
     }
 
     /**
-     * This will retrieve the line ending style for the start point,
-     * possible values shown in the LE_ constants section.
+     * This will retrieve the line ending style for the start point, possible values shown in the LE_ constants section.
      *
      * @return The ending style for the start point.
      */
     public String getStartPointEndingStyle()
     {
-        String retval = LE_NONE;
-        COSArray array = (COSArray) getCOSObject().getDictionaryObject(COSName.LE);
-        if( array != null )
+        COSBase base = getCOSObject().getDictionaryObject(COSName.LE);
+        if (base instanceof COSArray && ((COSArray) base).size() >= 2)
         {
-            retval = array.getName( 0 );
+            return ((COSArray) base).getName(0);
         }
-
-        return retval;
+        return LE_NONE;
     }
 
     /**
-     * This will set the line ending style for the end point,
-     * see the LE_ constants for the possible values.
+     * This will set the line ending style for the end point, see the LE_ constants for the possible values.
      *
      * @param style The new style.
      */
-    public void setEndPointEndingStyle( String style )
+    public void setEndPointEndingStyle(String style)
     {
-        if( style == null )
+        if (style == null)
         {
             style = LE_NONE;
         }
-        COSArray array = (COSArray) getCOSObject().getDictionaryObject(COSName.LE);
-        if( array == null )
+        COSBase base = getCOSObject().getDictionaryObject(COSName.LE);
+        COSArray array;
+        if (!(base instanceof COSArray) || ((COSArray) base).size() < 2)
         {
             array = new COSArray();
-            array.add( COSName.getPDFName( LE_NONE ) );
-            array.add( COSName.getPDFName( style ) );
+            array.add(COSName.getPDFName(LE_NONE));
+            array.add(COSName.getPDFName(style));
             getCOSObject().setItem(COSName.LE, array);
         }
         else
         {
-            array.setName( 1, style );
+            array = (COSArray) base;
+            array.setName(1, style);
         }
     }
 
     /**
-     * This will retrieve the line ending style for the end point,
-     * possible values shown in the LE_ constants section.
+     * This will retrieve the line ending style for the end point, possible values shown in the LE_ constants section.
      *
      * @return The ending style for the end point.
      */
     public String getEndPointEndingStyle()
     {
-        String retval = LE_NONE;
-        COSArray array = (COSArray) getCOSObject().getDictionaryObject(COSName.LE);
-        if( array != null )
+        COSBase base = getCOSObject().getDictionaryObject(COSName.LE);
+        if (base instanceof COSArray && ((COSArray) base).size() >= 2)
         {
-            retval = array.getName( 1 );
+            return ((COSArray) base).getName(1);
         }
-
-        return retval;
+        return LE_NONE;
     }
 
     /**
-     * This will set interior color of the line endings defined in the LE
-     * entry. color is in DeviceRGB color space.
+     * This will set interior color of the line endings defined in the LE entry. color is in DeviceRGB color space.
      *
      * @param ic color in the DeviceRGB color space.
      */
-    public void setInteriorColor( PDColor ic )
+    public void setInteriorColor(PDColor ic)
     {
         getCOSObject().setItem(COSName.IC, ic.toCOSArray());
     }
 
     /**
-     * This will retrieve the interior color of the line endings defined in the
-     * LE entry. color is in DeviceRGB color space.
+     * This will retrieve the interior color of the line endings defined in the LE entry. color is in DeviceRGB color
+     * space.
      *
      * @return object representing the color.
      */
     public PDColor getInteriorColor()
     {
-    	return getColor(COSName.IC);
+        return getColor(COSName.IC);
     }
 
     /**
      * This will set if the contents are shown as a caption to the line.
      *
-     * @param cap
-     *            Boolean value.
+     * @param cap Boolean value.
      */
-    public void setCaption( boolean cap )
+    public void setCaption(boolean cap)
     {
         getCOSObject().setBoolean(COSName.CAP, cap);
     }
@@ -290,21 +277,19 @@ public class PDAnnotationLine extends PDAnnotationMarkup
     }
 
     /**
-     * This will set the border style dictionary, specifying the width and dash
-     * pattern used in drawing the line.
+     * This will set the border style dictionary, specifying the width and dash pattern used in drawing the line.
      *
      * @param bs the border style dictionary to set.
      *
      */
     @Override
-    public void setBorderStyle( PDBorderStyleDictionary bs )
+    public void setBorderStyle(PDBorderStyleDictionary bs)
     {
         this.getCOSObject().setItem(COSName.BS, bs);
     }
 
     /**
-     * This will retrieve the border style dictionary, specifying the width and
-     * dash pattern used in drawing the line.
+     * This will retrieve the border style dictionary, specifying the width and dash pattern used in drawing the line.
      *
      * @return the border style dictionary.
      */
@@ -314,7 +299,7 @@ public class PDAnnotationLine extends PDAnnotationMarkup
         COSBase bs = getCOSObject().getDictionaryObject(COSName.BS);
         if (bs instanceof COSDictionary)
         {
-            return new PDBorderStyleDictionary((COSDictionary)bs);
+            return new PDBorderStyleDictionary((COSDictionary) bs);
         }
         return null;
     }
@@ -326,7 +311,7 @@ public class PDAnnotationLine extends PDAnnotationMarkup
      */
     public float getLeaderLineLength()
     {
-        return this.getCOSObject().getFloat(COSName.LL);
+        return this.getCOSObject().getFloat(COSName.LL, 0);
     }
 
     /**
@@ -346,7 +331,7 @@ public class PDAnnotationLine extends PDAnnotationMarkup
      */
     public float getLeaderLineExtensionLength()
     {
-        return this.getCOSObject().getFloat(COSName.LLE);
+        return this.getCOSObject().getFloat(COSName.LLE, 0);
     }
 
     /**
@@ -366,7 +351,7 @@ public class PDAnnotationLine extends PDAnnotationMarkup
      */
     public float getLeaderLineOffsetLength()
     {
-        return this.getCOSObject().getFloat(COSName.LLO);
+        return this.getCOSObject().getFloat(COSName.LLO, 0);
     }
 
     /**
@@ -386,18 +371,17 @@ public class PDAnnotationLine extends PDAnnotationMarkup
      */
     public String getCaptionPositioning()
     {
-        return this.getCOSObject().getString(COSName.CP);
+        return this.getCOSObject().getNameAsString(COSName.CP);
     }
 
     /**
-     * This will set the caption positioning.
-     * Allowed values are: "Inline" and "Top"
+     * This will set the caption positioning. Allowed values are: "Inline" and "Top"
      * 
      * @param captionPositioning caption positioning
      */
     public void setCaptionPositioning(String captionPositioning)
     {
-        this.getCOSObject().setString(COSName.CP, captionPositioning);
+        this.getCOSObject().setName(COSName.CP, captionPositioning);
     }
 
     /**
@@ -405,18 +389,18 @@ public class PDAnnotationLine extends PDAnnotationMarkup
      * 
      * @param offset the horizontal offset of the caption
      */
-    public void setCaptionHorizontalOffset( float offset )
+    public void setCaptionHorizontalOffset(float offset)
     {
         COSArray array = (COSArray) this.getCOSObject().getDictionaryObject(COSName.CO);
-        if( array == null )
+        if (array == null)
         {
             array = new COSArray();
-            array.setFloatArray(new float[] {offset, 0.f});
+            array.setFloatArray(new float[] { offset, 0.f });
             this.getCOSObject().setItem(COSName.CO, array);
         }
         else
         {
-            array.set(0, new COSFloat(offset) );
+            array.set(0, new COSFloat(offset));
         }
     }
 
@@ -429,7 +413,7 @@ public class PDAnnotationLine extends PDAnnotationMarkup
     {
         float retval = 0.f;
         COSArray array = (COSArray) this.getCOSObject().getDictionaryObject(COSName.CO);
-        if( array != null )
+        if (array != null)
         {
             retval = array.toFloatArray()[0];
         }
@@ -442,18 +426,18 @@ public class PDAnnotationLine extends PDAnnotationMarkup
      * 
      * @param offset vertical offset of the caption
      */
-    public void setCaptionVerticalOffset( float offset )
+    public void setCaptionVerticalOffset(float offset)
     {
         COSArray array = (COSArray) this.getCOSObject().getDictionaryObject(COSName.CO);
-        if( array == null )
+        if (array == null)
         {
             array = new COSArray();
-            array.setFloatArray(new float[] {0.f, offset});
+            array.setFloatArray(new float[] { 0.f, offset });
             this.getCOSObject().setItem(COSName.CO, array);
         }
         else
         {
-            array.set(1, new COSFloat(offset) );
+            array.set(1, new COSFloat(offset));
         }
     }
 
@@ -466,11 +450,41 @@ public class PDAnnotationLine extends PDAnnotationMarkup
     {
         float retval = 0.f;
         COSArray array = (COSArray) this.getCOSObject().getDictionaryObject(COSName.CO);
-        if( array != null )
+        if (array != null)
         {
             retval = array.toFloatArray()[1];
         }
         return retval;
+    }
+
+    /**
+     * Set a custom appearance handler for generating the annotations appearance streams.
+     * 
+     * @param appearanceHandler
+     */
+    public void setCustomAppearanceHandler(PDAppearanceHandler appearanceHandler)
+    {
+        customAppearanceHandler = appearanceHandler;
+    }
+
+    @Override
+    public void constructAppearances()
+    {
+        this.constructAppearances(null);
+    }
+
+    @Override
+    public void constructAppearances(PDDocument document)
+    {
+        if (customAppearanceHandler == null)
+        {
+            PDLineAppearanceHandler appearanceHandler = new PDLineAppearanceHandler(this, document);
+            appearanceHandler.generateAppearanceStreams();
+        }
+        else
+        {
+            customAppearanceHandler.generateAppearanceStreams();
+        }
     }
 
 }

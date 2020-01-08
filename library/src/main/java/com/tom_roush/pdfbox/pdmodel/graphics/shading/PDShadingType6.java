@@ -16,7 +16,10 @@
  */
 package com.tom_roush.pdfbox.pdmodel.graphics.shading;
 
+import java.awt.Paint;
+
 import com.tom_roush.pdfbox.cos.COSDictionary;
+import com.tom_roush.pdfbox.util.Matrix;
 
 /**
  * Resources for a shading type 6 (Coons Patch Mesh).
@@ -39,9 +42,9 @@ public class PDShadingType6 extends PDShadingType4
         return PDShading.SHADING_TYPE6;
     }
 
-//    @Override
-//    public Paint toPaint(Matrix matrix)
-//    {
-//        return new Type6ShadingPaint(this, matrix);
-//    }TODO: PdfBox-Android
+    @Override
+    public Paint toPaint(Matrix matrix)
+    {
+        return new Type6ShadingPaint(this, matrix);
+    }
 }

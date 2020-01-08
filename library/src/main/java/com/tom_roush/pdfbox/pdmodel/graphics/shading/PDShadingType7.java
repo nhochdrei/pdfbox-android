@@ -16,7 +16,10 @@
  */
 package com.tom_roush.pdfbox.pdmodel.graphics.shading;
 
+import java.awt.Paint;
+
 import com.tom_roush.pdfbox.cos.COSDictionary;
+import com.tom_roush.pdfbox.util.Matrix;
 
 /**
  * Resources for a shading type 7 (Tensor-Product Patch Mesh).
@@ -39,9 +42,9 @@ public class PDShadingType7 extends PDShadingType6
         return PDShading.SHADING_TYPE7;
     }
 
-//    @Override
-//    public Paint toPaint(Matrix matrix)
-//    {
-//        return new Type7ShadingPaint(this, matrix);
-//    }TODO: PdfBox-Android
+    @Override
+    public Paint toPaint(Matrix matrix)
+    {
+        return new Type7ShadingPaint(this, matrix);
+    }
 }

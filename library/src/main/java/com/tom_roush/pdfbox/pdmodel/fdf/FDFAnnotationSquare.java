@@ -16,14 +16,13 @@
  */
 package com.tom_roush.pdfbox.pdmodel.fdf;
 
+import java.awt.Color;
 import java.io.IOException;
 
-import com.tom_roush.harmony.awt.AWTColor;
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.pdmodel.common.PDRectangle;
-
 import org.w3c.dom.Element;
 
 /**
@@ -37,7 +36,7 @@ public class FDFAnnotationSquare extends FDFAnnotation
     /**
      * COS Model value for SubType entry.
      */
-    public static final String SUBTYPE ="Square";
+    public static final String SUBTYPE = "Square";
 
     /**
      * Default constructor.
@@ -45,7 +44,7 @@ public class FDFAnnotationSquare extends FDFAnnotation
     public FDFAnnotationSquare()
     {
         super();
-        annot.setName( COSName.SUBTYPE, SUBTYPE );
+        annot.setName(COSName.SUBTYPE, SUBTYPE);
     }
 
     /**
@@ -53,9 +52,9 @@ public class FDFAnnotationSquare extends FDFAnnotation
      *
      * @param a An existing FDF Annotation.
      */
-    public FDFAnnotationSquare( COSDictionary a )
+    public FDFAnnotationSquare(COSDictionary a)
     {
-        super( a );
+        super(a);
     }
 
     /**
@@ -65,7 +64,7 @@ public class FDFAnnotationSquare extends FDFAnnotation
      *
      * @throws IOException If there is an error extracting information from the element.
      */
-    public FDFAnnotationSquare( Element element ) throws IOException
+    public FDFAnnotationSquare(Element element) throws IOException
     {
         super(element);
         annot.setName(COSName.SUBTYPE, SUBTYPE);
@@ -74,7 +73,7 @@ public class FDFAnnotationSquare extends FDFAnnotation
         if (color != null && color.length() == 7 && color.charAt(0) == '#')
         {
             int colorValue = Integer.parseInt(color.substring(1, 7), 16);
-            setInteriorColor(new AWTColor(colorValue));
+            setInteriorColor(new Color(colorValue));
         }
 
         initFringe(element);
@@ -104,7 +103,7 @@ public class FDFAnnotationSquare extends FDFAnnotation
      *
      * @param color The interior color of the circle.
      */
-    public final void setInteriorColor(AWTColor color)
+    public final void setInteriorColor(Color color)
     {
         COSArray array = null;
         if (color != null)
@@ -121,16 +120,16 @@ public class FDFAnnotationSquare extends FDFAnnotation
      *
      * @return object representing the color.
      */
-    public AWTColor getInteriorColor()
+    public Color getInteriorColor()
     {
-        AWTColor retval = null;
+        Color retval = null;
         COSArray array = (COSArray) annot.getDictionaryObject(COSName.IC);
         if (array != null)
         {
             float[] rgb = array.toFloatArray();
             if (rgb.length >= 3)
             {
-                retval = new AWTColor(rgb[0], rgb[1], rgb[2]);
+                retval = new Color(rgb[0], rgb[1], rgb[2]);
             }
         }
         return retval;

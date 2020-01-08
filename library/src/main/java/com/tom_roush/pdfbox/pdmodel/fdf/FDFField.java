@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
-
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;
@@ -35,7 +34,6 @@ import com.tom_roush.pdfbox.pdmodel.interactive.action.PDAction;
 import com.tom_roush.pdfbox.pdmodel.interactive.action.PDActionFactory;
 import com.tom_roush.pdfbox.pdmodel.interactive.action.PDAdditionalActions;
 import com.tom_roush.pdfbox.pdmodel.interactive.annotation.PDAppearanceDictionary;
-
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -62,7 +60,7 @@ public class FDFField implements COSObjectable
      *
      * @param f The FDF field.
      */
-    public FDFField( COSDictionary f )
+    public FDFField(COSDictionary f)
     {
         field = f;
     }
@@ -73,35 +71,35 @@ public class FDFField implements COSObjectable
      * @param fieldXML The XML document that contains the XFDF data.
      * @throws IOException If there is an error reading from the dom.
      */
-    public FDFField( Element fieldXML ) throws IOException
+    public FDFField(Element fieldXML) throws IOException
     {
         this();
-        this.setPartialFieldName( fieldXML.getAttribute( "name" ) );
+        this.setPartialFieldName(fieldXML.getAttribute("name"));
         NodeList nodeList = fieldXML.getChildNodes();
         List<FDFField> kids = new ArrayList<FDFField>();
-        for( int i=0; i<nodeList.getLength(); i++ )
+        for (int i = 0; i < nodeList.getLength(); i++)
         {
-            Node node = nodeList.item( i );
-            if( node instanceof Element )
+            Node node = nodeList.item(i);
+            if (node instanceof Element)
             {
-                Element child = (Element)node;
-                if( child.getTagName().equals( "value" ) )
+                Element child = (Element) node;
+                if (child.getTagName().equals("value"))
                 {
-                    setValue( XMLUtil.getNodeValue( child ) );
+                    setValue(com.tom_roush.pdfbox.util.XMLUtil.getNodeValue(child));
                 }
-                else if( child.getTagName().equals( "value-richtext" ) )
+                else if (child.getTagName().equals("value-richtext"))
                 {
-                    setRichText(new COSString(XMLUtil.getNodeValue(child)));
+                    setRichText(new COSString(com.tom_roush.pdfbox.util.XMLUtil.getNodeValue(child)));
                 }
-                else if( child.getTagName().equals( "field" ) )
+                else if (child.getTagName().equals("field"))
                 {
-                    kids.add( new FDFField( child ) );
+                    kids.add(new FDFField(child));
                 }
             }
         }
-        if( kids.size() > 0 )
+        if (kids.size() > 0)
         {
-            setKids( kids );
+            setKids(kids);
         }
 
     }
@@ -113,36 +111,38 @@ public class FDFField implements COSObjectable
      *
      * @throws IOException If there is an error writing the XML.
      */
-    public void writeXML( Writer output ) throws IOException
+    public void writeXML(Writer output) throws IOException
     {
         output.write("<field name=\"" + getPartialFieldName() + "\">\n");
         Object value = getValue();
-        if( value != null )
+
+        if (value instanceof String)
         {
-            if(value instanceof COSString)
+            output.write("<value>" + escapeXML((String) value) + "</value>\n");
+        }
+        else if (value instanceof List)
+        {
+            List<String> items = (List<String>) value;
+            for (String item : items)
             {
-                output.write("<value>" + escapeXML(((COSString) value).getString()) + "</value>\n");
-            }
-            else if(value instanceof COSStream)
-            {
-                output.write(
-                    "<value>" + escapeXML(((COSStream)value).toTextString()) + "</value>\n");
+                output.write("<value>" + escapeXML((String) item) + "</value>\n");
             }
         }
+
         String rt = getRichText();
-        if( rt != null )
+        if (rt != null)
         {
             output.write("<value-richtext>" + escapeXML(rt) + "</value-richtext>\n");
         }
         List<FDFField> kids = getKids();
-        if( kids != null )
+        if (kids != null)
         {
             for (FDFField kid : kids)
             {
                 kid.writeXML(output);
             }
         }
-        output.write( "</field>\n");
+        output.write("</field>\n");
     }
 
     /**
@@ -157,23 +157,23 @@ public class FDFField implements COSObjectable
     }
 
     /**
-     * This will get the list of kids. This will return a list of FDFField objects.
-     * This will return null if the underlying list is null.
+     * This will get the list of kids. This will return a list of FDFField objects. This will return null if the
+     * underlying list is null.
      *
      * @return The list of kids.
      */
     public List<FDFField> getKids()
     {
-        COSArray kids = (COSArray)field.getDictionaryObject( COSName.KIDS );
+        COSArray kids = (COSArray) field.getDictionaryObject(COSName.KIDS);
         List<FDFField> retval = null;
-        if( kids != null )
+        if (kids != null)
         {
             List<FDFField> actuals = new ArrayList<FDFField>();
-            for( int i=0; i<kids.size(); i++ )
+            for (int i = 0; i < kids.size(); i++)
             {
-                actuals.add( new FDFField( (COSDictionary)kids.getObject( i ) ) );
+                actuals.add(new FDFField((COSDictionary) kids.getObject(i)));
             }
-            retval = new COSArrayList<FDFField>( actuals, kids );
+            retval = new COSArrayList<FDFField>(actuals, kids);
         }
         return retval;
     }
@@ -183,23 +183,22 @@ public class FDFField implements COSObjectable
      *
      * @param kids A list of FDFField objects.
      */
-    public void setKids( List<FDFField> kids )
+    public void setKids(List<FDFField> kids)
     {
-        field.setItem( COSName.KIDS, COSArrayList.converterToCOSArray( kids ) );
+        field.setItem(COSName.KIDS, COSArrayList.converterToCOSArray(kids));
     }
 
     /**
-     * This will get the "T" entry in the field dictionary. A partial field
-     * name. Where the fully qualified field name is a concatenation of
-     * the parent's fully qualified field name and "." as a separator. For example<br/>
-     * Address.State<br />
-     * Address.City<br />
+     * This will get the "T" entry in the field dictionary. A partial field name. Where the fully qualified field name
+     * is a concatenation of the parent's fully qualified field name and "." as a separator. For example<br>
+     * Address.State<br>
+     * Address.City<br>
      *
      * @return The partial field name.
      */
     public String getPartialFieldName()
     {
-        return field.getString( COSName.T );
+        return field.getString(COSName.T);
     }
 
     /**
@@ -207,38 +206,41 @@ public class FDFField implements COSObjectable
      *
      * @param partial The partial field name.
      */
-    public void setPartialFieldName( String partial )
+    public void setPartialFieldName(String partial)
     {
-        field.setString( COSName.T, partial );
+        field.setString(COSName.T, partial);
     }
 
     /**
-     * This will get the value for the field. This will return type will either be <br />
-     * String : Checkboxes, Radio Button <br />
+     * This will get the value for the field. This will return type will either be <br>
+     * String : Checkboxes, Radio Button, Textfields <br>
      * java.util.List of strings: Choice Field
-     * PDTextStream: Textfields
      *
      * @return The value of the field.
      * @throws IOException If there is an error getting the value.
      */
     public Object getValue() throws IOException
     {
-        COSBase value = field.getDictionaryObject( COSName.V );
-        if( value instanceof COSName )
+        COSBase value = field.getDictionaryObject(COSName.V);
+        if (value instanceof COSName)
         {
             return ((COSName) value).getName();
         }
-        else if( value instanceof COSArray )
+        else if (value instanceof COSArray)
         {
             return COSArrayList.convertCOSStringCOSArrayToList((COSArray) value);
         }
-        else if( value instanceof COSString || value instanceof COSStream )
+        else if (value instanceof COSString)
         {
-            return value;
+            return ((COSString) value).getString();
         }
-        else if( value != null )
+        else if (value instanceof COSStream)
         {
-            throw new IOException( "Error:Unknown type for field import" + value );
+            return ((COSStream) value).toTextString();
+        }
+        else if (value != null)
+        {
+            throw new IOException("Error:Unknown type for field import" + value);
         }
         else
         {
@@ -248,13 +250,14 @@ public class FDFField implements COSObjectable
 
     /**
      * Returns the COS value of this field.
-     *
+     * 
      * @return The COS value of the field.
      * @throws IOException If there is an error getting the value.
      */
     public COSBase getCOSValue() throws IOException
     {
         COSBase value = field.getDictionaryObject(COSName.V);
+        
         if (value instanceof COSName)
         {
             return value;
@@ -278,38 +281,37 @@ public class FDFField implements COSObjectable
     }
 
     /**
-     * You should pass in a string, or a java.util.List of strings to set the
-     * value.
+     * You should pass in a string, or a java.util.List of strings to set the value.
      *
      * @param value The value that should populate when imported.
      *
      * @throws IOException If there is an error setting the value.
      */
-    public void setValue( Object value ) throws IOException
+    public void setValue(Object value) throws IOException
     {
         COSBase cos = null;
-        if( value instanceof List )
+        if (value instanceof List)
         {
-            cos = COSArrayList.convertStringListToCOSStringCOSArray((List)value);
+            cos = COSArrayList.convertStringListToCOSStringCOSArray((List<String>) value);
         }
-        else if( value instanceof String )
+        else if (value instanceof String)
         {
-            cos = COSName.getPDFName( (String)value );
+            cos = new COSString((String) value);
         }
-        else if( value instanceof COSObjectable )
+        else if (value instanceof COSObjectable)
         {
-            cos = ((COSObjectable)value).getCOSObject();
+            cos = ((COSObjectable) value).getCOSObject();
         }
-        else if( value != null )
+        else if (value != null)
         {
-            throw new IOException( "Error:Unknown type for field import" + value );
+            throw new IOException("Error:Unknown type for field import" + value);
         }
         field.setItem(COSName.V, cos);
     }
 
     /**
      * Sets the COS value of this field.
-     *
+     * 
      * @param value COS value.
      */
     public void setValue(COSBase value)
@@ -318,16 +320,15 @@ public class FDFField implements COSObjectable
     }
 
     /**
-     * This will get the Ff entry of the cos dictionary. If it it not present then
-     * this method will return null.
+     * This will get the Ff entry of the cos dictionary. If it it not present then this method will return null.
      *
      * @return The field flags.
      */
     public Integer getFieldFlags()
     {
         Integer retval = null;
-        COSNumber ff = (COSNumber)field.getDictionaryObject( COSName.FF );
-        if( ff != null )
+        COSNumber ff = (COSNumber) field.getDictionaryObject(COSName.FF);
+        if (ff != null)
         {
             retval = ff.intValue();
         }
@@ -335,43 +336,40 @@ public class FDFField implements COSObjectable
     }
 
     /**
-     * This will get the field flags that are associated with this field. The Ff entry
-     * in the FDF field dictionary.
+     * This will get the field flags that are associated with this field. The Ff entry in the FDF field dictionary.
      *
      * @param ff The new value for the field flags.
      */
-    public void setFieldFlags( Integer ff )
+    public void setFieldFlags(Integer ff)
     {
         COSInteger value = null;
-        if( ff != null )
+        if (ff != null)
         {
-            value = COSInteger.get( ff );
+            value = COSInteger.get(ff);
         }
-        field.setItem( COSName.FF, value );
+        field.setItem(COSName.FF, value);
     }
 
     /**
-     * This will get the field flags that are associated with this field. The Ff entry
-     * in the FDF field dictionary.
+     * This will get the field flags that are associated with this field. The Ff entry in the FDF field dictionary.
      *
      * @param ff The new value for the field flags.
      */
-    public void setFieldFlags( int ff )
+    public void setFieldFlags(int ff)
     {
-        field.setInt( COSName.FF, ff );
+        field.setInt(COSName.FF, ff);
     }
 
     /**
-     * This will get the SetFf entry of the cos dictionary. If it it not present then
-     * this method will return null.
+     * This will get the SetFf entry of the cos dictionary. If it it not present then this method will return null.
      *
      * @return The field flags.
      */
     public Integer getSetFieldFlags()
     {
         Integer retval = null;
-        COSNumber ff = (COSNumber)field.getDictionaryObject( COSName.SET_FF );
-        if( ff != null )
+        COSNumber ff = (COSNumber) field.getDictionaryObject(COSName.SET_FF);
+        if (ff != null)
         {
             retval = ff.intValue();
         }
@@ -379,43 +377,40 @@ public class FDFField implements COSObjectable
     }
 
     /**
-     * This will get the field flags that are associated with this field. The SetFf entry
-     * in the FDF field dictionary.
+     * This will get the field flags that are associated with this field. The SetFf entry in the FDF field dictionary.
      *
      * @param ff The new value for the "set field flags".
      */
-    public void setSetFieldFlags( Integer ff )
+    public void setSetFieldFlags(Integer ff)
     {
         COSInteger value = null;
-        if( ff != null )
+        if (ff != null)
         {
-            value = COSInteger.get( ff );
+            value = COSInteger.get(ff);
         }
-        field.setItem( COSName.SET_FF, value );
+        field.setItem(COSName.SET_FF, value);
     }
 
     /**
-     * This will get the field flags that are associated with this field. The SetFf entry
-     * in the FDF field dictionary.
+     * This will get the field flags that are associated with this field. The SetFf entry in the FDF field dictionary.
      *
      * @param ff The new value for the "set field flags".
      */
-    public void setSetFieldFlags( int ff )
+    public void setSetFieldFlags(int ff)
     {
-        field.setInt( COSName.SET_FF, ff );
+        field.setInt(COSName.SET_FF, ff);
     }
 
     /**
-     * This will get the ClrFf entry of the cos dictionary. If it it not present then
-     * this method will return null.
+     * This will get the ClrFf entry of the cos dictionary. If it it not present then this method will return null.
      *
      * @return The field flags.
      */
     public Integer getClearFieldFlags()
     {
         Integer retval = null;
-        COSNumber ff = (COSNumber)field.getDictionaryObject( COSName.CLR_FF );
-        if( ff != null )
+        COSNumber ff = (COSNumber) field.getDictionaryObject(COSName.CLR_FF);
+        if (ff != null)
         {
             retval = ff.intValue();
         }
@@ -423,43 +418,40 @@ public class FDFField implements COSObjectable
     }
 
     /**
-     * This will get the field flags that are associated with this field. The ClrFf entry
-     * in the FDF field dictionary.
+     * This will get the field flags that are associated with this field. The ClrFf entry in the FDF field dictionary.
      *
      * @param ff The new value for the "clear field flags".
      */
-    public void setClearFieldFlags( Integer ff )
+    public void setClearFieldFlags(Integer ff)
     {
         COSInteger value = null;
-        if( ff != null )
+        if (ff != null)
         {
-            value = COSInteger.get( ff );
+            value = COSInteger.get(ff);
         }
-        field.setItem( COSName.CLR_FF, value );
+        field.setItem(COSName.CLR_FF, value);
     }
 
     /**
-     * This will get the field flags that are associated with this field. The ClrFf entry
-     * in the FDF field dictionary.
+     * This will get the field flags that are associated with this field. The ClrFf entry in the FDF field dictionary.
      *
      * @param ff The new value for the "clear field flags".
      */
-    public void setClearFieldFlags( int ff )
+    public void setClearFieldFlags(int ff)
     {
-        field.setInt( COSName.CLR_FF, ff );
+        field.setInt(COSName.CLR_FF, ff);
     }
 
     /**
-     * This will get the F entry of the cos dictionary. If it it not present then
-     * this method will return null.
+     * This will get the F entry of the cos dictionary. If it it not present then this method will return null.
      *
      * @return The widget field flags.
      */
     public Integer getWidgetFieldFlags()
     {
         Integer retval = null;
-        COSNumber f = (COSNumber)field.getDictionaryObject( "F" );
-        if( f != null )
+        COSNumber f = (COSNumber) field.getDictionaryObject("F");
+        if (f != null)
         {
             retval = f.intValue();
         }
@@ -467,43 +459,41 @@ public class FDFField implements COSObjectable
     }
 
     /**
-     * This will get the widget field flags that are associated with this field. The F entry
-     * in the FDF field dictionary.
+     * This will get the widget field flags that are associated with this field. The F entry in the FDF field
+     * dictionary.
      *
      * @param f The new value for the field flags.
      */
-    public void setWidgetFieldFlags( Integer f )
+    public void setWidgetFieldFlags(Integer f)
     {
         COSInteger value = null;
-        if( f != null )
+        if (f != null)
         {
-            value = COSInteger.get( f );
+            value = COSInteger.get(f);
         }
-        field.setItem( COSName.F, value );
+        field.setItem(COSName.F, value);
     }
 
     /**
-     * This will get the field flags that are associated with this field. The F entry
-     * in the FDF field dictionary.
+     * This will get the field flags that are associated with this field. The F entry in the FDF field dictionary.
      *
      * @param f The new value for the field flags.
      */
-    public void setWidgetFieldFlags( int f )
+    public void setWidgetFieldFlags(int f)
     {
-        field.setInt( COSName.F, f );
+        field.setInt(COSName.F, f);
     }
 
     /**
-     * This will get the SetF entry of the cos dictionary. If it it not present then
-     * this method will return null.
+     * This will get the SetF entry of the cos dictionary. If it it not present then this method will return null.
      *
      * @return The field flags.
      */
     public Integer getSetWidgetFieldFlags()
     {
         Integer retval = null;
-        COSNumber ff = (COSNumber)field.getDictionaryObject( COSName.SET_F );
-        if( ff != null )
+        COSNumber ff = (COSNumber) field.getDictionaryObject(COSName.SET_F);
+        if (ff != null)
         {
             retval = ff.intValue();
         }
@@ -511,43 +501,42 @@ public class FDFField implements COSObjectable
     }
 
     /**
-     * This will get the widget field flags that are associated with this field. The SetF entry
-     * in the FDF field dictionary.
+     * This will get the widget field flags that are associated with this field. The SetF entry in the FDF field
+     * dictionary.
      *
      * @param ff The new value for the "set widget field flags".
      */
-    public void setSetWidgetFieldFlags( Integer ff )
+    public void setSetWidgetFieldFlags(Integer ff)
     {
         COSInteger value = null;
-        if( ff != null )
+        if (ff != null)
         {
-            value = COSInteger.get( ff );
+            value = COSInteger.get(ff);
         }
-        field.setItem( COSName.SET_F, value );
+        field.setItem(COSName.SET_F, value);
     }
 
     /**
-     * This will get the widget field flags that are associated with this field. The SetF entry
-     * in the FDF field dictionary.
+     * This will get the widget field flags that are associated with this field. The SetF entry in the FDF field
+     * dictionary.
      *
      * @param ff The new value for the "set widget field flags".
      */
-    public void setSetWidgetFieldFlags( int ff )
+    public void setSetWidgetFieldFlags(int ff)
     {
-        field.setInt( COSName.SET_F, ff );
+        field.setInt(COSName.SET_F, ff);
     }
 
     /**
-     * This will get the ClrF entry of the cos dictionary. If it it not present then
-     * this method will return null.
+     * This will get the ClrF entry of the cos dictionary. If it it not present then this method will return null.
      *
      * @return The widget field flags.
      */
     public Integer getClearWidgetFieldFlags()
     {
         Integer retval = null;
-        COSNumber ff = (COSNumber)field.getDictionaryObject( COSName.CLR_F );
-        if( ff != null )
+        COSNumber ff = (COSNumber) field.getDictionaryObject(COSName.CLR_F);
+        if (ff != null)
         {
             retval = ff.intValue();
         }
@@ -555,45 +544,42 @@ public class FDFField implements COSObjectable
     }
 
     /**
-     * This will get the field flags that are associated with this field. The ClrF entry
-     * in the FDF field dictionary.
+     * This will get the field flags that are associated with this field. The ClrF entry in the FDF field dictionary.
      *
      * @param ff The new value for the "clear widget field flags".
      */
-    public void setClearWidgetFieldFlags( Integer ff )
+    public void setClearWidgetFieldFlags(Integer ff)
     {
         COSInteger value = null;
-        if( ff != null )
+        if (ff != null)
         {
-            value = COSInteger.get( ff );
+            value = COSInteger.get(ff);
         }
-        field.setItem( COSName.CLR_F, value );
+        field.setItem(COSName.CLR_F, value);
     }
 
     /**
-     * This will get the field flags that are associated with this field. The ClrF entry
-     * in the FDF field dictionary.
+     * This will get the field flags that are associated with this field. The ClrF entry in the FDF field dictionary.
      *
      * @param ff The new value for the "clear field flags".
      */
-    public void setClearWidgetFieldFlags( int ff )
+    public void setClearWidgetFieldFlags(int ff)
     {
-        field.setInt( COSName.CLR_F, ff );
+        field.setInt(COSName.CLR_F, ff);
     }
 
     /**
-     * This will get the appearance dictionary that specifies the appearance of
-     * a pushbutton field.
+     * This will get the appearance dictionary that specifies the appearance of a pushbutton field.
      *
      * @return The AP entry of this dictionary.
      */
     public PDAppearanceDictionary getAppearanceDictionary()
     {
         PDAppearanceDictionary retval = null;
-        COSDictionary dict = (COSDictionary)field.getDictionaryObject( COSName.AP );
-        if( dict != null )
+        COSDictionary dict = (COSDictionary) field.getDictionaryObject(COSName.AP);
+        if (dict != null)
         {
-            retval = new PDAppearanceDictionary( dict );
+            retval = new PDAppearanceDictionary(dict);
         }
         return retval;
     }
@@ -601,11 +587,11 @@ public class FDFField implements COSObjectable
     /**
      * This will set the appearance dictionary.
      *
-     * @param ap The apperance dictionary.
+     * @param ap The appearance dictionary.
      */
-    public void setAppearanceDictionary( PDAppearanceDictionary ap )
+    public void setAppearanceDictionary(PDAppearanceDictionary ap)
     {
-        field.setItem( COSName.AP, ap );
+        field.setItem(COSName.AP, ap);
     }
 
     /**
@@ -616,10 +602,10 @@ public class FDFField implements COSObjectable
     public FDFNamedPageReference getAppearanceStreamReference()
     {
         FDFNamedPageReference retval = null;
-        COSDictionary ref = (COSDictionary)field.getDictionaryObject( COSName.AP_REF );
-        if( ref != null )
+        COSDictionary ref = (COSDictionary) field.getDictionaryObject(COSName.AP_REF);
+        if (ref != null)
         {
-            retval = new FDFNamedPageReference( ref );
+            retval = new FDFNamedPageReference(ref);
         }
         return retval;
     }
@@ -629,9 +615,9 @@ public class FDFField implements COSObjectable
      *
      * @param ref The named page references.
      */
-    public void setAppearanceStreamReference( FDFNamedPageReference ref )
+    public void setAppearanceStreamReference(FDFNamedPageReference ref)
     {
-        field.setItem( COSName.AP_REF, ref );
+        field.setItem(COSName.AP_REF, ref);
     }
 
     /**
@@ -642,10 +628,10 @@ public class FDFField implements COSObjectable
     public FDFIconFit getIconFit()
     {
         FDFIconFit retval = null;
-        COSDictionary dic = (COSDictionary)field.getDictionaryObject(COSName.IF);
-        if( dic != null )
+        COSDictionary dic = (COSDictionary) field.getDictionaryObject(COSName.IF);
+        if (dic != null)
         {
-            retval = new FDFIconFit( dic );
+            retval = new FDFIconFit(dic);
         }
         return retval;
     }
@@ -655,52 +641,52 @@ public class FDFField implements COSObjectable
      *
      * @param fit The icon fit object.
      */
-    public void setIconFit( FDFIconFit fit )
+    public void setIconFit(FDFIconFit fit)
     {
-        field.setItem( COSName.IF, fit );
+        field.setItem(COSName.IF, fit);
     }
 
     /**
-     * This will return a list of options for a choice field. The value in the
-     * list will be 1 of 2 types. java.lang.String or FDFOptionElement.
+     * This will return a list of options for a choice field. The value in the list will be 1 of 2 types.
+     * java.lang.String or FDFOptionElement.
      *
      * @return A list of all options.
      */
     public List<Object> getOptions()
     {
         List<Object> retval = null;
-        COSArray array = (COSArray)field.getDictionaryObject( COSName.OPT );
-        if( array != null )
+        COSArray array = (COSArray) field.getDictionaryObject(COSName.OPT);
+        if (array != null)
         {
             List<Object> objects = new ArrayList<Object>();
-            for( int i=0; i<array.size(); i++ )
+            for (int i = 0; i < array.size(); i++)
             {
-                COSBase next = array.getObject( i );
-                if( next instanceof COSString )
+                COSBase next = array.getObject(i);
+                if (next instanceof COSString)
                 {
-                    objects.add( ((COSString)next).getString() );
+                    objects.add(((COSString) next).getString());
                 }
                 else
                 {
-                    COSArray value = (COSArray)next;
-                    objects.add( new FDFOptionElement( value ) );
+                    COSArray value = (COSArray) next;
+                    objects.add(new FDFOptionElement(value));
                 }
             }
-            retval = new COSArrayList<Object>( objects, array );
+            retval = new COSArrayList<Object>(objects, array);
         }
         return retval;
     }
 
     /**
-     * This will set the options for the choice field. The objects in the list
-     * should either be java.lang.String or FDFOptionElement.
+     * This will set the options for the choice field. The objects in the list should either be java.lang.String or
+     * FDFOptionElement.
      *
      * @param options The options to set.
      */
     public void setOptions(List<Object> options)
     {
-        COSArray value = COSArrayList.converterToCOSArray( options );
-        field.setItem( COSName.OPT, value );
+        COSArray value = COSArrayList.converterToCOSArray(options);
+        field.setItem(COSName.OPT, value);
     }
 
     /**
@@ -710,7 +696,7 @@ public class FDFField implements COSObjectable
      */
     public PDAction getAction()
     {
-        return PDActionFactory.createAction( (COSDictionary)field.getDictionaryObject( COSName.A ) );
+        return PDActionFactory.createAction((COSDictionary) field.getDictionaryObject(COSName.A));
     }
 
     /**
@@ -718,24 +704,23 @@ public class FDFField implements COSObjectable
      *
      * @param a The new action.
      */
-    public void setAction( PDAction a )
+    public void setAction(PDAction a)
     {
-        field.setItem( COSName.A, a );
+        field.setItem(COSName.A, a);
     }
 
     /**
-     * This will get a list of additional actions that will get executed based
-     * on events.
+     * This will get a list of additional actions that will get executed based on events.
      *
      * @return The AA entry in this field dictionary.
      */
     public PDAdditionalActions getAdditionalActions()
     {
         PDAdditionalActions retval = null;
-        COSDictionary dict = (COSDictionary)field.getDictionaryObject( COSName.AA );
-        if( dict != null )
+        COSDictionary dict = (COSDictionary) field.getDictionaryObject(COSName.AA);
+        if (dict != null)
         {
-            retval = new PDAdditionalActions( dict );
+            retval = new PDAdditionalActions(dict);
         }
 
         return retval;
@@ -746,9 +731,9 @@ public class FDFField implements COSObjectable
      *
      * @param aa The additional actions.
      */
-    public void setAdditionalActions( PDAdditionalActions aa )
+    public void setAdditionalActions(PDAdditionalActions aa)
     {
-        field.setItem( COSName.AA, aa );
+        field.setItem(COSName.AA, aa);
     }
 
     /**
@@ -758,7 +743,7 @@ public class FDFField implements COSObjectable
      */
     public String getRichText()
     {
-        COSBase rv = field.getDictionaryObject( COSName.RV );
+        COSBase rv = field.getDictionaryObject(COSName.RV);
         if (rv == null)
         {
             return null;
@@ -769,7 +754,7 @@ public class FDFField implements COSObjectable
         }
         else
         {
-            return ((COSStream)rv).toTextString();
+            return ((COSStream) rv).toTextString();
         }
     }
 
@@ -788,16 +773,16 @@ public class FDFField implements COSObjectable
      *
      * @param rv The rich text value for the stream.
      */
-    public void setRichText( COSStream rv )
+    public void setRichText(COSStream rv)
     {
-        field.setItem( COSName.RV, rv );
+        field.setItem(COSName.RV, rv);
     }
 
     /**
      * Escape special characters.
-     *
+     * 
      * @param input the string to be escaped
-     *
+     * 
      * @return the resulting string
      */
     private String escapeXML(String input)
@@ -808,30 +793,30 @@ public class FDFField implements COSObjectable
             char c = input.charAt(i);
             switch (c)
             {
-                case '<':
-                    escapedXML.append("&lt;");
-                    break;
-                case '>':
-                    escapedXML.append("&gt;");
-                    break;
-                case '\"':
-                    escapedXML.append("&quot;");
-                    break;
-                case '&':
-                    escapedXML.append("&amp;");
-                    break;
-                case '\'':
-                    escapedXML.append("&apos;");
-                    break;
-                default:
-                    if (c > 0x7e)
-                    {
-                        escapedXML.append("&#").append((int) c).append(";");
-                    }
-                    else
-                    {
-                        escapedXML.append(c);
-                    }
+            case '<':
+                escapedXML.append("&lt;");
+                break;
+            case '>':
+                escapedXML.append("&gt;");
+                break;
+            case '\"':
+                escapedXML.append("&quot;");
+                break;
+            case '&':
+                escapedXML.append("&amp;");
+                break;
+            case '\'':
+                escapedXML.append("&apos;");
+                break;
+            default:
+                if (c > 0x7e)
+                {
+                    escapedXML.append("&#").append((int) c).append(";");
+                }
+                else
+                {
+                    escapedXML.append(c);
+                }
             }
         }
         return escapedXML.toString();

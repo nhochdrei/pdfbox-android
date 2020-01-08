@@ -90,7 +90,7 @@ public class DataInput
             byte value = inputBuffer[bufferPosition];
             bufferPosition++;
             return value;
-        }
+        } 
         catch (RuntimeException re)
         {
             return -1;
@@ -181,7 +181,7 @@ public class DataInput
     {
         if (inputBuffer.length - bufferPosition < length)
         {
-            throw new EOFException();
+            throw new EOFException(); 
         }
         byte[] bytes = new byte[length];
         System.arraycopy(inputBuffer, bufferPosition, bytes, 0, length);
@@ -207,8 +207,7 @@ public class DataInput
     {
         try
         {
-            int value = inputBuffer[bufferPosition + offset] & 0xff;
-            return value;
+            return inputBuffer[bufferPosition + offset] & 0xff;
         }
         catch (RuntimeException re)
         {

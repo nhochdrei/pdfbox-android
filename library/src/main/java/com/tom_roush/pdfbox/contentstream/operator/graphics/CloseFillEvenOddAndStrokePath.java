@@ -16,27 +16,30 @@
  */
 package com.tom_roush.pdfbox.contentstream.operator.graphics;
 
-import java.io.IOException;
 import java.util.List;
 
-import com.tom_roush.pdfbox.contentstream.operator.Operator;
 import com.tom_roush.pdfbox.cos.COSBase;
+import com.tom_roush.pdfbox.contentstream.operator.Operator;
+import com.tom_roush.pdfbox.contentstream.operator.OperatorName;
+
+import java.io.IOException;
 
 /**
  * b* Close, fill and stroke the path with even-odd winding rule.
+ *
  */
 public final class CloseFillEvenOddAndStrokePath extends GraphicsOperatorProcessor
 {
     @Override
     public void process(Operator operator, List<COSBase> operands) throws IOException
     {
-        context.processOperator("h", operands);  // ClosePath
-        context.processOperator("B*", operands); // FillEvenOddAndStroke
+        context.processOperator(OperatorName.CLOSE_PATH, operands);
+        context.processOperator(OperatorName.FILL_EVEN_ODD_AND_STROKE, operands);
     }
 
     @Override
     public String getName()
     {
-        return "b*";
+        return OperatorName.CLOSE_FILL_EVEN_ODD_AND_STROKE;
     }
 }

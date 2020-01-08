@@ -58,7 +58,8 @@ public class PDDocumentCatalog implements COSObjectable
     private PDAcroForm cachedAcroForm;
 
     /**
-     * Constructor. AcroForm.
+     * Constructor. Internal PDFBox use only! If you need to get the document catalog, call
+     * {@link PDDocument#getDocumentCatalog()}.
      *
      * @param doc The document that this catalog is part of.
      */
@@ -71,7 +72,8 @@ public class PDDocumentCatalog implements COSObjectable
     }
 
     /**
-     * Constructor.
+     * Constructor. Internal PDFBox use only! If you need to get the document catalog, call
+     * {@link PDDocument#getDocumentCatalog()}.
      *
      * @param doc The document that this catalog is part of.
      * @param rootDictionary The root dictionary that this object wraps.
@@ -100,7 +102,7 @@ public class PDDocumentCatalog implements COSObjectable
      */
     public PDAcroForm getAcroForm()
     {
-        if(cachedAcroForm == null)
+        if (cachedAcroForm == null)
         {
             COSDictionary dict = (COSDictionary)root.getDictionaryObject(COSName.ACRO_FORM);
             cachedAcroForm = dict == null ? null : new PDAcroForm(document, dict);
@@ -121,11 +123,13 @@ public class PDDocumentCatalog implements COSObjectable
 
     /**
      * Returns all pages in the document, as a page tree.
+     * 
+     * @return the page tree of all pages
      */
     public PDPageTree getPages()
     {
-        // TODO cache me?
-        return new PDPageTree((COSDictionary) root.getDictionaryObject(COSName.PAGES), document);
+        // todo: cache me?
+        return new PDPageTree((COSDictionary)root.getDictionaryObject(COSName.PAGES), document);
     }
 
     /**
@@ -156,8 +160,8 @@ public class PDDocumentCatalog implements COSObjectable
      */
     public PDDocumentOutline getDocumentOutline()
     {
-        COSDictionary dict = (COSDictionary)root.getDictionaryObject(COSName.OUTLINES);
-        return dict == null ? null : new PDDocumentOutline(dict);
+        COSBase cosObj = root.getDictionaryObject(COSName.OUTLINES);
+        return cosObj instanceof COSDictionary ? new PDDocumentOutline((COSDictionary)cosObj) : null;
     }
 
     /**
@@ -172,17 +176,19 @@ public class PDDocumentCatalog implements COSObjectable
 
     /**
      * Returns the document's article threads.
+     * 
+     * @return a list containing all article threads.
      */
     public List<PDThread> getThreads()
     {
         COSArray array = (COSArray)root.getDictionaryObject(COSName.THREADS);
-        if(array == null)
+        if (array == null)
         {
             array = new COSArray();
             root.setItem(COSName.THREADS, array);
         }
         List<PDThread> pdObjects = new ArrayList<PDThread>();
-        for(int i = 0; i < array.size(); i++)
+        for (int i = 0; i < array.size(); i++)
         {
             pdObjects.add(new PDThread((COSDictionary)array.getObject(i)));
         }
@@ -194,9 +200,9 @@ public class PDDocumentCatalog implements COSObjectable
      *
      * @param threads The list of threads, or null to clear it.
      */
-    public void setThreads(List threads)
+    public void setThreads(List<PDThread> threads)
     {
-        root.setItem( COSName.THREADS, COSArrayList.converterToCOSArray(threads));
+        root.setItem(COSName.THREADS, COSArrayList.converterToCOSArray(threads));
     }
 
     /**
@@ -208,7 +214,7 @@ public class PDDocumentCatalog implements COSObjectable
     public PDMetadata getMetadata()
     {
         COSBase metaObj = root.getDictionaryObject(COSName.METADATA);
-        if(metaObj instanceof COSStream)
+        if (metaObj instanceof COSStream)
         {
             return new PDMetadata((COSStream) metaObj);
         }
@@ -244,22 +250,17 @@ public class PDDocumentCatalog implements COSObjectable
     public PDDestinationOrAction getOpenAction() throws IOException
     {
         COSBase openAction = root.getDictionaryObject(COSName.OPEN_ACTION);
-
-        if(openAction == null)
-        {
-            return null;
-        }
-        else if(openAction instanceof COSDictionary)
+        if (openAction instanceof COSDictionary)
         {
             return PDActionFactory.createAction((COSDictionary)openAction);
         }
-        else if(openAction instanceof COSArray)
+        else if (openAction instanceof COSArray)
         {
             return PDDestination.create(openAction);
         }
         else
         {
-            throw new IOException("Unknown OpenAction " + openAction);
+            return null;
         }
     }
     /**
@@ -308,17 +309,15 @@ public class PDDocumentCatalog implements COSObjectable
         }
         return nameDic;
     }
-
+    
     /**
      * Find the page destination from a named destination.
-     *
      * @param namedDest the named destination.
-     *
      * @return a PDPageDestination object or null if not found.
      * @throws IOException if there is an error creating the PDPageDestination object.
      */
     public PDPageDestination findNamedDestinationPage(PDNamedDestination namedDest)
-        throws IOException
+            throws IOException
     {
         PDPageDestination pageDestination = null;
         PDDocumentNameDictionary namesDict = getNames();
@@ -337,12 +336,12 @@ public class PDDocumentCatalog implements COSObjectable
             if (nameDestDict != null)
             {
                 String name = namedDest.getNamedDestination();
-                pageDestination = (PDPageDestination)nameDestDict.getDestination(name);
+                pageDestination = (PDPageDestination) nameDestDict.getDestination(name);
             }
         }
         return pageDestination;
     }
-
+    
     /**
      * Sets the names dictionary for the document.
      *
@@ -380,7 +379,7 @@ public class PDDocumentCatalog implements COSObjectable
      *
      * @return The list of PDOutputIntent
      */
-    public List<PDOutputIntent> getOutputIntents ()
+    public List<PDOutputIntent> getOutputIntents()
     {
         List<PDOutputIntent> retval = new ArrayList<PDOutputIntent>();
         COSArray array = (COSArray)root.getDictionaryObject(COSName.OUTPUT_INTENTS);
@@ -400,8 +399,8 @@ public class PDDocumentCatalog implements COSObjectable
     }
 
     /**
-     * Add an OutputIntent to the list. If there is not OutputIntent, the list is created and the
-     * first element added.
+     * Add an OutputIntent to the list.  If there is not OutputIntent, the list is created and the
+     * first  element added.
      *
      * @param outputIntent the OutputIntent to add.
      */
@@ -422,7 +421,7 @@ public class PDDocumentCatalog implements COSObjectable
      * @param outputIntents the list of OutputIntents, if the list is empty all OutputIntents are
      * removed.
      */
-    public void setOutputIntents(List<PDOutputIntent> outputIntents)
+    public void setOutputIntents(List<PDOutputIntent> outputIntents) 
     {
         COSArray array = new COSArray();
         for (PDOutputIntent intent : outputIntents)
@@ -434,13 +433,22 @@ public class PDDocumentCatalog implements COSObjectable
 
     /**
      * Returns the page display mode.
+     * 
+     * @return the page mode.
      */
     public PageMode getPageMode()
     {
         String mode = root.getNameAsString(COSName.PAGE_MODE);
         if (mode != null)
         {
-            return PageMode.fromString(mode);
+            try
+            {
+                return PageMode.fromString(mode);
+            }
+            catch (IllegalArgumentException e)
+            {
+                return PageMode.USE_NONE;
+            }
         }
         else
         {
@@ -460,6 +468,8 @@ public class PDDocumentCatalog implements COSObjectable
 
     /**
      * Returns the page layout.
+     * 
+     * @return the page layout.
      */
     public PageLayout getPageLayout()
     {
@@ -486,6 +496,8 @@ public class PDDocumentCatalog implements COSObjectable
 
     /**
      * Returns the document-level URI.
+     * 
+     * @return the document-level URI
      */
     public PDURIDictionary getURI()
     {
@@ -505,10 +517,12 @@ public class PDDocumentCatalog implements COSObjectable
 
     /**
      * Get the document's structure tree root, or null if none exists.
+     * 
+     * @return the structure tree root.
      */
     public PDStructureTreeRoot getStructureTreeRoot()
     {
-        COSDictionary dict = (COSDictionary)root.getDictionaryObject(COSName.STRUCT_TREE_ROOT);
+        COSDictionary dict = root.getCOSDictionary(COSName.STRUCT_TREE_ROOT);
         return dict == null ? null : new PDStructureTreeRoot(dict);
     }
 
@@ -524,6 +538,8 @@ public class PDDocumentCatalog implements COSObjectable
 
     /**
      * Returns the language for the document, or null.
+     * 
+     * @return the language or null.
      */
     public String getLanguage()
     {
@@ -594,7 +610,8 @@ public class PDDocumentCatalog implements COSObjectable
     }
 
     /**
-     * Sets the optional content properties dictionary.
+     * Sets the optional content properties dictionary. The document version is incremented to 1.5
+     * if lower.
      *
      * @param ocProperties the optional properties dictionary
      */

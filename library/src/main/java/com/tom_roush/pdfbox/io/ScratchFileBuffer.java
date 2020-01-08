@@ -16,11 +16,11 @@
  */
 package com.tom_roush.pdfbox.io;
 
-import android.util.Log;
-
 import java.io.EOFException;
 import java.io.IOException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import com.tom_roush.pdfbox.cos.COSStream;
 
 /**
@@ -54,25 +54,23 @@ class ScratchFileBuffer implements RandomAccess
      * The current position (for next read/write) of the buffer as an offset in the current page.
      */
     private int positionInPage;
-    /**
+    /** 
      * <code>true</code> if current page was changed by a write method
      */
     private boolean currentPageContentChanged = false;
 
-    /**
-     * contains ordered list of pages with the index the page is known by page handler ({@link ScratchFile})
-     */
+    /** contains ordered list of pages with the index the page is known by page handler ({@link ScratchFile}) */
     private int[] pageIndexes = new int[16];
-    /**
-     * number of pages held by this buffer
-     */
+    /** number of pages held by this buffer */
     private int pageCount = 0;
-
+    
+    private static final Log LOG = LogFactory.getLog(ScratchFileBuffer.class);
+    
     /**
      * Creates a new buffer using pages handled by provided {@link ScratchFile}.
-     *
+     * 
      * @param pageHandler The {@link ScratchFile} managing the pages to be used by this buffer.
-     *
+     * 
      * @throws IOException If getting first page failed.
      */
     ScratchFileBuffer(ScratchFile pageHandler) throws IOException
@@ -80,16 +78,16 @@ class ScratchFileBuffer implements RandomAccess
         pageHandler.checkClosed();
 
         this.pageHandler = pageHandler;
-
+        
         pageSize = this.pageHandler.getPageSize();
-
+        
         addPage();
     }
 
     /**
      * Checks if this buffer, or the underlying {@link ScratchFile} have been closed,
      * throwing {@link IOException} if so.
-     *
+     * 
      * @throws IOException If either this buffer, or the underlying {@link ScratchFile} have been closed.
      */
     private void checkClosed() throws IOException
@@ -103,16 +101,16 @@ class ScratchFileBuffer implements RandomAccess
 
     /**
      * Adds a new page and positions all pointers to start of new page.
-     *
+     * 
      * @throws IOException if requesting a new page fails
      */
     private void addPage() throws IOException
     {
-        if (pageCount + 1 >= pageIndexes.length)
+        if (pageCount+1 >= pageIndexes.length)
         {
-            int newSize = pageIndexes.length * 2;
+            int newSize = pageIndexes.length*2;
             // check overflow
-            if (newSize < pageIndexes.length)
+            if (newSize<pageIndexes.length)
             {
                 if (pageIndexes.length == Integer.MAX_VALUE)
                 {
@@ -124,17 +122,17 @@ class ScratchFileBuffer implements RandomAccess
             System.arraycopy(pageIndexes, 0, newPageIndexes, 0, pageCount);
             pageIndexes = newPageIndexes;
         }
-
+        
         int newPageIdx = pageHandler.getNewPage();
-
+        
         pageIndexes[pageCount] = newPageIdx;
         currentPagePositionInPageIndexes = pageCount;
-        currentPageOffset = ((long) pageCount) * pageSize;
+        currentPageOffset = ((long)pageCount) * pageSize; 
         pageCount++;
         currentPage = new byte[pageSize];
         positionInPage = 0;
     }
-
+    
     /**
      * {@inheritDoc}
      */
@@ -147,18 +145,18 @@ class ScratchFileBuffer implements RandomAccess
     /**
      * Ensures the current page has at least one byte left
      * ({@link #positionInPage} in &lt; {@link #pageSize}).
-     *
+     * 
      * <p>If this is not the case we go to next page (writing
      * current one if changed). If current buffer has no more
      * pages we add a new one.</p>
-     *
+     * 
      * @param addNewPageIfNeeded if <code>true</code> it is allowed to add a new page in case
      *                           we are currently at end of last buffer page
-     *
+     * 
      * @return <code>true</code> if we were successful positioning pointer before end of page;
      *         we might return <code>false</code> if it is not allowed to add another page
      *         and current pointer points at end of last page
-     *
+     * 
      * @throws IOException
      */
     private boolean ensureAvailableBytesInPage(boolean addNewPageIfNeeded) throws IOException
@@ -173,11 +171,11 @@ class ScratchFileBuffer implements RandomAccess
                 currentPageContentChanged = false;
             }
             // get new page
-            if (currentPagePositionInPageIndexes + 1 < pageCount)
+            if (currentPagePositionInPageIndexes+1 < pageCount)
             {
                 // we already have more pages assigned (there was a backward seek before)
                 currentPage = pageHandler.readPage(pageIndexes[++currentPagePositionInPageIndexes]);
-                currentPageOffset = ((long) currentPagePositionInPageIndexes) * pageSize;
+                currentPageOffset = ((long)currentPagePositionInPageIndexes) * pageSize;
                 positionInPage = 0;
             }
             else if (addNewPageIfNeeded)
@@ -193,7 +191,7 @@ class ScratchFileBuffer implements RandomAccess
         }
         return true;
     }
-
+    
     /**
      * {@inheritDoc}
      */
@@ -201,13 +199,13 @@ class ScratchFileBuffer implements RandomAccess
     public void write(int b) throws IOException
     {
         checkClosed();
-
+        
         ensureAvailableBytesInPage(true);
-
+        
         currentPage[positionInPage++] = (byte) b;
         currentPageContentChanged = true;
-
-        if (currentPageOffset + positionInPage > size)
+        
+        if(currentPageOffset + positionInPage > size)
         {
             size = currentPageOffset + positionInPage;
         }
@@ -231,24 +229,24 @@ class ScratchFileBuffer implements RandomAccess
         checkClosed();
 
         int remain = len;
-        int bOff = off;
-
+        int bOff   = off;
+        
         while (remain > 0)
         {
             ensureAvailableBytesInPage(true);
 
-            int bytesToWrite = Math.min(remain, pageSize - positionInPage);
-
+            int bytesToWrite = Math.min(remain, pageSize-positionInPage);
+            
             System.arraycopy(b, bOff, currentPage, positionInPage, bytesToWrite);
-
+            
             positionInPage += bytesToWrite;
             currentPageContentChanged = true;
-
-            bOff += bytesToWrite;
+            
+            bOff   += bytesToWrite;
             remain -= bytesToWrite;
         }
-
-        if (currentPageOffset + positionInPage > size)
+        
+        if(currentPageOffset + positionInPage > size)
         {
             size = currentPageOffset + positionInPage;
         }
@@ -261,11 +259,11 @@ class ScratchFileBuffer implements RandomAccess
     public final void clear() throws IOException
     {
         checkClosed();
-
+        
         // keep only the first page, discard all other pages
         pageHandler.markPagesAsFree(pageIndexes, 1, pageCount - 1);
         pageCount = 1;
-
+        
         // change to first page if we are not already there
         if (currentPagePositionInPageIndexes > 0)
         {
@@ -303,14 +301,13 @@ class ScratchFileBuffer implements RandomAccess
         {
             throw new EOFException();
         }
-
+        
         if (seekToPosition < 0)
         {
             throw new IOException("Negative seek offset: " + seekToPosition);
         }
-
-        if ((seekToPosition >= currentPageOffset) &&
-            (seekToPosition <= currentPageOffset + pageSize))
+        
+        if ((seekToPosition >= currentPageOffset) && (seekToPosition <= currentPageOffset + pageSize))
         {
             // within same page
             positionInPage = (int) (seekToPosition - currentPageOffset);
@@ -318,19 +315,19 @@ class ScratchFileBuffer implements RandomAccess
         else
         {
             // have to go to another page
-
+            
             // check if current page needs to be written to file
             if (currentPageContentChanged)
             {
                 pageHandler.writePage(pageIndexes[currentPagePositionInPageIndexes], currentPage);
                 currentPageContentChanged = false;
             }
-
+            
             int newPagePosition = (int) (seekToPosition / pageSize);
-
+            
             currentPage = pageHandler.readPage(pageIndexes[newPagePosition]);
             currentPagePositionInPageIndexes = newPagePosition;
-            currentPageOffset = ((long) currentPagePositionInPageIndexes) * pageSize;
+            currentPageOffset = ((long)currentPagePositionInPageIndexes) * pageSize;
             positionInPage = (int) (seekToPosition - currentPageOffset);
         }
     }
@@ -384,8 +381,7 @@ class ScratchFileBuffer implements RandomAccess
                 throw new EOFException();
             }
             n += count;
-        }
-        while (n < len);
+        } while (n < len);
 
         return b;
     }
@@ -423,12 +419,12 @@ class ScratchFileBuffer implements RandomAccess
             return -1;
         }
 
-        if (!ensureAvailableBytesInPage(false))
+        if (! ensureAvailableBytesInPage(false))
         {
             // should not happen, we checked it before
             throw new IOException("Unexpectedly no bytes available for read in buffer.");
         }
-
+        
         return currentPage[positionInPage++] & 0xff;
     }
 
@@ -457,16 +453,16 @@ class ScratchFileBuffer implements RandomAccess
         int remain = (int) Math.min(len, size - (currentPageOffset + positionInPage));
 
         int totalBytesRead = 0;
-        int bOff = off;
+        int bOff           = off;
 
         while (remain > 0)
         {
-            if (!ensureAvailableBytesInPage(false))
+            if (! ensureAvailableBytesInPage(false))
             {
                 // should not happen, we checked it before
                 throw new IOException("Unexpectedly no bytes available for read in buffer.");
             }
-
+            
             int readBytes = Math.min(remain, pageSize - positionInPage);
 
             System.arraycopy(currentPage, positionInPage, b, bOff, readBytes);
@@ -486,12 +482,11 @@ class ScratchFileBuffer implements RandomAccess
     @Override
     public void close() throws IOException
     {
-        if (pageHandler != null)
-        {
+        if (pageHandler != null) {
 
             pageHandler.markPagesAsFree(pageIndexes, 0, pageCount);
             pageHandler = null;
-
+            
             pageIndexes = null;
             currentPage = null;
             currentPageOffset = 0;
@@ -500,14 +495,14 @@ class ScratchFileBuffer implements RandomAccess
             size = 0;
         }
     }
-
+    
     /**
      * While calling finalize is normally discouraged we will have to
-     * use it here as long as closing a scratch file buffer is not
+     * use it here as long as closing a scratch file buffer is not 
      * done in every case. Currently {@link COSStream} creates new
      * buffers without closing the old one - which might still be
      * used.
-     *
+     * 
      * <p>Enabling debugging one will see if there are still cases
      * where the buffer is not closed.</p>
      */
@@ -516,9 +511,9 @@ class ScratchFileBuffer implements RandomAccess
     {
         try
         {
-            if ((pageHandler != null))
+            if ((pageHandler != null) && LOG.isDebugEnabled())
             {
-                Log.d("PdfBox-Android", "ScratchFileBuffer not closed!");
+                LOG.debug("ScratchFileBuffer not closed!");
             }
             close();
         }

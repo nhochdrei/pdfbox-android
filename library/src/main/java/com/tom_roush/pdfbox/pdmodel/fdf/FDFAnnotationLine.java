@@ -16,15 +16,14 @@
  */
 package com.tom_roush.pdfbox.pdmodel.fdf;
 
+import java.awt.Color;
 import java.io.IOException;
 
-import com.tom_roush.harmony.awt.AWTColor;
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSFloat;
 import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.pdmodel.interactive.annotation.PDAnnotationLine;
-
 import org.w3c.dom.Element;
 
 /**
@@ -38,7 +37,7 @@ public class FDFAnnotationLine extends FDFAnnotation
     /**
      * COS Model value for SubType entry.
      */
-    public static final String SUBTYPE ="Line";
+    public static final String SUBTYPE = "Line";
 
     /**
      * Default constructor.
@@ -46,7 +45,7 @@ public class FDFAnnotationLine extends FDFAnnotation
     public FDFAnnotationLine()
     {
         super();
-        annot.setName( COSName.SUBTYPE, SUBTYPE );
+        annot.setName(COSName.SUBTYPE, SUBTYPE);
     }
 
     /**
@@ -54,9 +53,9 @@ public class FDFAnnotationLine extends FDFAnnotation
      *
      * @param a An existing FDF Annotation.
      */
-    public FDFAnnotationLine( COSDictionary a )
+    public FDFAnnotationLine(COSDictionary a)
     {
-        super( a );
+        super(a);
     }
 
     /**
@@ -66,7 +65,7 @@ public class FDFAnnotationLine extends FDFAnnotation
      *
      * @throws IOException If there is an error extracting information from the element.
      */
-    public FDFAnnotationLine( Element element ) throws IOException
+    public FDFAnnotationLine(Element element) throws IOException
     {
         super(element);
         annot.setName(COSName.SUBTYPE, SUBTYPE);
@@ -127,7 +126,7 @@ public class FDFAnnotationLine extends FDFAnnotation
         if (color != null && color.length() == 7 && color.charAt(0) == '#')
         {
             int colorValue = Integer.parseInt(color.substring(1, 7), 16);
-            setInteriorColor(new AWTColor(colorValue));
+            setInteriorColor(new Color(colorValue));
         }
 
         String caption = element.getAttribute("caption");
@@ -274,7 +273,7 @@ public class FDFAnnotationLine extends FDFAnnotation
      *
      * @param color The interior color of the line endings.
      */
-    public void setInteriorColor(AWTColor color)
+    public void setInteriorColor(Color color)
     {
         COSArray array = null;
         if (color != null)
@@ -291,16 +290,16 @@ public class FDFAnnotationLine extends FDFAnnotation
      *
      * @return object representing the color.
      */
-    public AWTColor getInteriorColor()
+    public Color getInteriorColor()
     {
-        AWTColor retval = null;
+        Color retval = null;
         COSArray array = (COSArray) annot.getDictionaryObject(COSName.IC);
         if (array != null)
         {
             float[] rgb = array.toFloatArray();
             if (rgb.length >= 3)
             {
-                retval = new AWTColor(rgb[0], rgb[1], rgb[2]);
+                retval = new Color(rgb[0], rgb[1], rgb[2]);
             }
         }
         return retval;
@@ -328,7 +327,7 @@ public class FDFAnnotationLine extends FDFAnnotation
 
     /**
      * This will retrieve the length of the leader line.
-     *
+     * 
      * @return the length of the leader line
      */
     public float getLeaderLength()
@@ -338,7 +337,7 @@ public class FDFAnnotationLine extends FDFAnnotation
 
     /**
      * This will set the length of the leader line.
-     *
+     * 
      * @param leaderLength length of the leader line
      */
     public void setLeaderLength(float leaderLength)
@@ -348,7 +347,7 @@ public class FDFAnnotationLine extends FDFAnnotation
 
     /**
      * This will retrieve the length of the leader line extensions.
-     *
+     * 
      * @return the length of the leader line extensions
      */
     public float getLeaderExtend()
@@ -358,7 +357,7 @@ public class FDFAnnotationLine extends FDFAnnotation
 
     /**
      * This will set the length of the leader line extensions.
-     *
+     * 
      * @param leaderExtend length of the leader line extensions
      */
     public void setLeaderExtend(float leaderExtend)
@@ -368,7 +367,7 @@ public class FDFAnnotationLine extends FDFAnnotation
 
     /**
      * This will retrieve the length of the leader line offset.
-     *
+     * 
      * @return the length of the leader line offset
      */
     public float getLeaderOffset()
@@ -378,7 +377,7 @@ public class FDFAnnotationLine extends FDFAnnotation
 
     /**
      * This will set the length of the leader line offset.
-     *
+     * 
      * @param leaderOffset length of the leader line offset
      */
     public void setLeaderOffset(float leaderOffset)
@@ -388,7 +387,7 @@ public class FDFAnnotationLine extends FDFAnnotation
 
     /**
      * This will retrieve the caption positioning.
-     *
+     * 
      * @return the caption positioning
      */
     public String getCaptionStyle()
@@ -398,7 +397,7 @@ public class FDFAnnotationLine extends FDFAnnotation
 
     /**
      * This will set the caption positioning. Allowed values are: "Inline" and "Top"
-     *
+     * 
      * @param captionStyle caption positioning
      */
     public void setCaptionStyle(String captionStyle)
@@ -408,7 +407,7 @@ public class FDFAnnotationLine extends FDFAnnotation
 
     /**
      * This will set the horizontal offset of the caption.
-     *
+     * 
      * @param offset the horizontal offset of the caption
      */
     public void setCaptionHorizontalOffset(float offset)
@@ -417,7 +416,7 @@ public class FDFAnnotationLine extends FDFAnnotation
         if (array == null)
         {
             array = new COSArray();
-            array.setFloatArray(new float[]{offset, 0.f});
+            array.setFloatArray(new float[] { offset, 0.f });
             annot.setItem(COSName.CO, array);
         }
         else
@@ -428,7 +427,7 @@ public class FDFAnnotationLine extends FDFAnnotation
 
     /**
      * This will retrieve the horizontal offset of the caption.
-     *
+     * 
      * @return the horizontal offset of the caption
      */
     public float getCaptionHorizontalOffset()
@@ -445,7 +444,7 @@ public class FDFAnnotationLine extends FDFAnnotation
 
     /**
      * This will set the vertical offset of the caption.
-     *
+     * 
      * @param offset vertical offset of the caption
      */
     public void setCaptionVerticalOffset(float offset)
@@ -454,7 +453,7 @@ public class FDFAnnotationLine extends FDFAnnotation
         if (array == null)
         {
             array = new COSArray();
-            array.setFloatArray(new float[]{0.f, offset});
+            array.setFloatArray(new float[] { 0.f, offset });
             annot.setItem(COSName.CO, array);
         }
         else
@@ -465,7 +464,7 @@ public class FDFAnnotationLine extends FDFAnnotation
 
     /**
      * This will retrieve the vertical offset of the caption.
-     *
+     * 
      * @return the vertical offset of the caption
      */
     public float getCaptionVerticalOffset()

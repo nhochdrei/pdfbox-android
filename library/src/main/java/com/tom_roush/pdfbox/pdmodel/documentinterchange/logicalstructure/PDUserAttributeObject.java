@@ -62,7 +62,8 @@ public class PDUserAttributeObject extends PDAttributeObject
      */
     public List<PDUserProperty> getOwnerUserProperties()
     {
-        COSArray p = (COSArray) this.getCOSObject().getDictionaryObject(COSName.P);
+        COSArray p = (COSArray) this.getCOSObject()
+            .getDictionaryObject(COSName.P);
         List<PDUserProperty> properties = new ArrayList<PDUserProperty>(p.size());
         for (int i = 0; i < p.size(); i++)
         {
@@ -94,8 +95,7 @@ public class PDUserAttributeObject extends PDAttributeObject
      */
     public void addUserProperty(PDUserProperty userProperty)
     {
-        COSArray p = (COSArray) this.getCOSObject()
-            .getDictionaryObject(COSName.P);
+        COSArray p = (COSArray) this.getCOSObject().getDictionaryObject(COSName.P);
         p.add(userProperty);
         this.notifyChanged();
     }
@@ -117,7 +117,7 @@ public class PDUserAttributeObject extends PDAttributeObject
     }
 
     /**
-     * @param userProperty  
+     * @param userProperty the changed user property.
      */
     public void userPropertyChanged(PDUserProperty userProperty)
     {
@@ -127,9 +127,9 @@ public class PDUserAttributeObject extends PDAttributeObject
     @Override
     public String toString()
     {
-        return new StringBuilder().append(super.toString())
-            .append(", userProperties=")
-            .append(this.getOwnerUserProperties()).toString();
+        return super.toString() +
+                ", userProperties=" +
+                this.getOwnerUserProperties();
     }
 
 }

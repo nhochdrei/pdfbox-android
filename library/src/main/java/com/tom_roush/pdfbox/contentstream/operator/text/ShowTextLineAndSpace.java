@@ -16,13 +16,15 @@
  */
 package com.tom_roush.pdfbox.contentstream.operator.text;
 
-import java.io.IOException;
 import java.util.List;
 
-import com.tom_roush.pdfbox.contentstream.operator.MissingOperandException;
-import com.tom_roush.pdfbox.contentstream.operator.Operator;
-import com.tom_roush.pdfbox.contentstream.operator.OperatorProcessor;
 import com.tom_roush.pdfbox.cos.COSBase;
+import com.tom_roush.pdfbox.contentstream.operator.Operator;
+import com.tom_roush.pdfbox.contentstream.operator.OperatorName;
+import com.tom_roush.pdfbox.contentstream.operator.OperatorProcessor;
+
+import java.io.IOException;
+import com.tom_roush.pdfbox.contentstream.operator.MissingOperandException;
 
 /**
  * ": Set word and character spacing, move to next line, and show text.
@@ -38,14 +40,14 @@ public class ShowTextLineAndSpace extends OperatorProcessor
         {
             throw new MissingOperandException(operator, arguments);
         }
-        context.processOperator("Tw", arguments.subList(0,1));
-        context.processOperator("Tc", arguments.subList(1,2));
-        context.processOperator("'", arguments.subList(2,3));
+        context.processOperator(OperatorName.SET_WORD_SPACING, arguments.subList(0, 1));
+        context.processOperator(OperatorName.SET_CHAR_SPACING, arguments.subList(1, 2));
+        context.processOperator(OperatorName.SHOW_TEXT_LINE, arguments.subList(2, 3));
     }
 
     @Override
     public String getName()
     {
-        return "\"";
+        return OperatorName.SHOW_TEXT_LINE_AND_SPACE;
     }
 }

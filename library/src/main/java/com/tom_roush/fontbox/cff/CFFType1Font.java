@@ -16,14 +16,12 @@
  */
 package com.tom_roush.fontbox.cff;
 
-import android.graphics.Path;
-
+import java.awt.geom.GeneralPath;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
 import com.tom_roush.fontbox.EncodedFont;
 import com.tom_roush.fontbox.type1.Type1CharStringReader;
 
@@ -57,7 +55,7 @@ public class CFFType1Font extends CFFFont implements EncodedFont
     }
 
     @Override
-    public Path getPath(String name) throws IOException
+    public GeneralPath getPath(String name) throws IOException
     {
         return getType1CharString(name).getPath();
     }
@@ -99,7 +97,7 @@ public class CFFType1Font extends CFFFont implements EncodedFont
 
     /**
      * Returns the GID for the given PostScript glyph name.
-     *
+     * 
      * @param name a PostScript glyph name.
      * @return GID
      */

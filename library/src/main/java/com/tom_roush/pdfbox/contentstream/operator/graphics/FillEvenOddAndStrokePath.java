@@ -16,13 +16,14 @@
  */
 package com.tom_roush.pdfbox.contentstream.operator.graphics;
 
-import android.graphics.Path;
-
-import java.io.IOException;
 import java.util.List;
 
-import com.tom_roush.pdfbox.contentstream.operator.Operator;
 import com.tom_roush.pdfbox.cos.COSBase;
+import com.tom_roush.pdfbox.contentstream.operator.Operator;
+import com.tom_roush.pdfbox.contentstream.operator.OperatorName;
+
+import java.awt.geom.Path2D;
+import java.io.IOException;
 
 /**
  * B* Fill and then stroke the path, using the even-odd rule to determine the region to fill.
@@ -33,12 +34,12 @@ public final class FillEvenOddAndStrokePath extends GraphicsOperatorProcessor
     @Override
     public void process(Operator operator, List<COSBase> operands) throws IOException
     {
-        context.fillAndStrokePath(Path.FillType.EVEN_ODD);
+        context.fillAndStrokePath(Path2D.WIND_EVEN_ODD);
     }
 
     @Override
     public String getName()
     {
-        return "B*";
+        return OperatorName.FILL_EVEN_ODD_AND_STROKE;
     }
 }

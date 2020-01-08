@@ -16,8 +16,7 @@
  */
 package com.tom_roush.fontbox.ttf;
 
-import android.graphics.Path;
-
+import java.awt.geom.GeneralPath;
 import java.io.IOException;
 
 import com.tom_roush.fontbox.util.BoundingBox;
@@ -45,8 +44,7 @@ public class GlyphData
      * @param leftSideBearing The left side bearing for this glyph.
      * @throws IOException If there is an error reading the data.
      */
-    public void initData(GlyphTable glyphTable, TTFDataStream data, int leftSideBearing)
-        throws IOException
+    void initData( GlyphTable glyphTable, TTFDataStream data, int leftSideBearing ) throws IOException
     {
         numberOfContours = data.readSignedShort();
         xMin = data.readSignedShort();
@@ -58,7 +56,7 @@ public class GlyphData
         if (numberOfContours >= 0) 
         {
             // create a simple glyph
-            short x0 = (short)(leftSideBearing - xMin);
+            short x0 = (short) (leftSideBearing - xMin);
             glyphDescription = new GlyfSimpleDescript(numberOfContours, data, x0);
         }
         else 
@@ -113,7 +111,7 @@ public class GlyphData
      * Returns the path of the glyph.
      * @return the path
      */
-    public Path getPath()
+    public GeneralPath getPath()
     {
         return new GlyphRenderer(glyphDescription).getPath();
     }

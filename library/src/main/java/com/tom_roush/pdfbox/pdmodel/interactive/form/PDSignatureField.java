@@ -20,6 +20,9 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
@@ -35,12 +38,14 @@ import com.tom_roush.pdfbox.pdmodel.interactive.digitalsignature.PDSignature;
  */
 public class PDSignatureField extends PDTerminalField
 {
+	private static final Log LOG = LogFactory.getLog(PDSignatureField.class);
+	
     /**
      * @see PDTerminalField#PDTerminalField(PDAcroForm)
      *
      * @param acroForm The acroForm for this field.
      * @throws IOException If there is an error while resolving partial name for the signature field
-     * or getting the widget object.
+     *         or getting the widget object.
      */
     public PDSignatureField(PDAcroForm acroForm) throws IOException
     {
@@ -50,10 +55,10 @@ public class PDSignatureField extends PDTerminalField
         getWidgets().get(0).setPrinted(true);
         setPartialName(generatePartialName());
     }
-
+    
     /**
      * Constructor.
-     *
+     * 
      * @param acroForm The form that this field is part of.
      * @param field the PDF object to represent as a field.
      * @param parent the parent node of the node to be created
@@ -62,35 +67,34 @@ public class PDSignatureField extends PDTerminalField
     {
         super(acroForm, field, parent);
     }
-
+    
     /**
      * Generate a unique name for the signature.
-     *
+     * 
      * @return the signature's unique name
      */
     private String generatePartialName()
     {
         String fieldName = "Signature";
         Set<String> sigNames = new HashSet<String>();
-        // fixme: this ignores non-terminal fields, so will miss any descendant signatures
-        for (PDField field : getAcroForm().getFields())
+        for (PDField field : getAcroForm().getFieldTree())
         {
-            if (field instanceof PDSignatureField)
+            if(field instanceof PDSignatureField)
             {
                 sigNames.add(field.getPartialName());
             }
         }
         int i = 1;
-        while (sigNames.contains(fieldName + i))
+        while(sigNames.contains(fieldName+i))
         {
             ++i;
         }
-        return fieldName + i;
+        return fieldName+i;
     }
-
+    
     /**
      * Add a signature dictionary to the signature field.
-     *
+     * 
      * @param value is the PDSignatureField
      * @deprecated Use {@link #setValue(PDSignature)} instead.
      */
@@ -99,11 +103,12 @@ public class PDSignatureField extends PDTerminalField
     {
         setValue(value);
     }
-
+    
     /**
-     * Get the signature getCOSObject().
-     *
+     * Get the signature dictionary.
+     * 
      * @return the signature dictionary
+     * 
      */
     public PDSignature getSignature()
     {
@@ -112,7 +117,7 @@ public class PDSignatureField extends PDTerminalField
 
     /**
      * Sets the value of this field to be the given signature.
-     *
+     * 
      * @param value is the PDSignatureField
      */
     public void setValue(PDSignature value) throws IOException
@@ -122,22 +127,20 @@ public class PDSignatureField extends PDTerminalField
     }
 
     /**
-     * Sets the value of this field.
-     *
-     * <b>This will throw an UnsupportedOperationException if used as the signature fields
-     * value can't be set using a String</>
+     * <b>This will throw an UnsupportedOperationException if used as the signature fields value
+     * can't be set using a String</b>
      *
      * @param value the plain text value.
      *
      * @throws UnsupportedOperationException in all cases!
      */
     @Override
-    public void setValue(String value) throws UnsupportedOperationException
+    public void setValue(String value)
     {
-        throw new UnsupportedOperationException(
-            "Signature fields don't support setting the value as String " +
-                "- use setValue(PDSignature value) instead");
+        throw new UnsupportedOperationException("Signature fields don't support setting the value as String "
+                + "- use setValue(PDSignature value) instead");
     }
+    
 
     /**
      * Sets the default value of this field to be the given signature.
@@ -151,17 +154,17 @@ public class PDSignatureField extends PDTerminalField
 
     /**
      * Returns the signature contained in this field.
-     *
+     * 
      * @return A signature dictionary.
      */
     public PDSignature getValue()
     {
         COSBase value = getCOSObject().getDictionaryObject(COSName.V);
-        if (value == null)
+        if (value instanceof COSDictionary)
         {
-            return null;
+            return new PDSignature((COSDictionary) value);
         }
-        return new PDSignature((COSDictionary) value);
+        return null;
     }
 
     /**
@@ -176,9 +179,9 @@ public class PDSignatureField extends PDTerminalField
         {
             return null;
         }
-        return new PDSignature((COSDictionary) value);
+        return new PDSignature((COSDictionary)value);
     }
-
+    
     @Override
     public String getValueAsString()
     {
@@ -195,7 +198,7 @@ public class PDSignatureField extends PDTerminalField
      */
     public PDSeedValue getSeedValue()
     {
-        COSDictionary dict = (COSDictionary)getCOSObject().getDictionaryObject(COSName.SV);
+        COSDictionary dict = (COSDictionary) getCOSObject().getDictionaryObject(COSName.SV);
         PDSeedValue sv = null;
         if (dict != null)
         {
@@ -226,14 +229,15 @@ public class PDSignatureField extends PDTerminalField
         if (widget != null)
         {
             // check if the signature is visible
-            if (widget.getRectangle() == null || widget.getRectangle().getHeight() == 0 &&
-                widget.getRectangle().getWidth() == 0 || widget.isNoView() || widget.isHidden())
+            if (widget.getRectangle() == null ||
+                widget.getRectangle().getHeight() == 0 && widget.getRectangle().getWidth() == 0 ||
+                widget.isNoView() ||  widget.isHidden())
             {
                 return;
             }
 
             // TODO: implement appearance generation for signatures
-            throw new UnsupportedOperationException("not implemented");
+            LOG.warn("Appearance generation for signature fields not yet implemented - you need to generate/update that manually");
         }
     }
 }

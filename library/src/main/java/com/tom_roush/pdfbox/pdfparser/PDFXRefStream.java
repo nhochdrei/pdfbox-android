@@ -29,6 +29,7 @@ import java.util.TreeSet;
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;
+import com.tom_roush.pdfbox.cos.COSDocument;
 import com.tom_roush.pdfbox.cos.COSInteger;
 import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.cos.COSObject;
@@ -57,10 +58,25 @@ public class PDFXRefStream implements PDFXRef
 
     /**
      * Create a fresh XRef stream like for a fresh file or an incremental update.
+     * 
+     * @deprecated use {@link #PDFXRefStream(com.tom_roush.pdfbox.cos.COSDocument)}
      */
+    @Deprecated
     public PDFXRefStream()
     {
         this.stream = new COSStream();
+        streamData = new TreeMap<Long, Object>();
+        objectNumbers = new TreeSet<Long>();
+    }
+
+    /**
+     * Create a fresh XRef stream like for a fresh file or an incremental update.
+     * 
+     * @param cosDocument
+     */
+    public PDFXRefStream(COSDocument cosDocument)
+    {
+        stream = cosDocument.createCOSStream();
         streamData = new TreeMap<Long, Object>();
         objectNumbers = new TreeSet<Long>();
     }
@@ -77,12 +93,11 @@ public class PDFXRefStream implements PDFXRef
         {
             throw new IllegalArgumentException("size is not set in xrefstream");
         }
-        // add one for object number 0
-        stream.setLong(COSName.SIZE, streamData.size() + 1);
-
+        stream.setLong(COSName.SIZE, size);
+    
         List<Long> indexEntry = getIndexEntry();
         COSArray indexAsArray = new COSArray();
-        for (Long i : indexEntry)
+        for ( Long i : indexEntry )
         {
             indexAsArray.add(COSInteger.get(i));
         }
@@ -90,25 +105,28 @@ public class PDFXRefStream implements PDFXRef
 
         int[] wEntry = getWEntry();
         COSArray wAsArray = new COSArray();
-        for (int i = 0; i < wEntry.length; i++)
+        for (int j : wEntry)
         {
-            int j = wEntry[i];
             wAsArray.add(COSInteger.get(j));
         }
         stream.setItem(COSName.W, wAsArray);
-
+        
         OutputStream outputStream = this.stream.createOutputStream(COSName.FLATE_DECODE);
         writeStreamData(outputStream, wEntry);
         outputStream.flush();
         outputStream.close();
-
+    
         Set<COSName> keySet = this.stream.keySet();
         for ( COSName cosName : keySet )
         {
-            // "Other cross-reference stream entries not listed in Table 17 may be indirect; in fact,
+            // "Other cross-reference stream entries not listed in Table 17 may be indirect; in fact, 
             // some (such as Root in Table 15) shall be indirect."
-            if (COSName.ROOT.equals(cosName) || COSName.INFO.equals(cosName) || COSName.PREV.equals(
-                cosName))
+            if (COSName.ROOT.equals(cosName) || COSName.INFO.equals(cosName) || COSName.PREV.equals(cosName))
+            {
+                continue;
+            }
+            // this one too, because it has already been written in COSWriter.doWriteBody()
+            if (COSName.ENCRYPT.equals(cosName))
             {
                 continue;
             }
@@ -233,7 +251,7 @@ public class PDFXRefStream implements PDFXRef
         // add object number 0 to the set
         objNumbers.add(0L);
         objNumbers.addAll(objectNumbers);
-        for (Long objNumber : objNumbers)
+        for ( Long objNumber : objNumbers )
         {
             if (first == null)
             {
@@ -315,7 +333,7 @@ public class PDFXRefStream implements PDFXRef
      * A class representing an object stream reference. 
      *
      */
-    class ObjectStreamReference
+    static class ObjectStreamReference
     {
         long objectNumberOfObjectStream;
         long offset;
@@ -325,7 +343,7 @@ public class PDFXRefStream implements PDFXRef
      * A class representing a normal reference. 
      *
      */
-    class NormalReference
+    static class NormalReference
     {
         int genNumber;
         long offset;
@@ -335,7 +353,7 @@ public class PDFXRefStream implements PDFXRef
      * A class representing a free reference. 
      *
      */
-    class FreeReference
+    static class FreeReference
     {
         int nextGenNumber;
         long nextFree;

@@ -19,7 +19,7 @@ package com.tom_roush.fontbox.util.autodetect;
 
 /**
  * Unix font directory finder. This class is based on a class provided by Apache FOP. see
- * com.tom_roush.fop.fonts.autodetect.UnixFontDirFinder
+ * org.apache.fop.fonts.autodetect.UnixFontDirFinder
  */
 public class UnixFontDirFinder extends NativeFontDirFinder
 {

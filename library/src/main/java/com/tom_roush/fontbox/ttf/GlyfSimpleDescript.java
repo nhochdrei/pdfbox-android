@@ -19,6 +19,8 @@
 package com.tom_roush.fontbox.ttf;
 
 import java.io.IOException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * This class is based on code from Apache Batik a subproject of Apache XMLGraphics. see
@@ -26,6 +28,12 @@ import java.io.IOException;
  */
 public class GlyfSimpleDescript extends GlyfDescript
 {
+
+    /**
+     * Log instance.
+     */
+    private static final Log LOG = LogFactory.getLog(GlyfSimpleDescript.class);
+
     private int[] endPtsOfContours;
     private byte[] flags;
     private short[] xCoordinates;
@@ -40,8 +48,7 @@ public class GlyfSimpleDescript extends GlyfDescript
      * @param x0 the initial X-position
      * @throws IOException is thrown if something went wrong
      */
-    public GlyfSimpleDescript(short numberOfContours, TTFDataStream bais, short x0)
-        throws IOException
+    GlyfSimpleDescript(short numberOfContours, TTFDataStream bais, short x0) throws IOException
     {
         super(numberOfContours, bais);
 
@@ -198,7 +205,7 @@ public class GlyfSimpleDescript extends GlyfDescript
             if ((flags[index] & REPEAT) != 0)
             {
                 int repeats = bais.readUnsignedByte();
-                for (int i = 1; i <= repeats; i++)
+                for (int i = 1; i <= repeats && index + i < flags.length; i++)
                 {
                     flags[index + i] = flags[index];
                 }

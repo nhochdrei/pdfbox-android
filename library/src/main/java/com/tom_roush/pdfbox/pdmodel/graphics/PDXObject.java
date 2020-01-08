@@ -16,8 +16,6 @@
  */
 package com.tom_roush.pdfbox.pdmodel.graphics;
 
-import java.io.IOException;
-
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
@@ -30,6 +28,8 @@ import com.tom_roush.pdfbox.pdmodel.common.PDStream;
 import com.tom_roush.pdfbox.pdmodel.graphics.form.PDFormXObject;
 import com.tom_roush.pdfbox.pdmodel.graphics.form.PDTransparencyGroup;
 import com.tom_roush.pdfbox.pdmodel.graphics.image.PDImageXObject;
+
+import java.io.IOException;
 
 /**
  * An external object, or "XObject".
@@ -91,7 +91,6 @@ public class PDXObject implements COSObjectable
 
     /**
      * Creates a new XObject from the given stream and subtype.
-     *
      * @param stream The stream to read.
      * @param subtype
      */
@@ -105,7 +104,6 @@ public class PDXObject implements COSObjectable
 
     /**
      * Creates a new XObject from the given stream and subtype.
-     *
      * @param stream The stream to read.
      * @param subtype
      */
@@ -163,7 +161,6 @@ public class PDXObject implements COSObjectable
 
     /**
      * Returns the stream.
-     *
      * @return The stream for this object.
      */
     public final PDStream getStream()

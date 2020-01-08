@@ -16,10 +16,13 @@
  */
 package com.tom_roush.fontbox.ttf;
 
-import android.graphics.Path;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
+import java.awt.geom.GeneralPath;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * This class provides a glyph to GeneralPath conversion for true type fonts.
@@ -27,14 +30,17 @@ import java.util.List;
  *
  * @see
  * <a href="http://xmlgraphics.apache.org/batik">http://xmlgraphics.apache.org/batik</a>
- *
+ * 
  * Contour rendering ported from PDF.js, viewed on 14.2.2015, rev 2e97c0d
  *
  * @see
  * <a href="https://github.com/mozilla/pdf.js/blob/c0d17013a28ee7aa048831560b6494a26c52360c/src/core/font_renderer.js">pdf.js/src/core/font_renderer.js</a>
+ *
  */
 class GlyphRenderer
 {
+    private static final Log LOG = LogFactory.getLog(GlyphRenderer.class);
+
     private GlyphDescription glyphDescription;
 
     GlyphRenderer(GlyphDescription glyphDescription)
@@ -46,7 +52,7 @@ class GlyphRenderer
      * Returns the path of the glyph.
      * @return the path
      */
-    public Path getPath()
+    public GeneralPath getPath()
     {
         Point[] points = describe(glyphDescription);
         return calculatePath(points);
@@ -58,13 +64,19 @@ class GlyphRenderer
     private Point[] describe(GlyphDescription gd)
     {
         int endPtIndex = 0;
+        int endPtOfContourIndex = -1;
         Point[] points = new Point[gd.getPointCount()];
         for (int i = 0; i < gd.getPointCount(); i++)
         {
-            boolean endPt = gd.getEndPtOfContours(endPtIndex) == i;
+            if (endPtOfContourIndex == -1)
+            {
+                endPtOfContourIndex = gd.getEndPtOfContours(endPtIndex);
+            }
+            boolean endPt = endPtOfContourIndex == i;
             if (endPt)
             {
                 endPtIndex++;
+                endPtOfContourIndex = -1;
             }
             points[i] = new Point(gd.getXCoordinate(i), gd.getYCoordinate(i),
                     (gd.getFlags(i) & GlyfDescript.ON_CURVE) != 0, endPt);
@@ -79,9 +91,9 @@ class GlyphRenderer
      *
      * @return the calculated GeneralPath
      */
-    private Path calculatePath(Point[] points)
+    private GeneralPath calculatePath(Point[] points)
     {
-        Path path = new Path();
+        GeneralPath path = new GeneralPath();
         int start = 0;
         for (int p = 0, len = points.length; p < len; ++p)
         {
@@ -129,30 +141,39 @@ class GlyphRenderer
                         quadTo(path, pnow, midValue(pnow, contour.get(j + 1)));
                     }
                 }
-                path.close();
+                path.closePath();            
                 start = p + 1;
             }
         }
         return path;
     }
 
-    private void moveTo(Path path, Point point)
+    private void moveTo(GeneralPath path, Point point)
     {
         path.moveTo(point.x, point.y);
-//        Log.v("PdfBox-Android", "moveTo: " + String.format("%d,%d", point.x, point.y));
+        if (LOG.isDebugEnabled())
+        {
+            LOG.trace("moveTo: " + String.format(Locale.US, "%d,%d", point.x, point.y));
+        }
     }
 
-    private void lineTo(Path path, Point point)
+    private void lineTo(GeneralPath path, Point point)
     {
         path.lineTo(point.x, point.y);
-//        Log.v("PdfBox-Android", "lineTo: " + String.format("%d,%d", point.x, point.y));
+        if (LOG.isDebugEnabled())
+        {
+            LOG.trace("lineTo: " + String.format(Locale.US, "%d,%d", point.x, point.y));
+        }
     }
 
-    private void quadTo(Path path, Point ctrlPoint, Point point)
+    private void quadTo(GeneralPath path, Point ctrlPoint, Point point)
     {
         path.quadTo(ctrlPoint.x, ctrlPoint.y, point.x, point.y);
-//        Log.v("PdfBox-Android", "quadTo: " + String.format("%d,%d %d,%d", ctrlPoint.x, ctrlPoint.y,
-//                    point.x, point.y));
+        if (LOG.isDebugEnabled())
+        {
+            LOG.trace("quadTo: " + String.format(Locale.US, "%d,%d %d,%d", ctrlPoint.x, ctrlPoint.y,
+                    point.x, point.y));
+        }
     }
 
     private int midValue(int a, int b)
@@ -193,8 +214,9 @@ class GlyphRenderer
         @Override
         public String toString()
         {
-            return String.format("Point(%d,%d,%s,%s)", x, y, onCurve ? "onCurve" : "",
+            return String.format(Locale.US, "Point(%d,%d,%s,%s)", x, y, onCurve ? "onCurve" : "",
                     endOfContour ? "endOfContour" : "");
         }
     }
+    
 }

@@ -16,12 +16,11 @@
  */
 package com.tom_roush.pdfbox.pdmodel.interactive.digitalsignature.visible;
 
+import com.tom_roush.awt.geom.AffineTransform;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
-
-import com.tom_roush.harmony.awt.geom.AffineTransform;
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSDocument;
@@ -62,7 +61,7 @@ public class PDFTemplateStructure
     private PDResources holderFormResources;
     private PDFormXObject holderForm;
     private PDAppearanceDictionary appearanceDictionary;
-    private PDStream innterFormStream;
+    private PDStream innerFormStream;
     private PDResources innerFormResources;
     private PDFormXObject innerForm;
     private PDStream imageFormStream;
@@ -170,7 +169,7 @@ public class PDFTemplateStructure
     }
 
     /**
-     * Gets Dictionary of AcroForm. Thats <b> /DR </b>
+     * Gets Dictionary of AcroForm. That's <b> /DR </b>
      * entry in the AcroForm
      * @return the AcroForm's dictionary 
      */
@@ -182,7 +181,7 @@ public class PDFTemplateStructure
     /**
      * Acroform have its Dictionary, so we here set
      * the Dictionary  which is in this location:
-     * <b> AcroForm/DR <b>
+     * <b> AcroForm/DR </b>
      * @param acroFormDictionary
      */
     public void setAcroFormDictionary(COSDictionary acroFormDictionary)
@@ -201,11 +200,11 @@ public class PDFTemplateStructure
 
     /**
      * Sets SignatureRectangle
-     * @param singatureRectangle
+     * @param signatureRectangle
      */
-    public void setSignatureRectangle(PDRectangle singatureRectangle)
+    public void setSignatureRectangle(PDRectangle signatureRectangle)
     {
-        this.signatureRectangle = singatureRectangle;
+        this.signatureRectangle = signatureRectangle;
     }
 
     /**
@@ -363,16 +362,16 @@ public class PDFTemplateStructure
      */
     public PDStream getInnerFormStream()
     {
-        return innterFormStream;
+        return innerFormStream;
     }
 
     /**
      * Sets inner form stream
-     * @param innterFormStream
+     * @param innerFormStream
      */
-    public void setInnterFormStream(PDStream innterFormStream)
+    public void setInnterFormStream(PDStream innerFormStream)
     {
-        this.innterFormStream = innterFormStream;
+        this.innerFormStream = innerFormStream;
     }
 
     /**
@@ -568,12 +567,27 @@ public class PDFTemplateStructure
     {
         this.acroFormFields = acroFormFields;
     }
-    
-   /**
-    * Gets AP of the created template
-    * @return the templates Appearance Stream
-    * @throws IOException
-    */
+
+    /**
+     * Returns the visual signature COSDocument as a stream and closes the template field
+     * PDDocument.
+     *
+     * @return the visual signature COSDocument as a stream
+     * @throws IOException
+     * @deprecated This will be removed in 2.1 because the method name is misleading and confusing,
+     * and the work done rather belongs into the calling class:
+     * <pre>
+     * {@code
+     * COSDocument visualSignature = structure.getVisualSignature();
+     *  ByteArrayOutputStream baos = new ByteArrayOutputStream();
+     *  COSWriter writer = new COSWriter(baos);
+     *  writer.write(visualSignature);
+     *  writer.close();
+     *  structure.getTemplate().close();
+     *  ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+     * } </pre>
+     */
+    @Deprecated
     public ByteArrayInputStream getTemplateAppearanceStream() throws IOException
     {
         COSDocument visualSignature = getVisualSignature();
@@ -590,7 +604,7 @@ public class PDFTemplateStructure
 
     /**
      * Gets Widget Dictionary.
-     *
+     * 
      * @return the widget dictionary
      */
     public COSDictionary getWidgetDictionary()
@@ -600,7 +614,7 @@ public class PDFTemplateStructure
 
     /**
      * Sets Widget Dictionary.
-     *
+     * 
      * @param widgetDictionary
      */
     public void setWidgetDictionary(COSDictionary widgetDictionary)

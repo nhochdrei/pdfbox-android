@@ -16,19 +16,17 @@
  */
 package com.tom_roush.pdfbox.pdmodel.fdf;
 
-import android.util.Log;
-
 import java.io.IOException;
-
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.pdmodel.common.PDRectangle;
-
 import org.w3c.dom.Element;
 
 /**
@@ -38,18 +36,19 @@ import org.w3c.dom.Element;
  */
 public class FDFAnnotationFreeText extends FDFAnnotation
 {
+    private static final Log LOG = LogFactory.getLog(FDFAnnotationFreeText.class);
+ 
     /**
      * COS Model value for SubType entry.
      */
-    public static final String SUBTYPE ="FreeText";
+    public static final String SUBTYPE = "FreeText";
 
     /**
      * Default constructor.
      */
     public FDFAnnotationFreeText()
     {
-        super();
-        annot.setName( COSName.SUBTYPE, SUBTYPE );
+        annot.setName(COSName.SUBTYPE, SUBTYPE);
     }
 
     /**
@@ -57,9 +56,9 @@ public class FDFAnnotationFreeText extends FDFAnnotation
      *
      * @param a An existing FDF Annotation.
      */
-    public FDFAnnotationFreeText( COSDictionary a )
+    public FDFAnnotationFreeText(COSDictionary a)
     {
-        super( a );
+        super(a);
     }
 
     /**
@@ -69,13 +68,13 @@ public class FDFAnnotationFreeText extends FDFAnnotation
      *
      * @throws IOException If there is an error extracting information from the element.
      */
-    public FDFAnnotationFreeText( Element element ) throws IOException
+    public FDFAnnotationFreeText(Element element) throws IOException
     {
         super(element);
         annot.setName(COSName.SUBTYPE, SUBTYPE);
 
         setJustification(element.getAttribute("justification"));
-
+        
         XPath xpath = XPathFactory.newInstance().newXPath();
         try
         {
@@ -84,7 +83,7 @@ public class FDFAnnotationFreeText extends FDFAnnotation
         }
         catch (XPathExpressionException ex)
         {
-            Log.d("PdfBox-Android", "Error while evaluating XPath expression");
+            LOG.debug("Error while evaluating XPath expression");
         }
         initCallout(element);
         String rotation = element.getAttribute("rotation");
@@ -119,7 +118,7 @@ public class FDFAnnotationFreeText extends FDFAnnotation
         }
     }
 
-    private void initCallout(Element element) throws IOException
+    private void initCallout(Element element)
     {
         String callout = element.getAttribute("callout");
         if (callout != null && !callout.isEmpty())
@@ -150,7 +149,7 @@ public class FDFAnnotationFreeText extends FDFAnnotation
     }
 
     /**
-     * This will get the coordinates of the the callout line.
+     * This will get the coordinates of the callout line.
      *
      * @return An array of four or six numbers specifying a callout line attached to the free text
      * annotation. Six numbers [ x1 y1 x2 y2 x3 y3 ] represent the starting, knee point, and ending
@@ -159,7 +158,7 @@ public class FDFAnnotationFreeText extends FDFAnnotation
      */
     public float[] getCallout()
     {
-        COSArray array = (COSArray)annot.getDictionaryObject(COSName.CL);
+        COSArray array = (COSArray) annot.getDictionaryObject(COSName.CL);
         if (array != null)
         {
             return array.toFloatArray();
@@ -172,7 +171,7 @@ public class FDFAnnotationFreeText extends FDFAnnotation
 
     /**
      * This will set the form of quadding (justification) of the annotation text.
-     *
+     * 
      * @param justification The quadding of the text.
      */
     public final void setJustification(String justification)
@@ -191,7 +190,7 @@ public class FDFAnnotationFreeText extends FDFAnnotation
 
     /**
      * This will get the form of quadding (justification) of the annotation text.
-     *
+     * 
      * @return The quadding of the text.
      */
     public String getJustification()
@@ -201,7 +200,7 @@ public class FDFAnnotationFreeText extends FDFAnnotation
 
     /**
      * This will set the clockwise rotation in degrees.
-     *
+     * 
      * @param rotation The number of degrees of clockwise rotation.
      */
     public final void setRotation(int rotation)
@@ -211,7 +210,7 @@ public class FDFAnnotationFreeText extends FDFAnnotation
 
     /**
      * This will get the clockwise rotation in degrees.
-     *
+     * 
      * @return The number of degrees of clockwise rotation.
      */
     public String getRotation()
@@ -280,7 +279,7 @@ public class FDFAnnotationFreeText extends FDFAnnotation
      */
     public PDRectangle getFringe()
     {
-        COSArray rd = (COSArray)annot.getDictionaryObject(COSName.RD);
+        COSArray rd = (COSArray) annot.getDictionaryObject(COSName.RD);
         if (rd != null)
         {
             return new PDRectangle(rd);

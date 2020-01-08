@@ -20,13 +20,14 @@ import java.io.IOException;
 
 /**
  * A vertical metrics 'vmtx' table in a TrueType or OpenType font.
- *
+ * 
  * This table is required by the OpenType CJK Font Guidelines for "all
  * OpenType fonts that are used for vertical writing".
- *
+ * 
  * This table is specified in both the TrueType and OpenType specifications.
- *
+ * 
  * @author Glenn Adams
+ * 
  */
 public class VerticalMetricsTable extends TTFTable
 {
@@ -34,10 +35,10 @@ public class VerticalMetricsTable extends TTFTable
      * A tag that identifies this table type.
      */
     public static final String TAG = "vmtx";
-
+    
     private int[] advanceHeight;
     private short[] topSideBearing;
-    private short[] nonVerticalTopSideBearing;
+    private short[] additionalTopSideBearing;
     private int numVMetrics;
 
     VerticalMetricsTable(TrueTypeFont font)
@@ -47,22 +48,26 @@ public class VerticalMetricsTable extends TTFTable
 
     /**
      * This will read the required data from the stream.
-     *
+     * 
      * @param ttf The font that is being read.
      * @param data The stream to read the data from.
      * @throws IOException If there is an error reading the data.
      */
     @Override
-    public void read(TrueTypeFont ttf, TTFDataStream data) throws IOException
+    void read(TrueTypeFont ttf, TTFDataStream data) throws IOException
     {
         VerticalHeaderTable vHeader = ttf.getVerticalHeader();
+        if (vHeader == null)
+        {
+            throw new IOException("Could not get vhea table");
+        }
         numVMetrics = vHeader.getNumberOfVMetrics();
         int numGlyphs = ttf.getNumberOfGlyphs();
 
         int bytesRead = 0;
-        advanceHeight = new int[numVMetrics];
-        topSideBearing = new short[numVMetrics];
-        for (int i = 0; i < numVMetrics; i++)
+        advanceHeight = new int[ numVMetrics ];
+        topSideBearing = new short[ numVMetrics ];
+        for( int i=0; i<numVMetrics; i++ )
         {
             advanceHeight[i] = data.readUnsignedShort();
             topSideBearing[i] = data.readSignedShort();
@@ -79,18 +84,35 @@ public class VerticalMetricsTable extends TTFTable
                 numberNonVertical = numGlyphs;
             }
 
-            nonVerticalTopSideBearing = new short[numberNonVertical];
-            for (int i = 0; i < numberNonVertical; i++)
+            additionalTopSideBearing = new short[numberNonVertical];
+            for( int i=0; i<numberNonVertical; i++ )
             {
                 if (bytesRead < getLength())
                 {
-                    nonVerticalTopSideBearing[i] = data.readSignedShort();
+                    additionalTopSideBearing[i] = data.readSignedShort();
                     bytesRead += 2;
                 }
             }
         }
 
         initialized = true;
+    }
+
+    /**
+     * Returns the top sidebearing for the given GID
+     *
+     * @param gid GID
+     */
+    public int getTopSideBearing(int gid)
+    {
+        if (gid < numVMetrics)
+        {
+            return topSideBearing[gid];
+        }
+        else
+        {
+            return additionalTopSideBearing[gid - numVMetrics];
+        }
     }
 
     /**
@@ -108,7 +130,7 @@ public class VerticalMetricsTable extends TTFTable
         {
             // monospaced fonts may not have a height for every glyph
             // the last one is for subsequent glyphs
-            return advanceHeight[advanceHeight.length - 1];
+            return advanceHeight[advanceHeight.length -1];
         }
     }
 }

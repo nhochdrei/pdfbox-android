@@ -22,6 +22,7 @@ import com.tom_roush.pdfbox.cos.COSName;
 
 /**
  * This class represents a rectlinear measure dictionary.
+ * 
  */
 public class PDRectlinearMeasureDictionary extends PDMeasureDictionary
 {

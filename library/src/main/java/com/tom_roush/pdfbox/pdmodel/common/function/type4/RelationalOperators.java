@@ -20,9 +20,15 @@ import java.util.Stack;
 
 /**
  * Provides the relational operators such as "eq" and "le".
+ *
  */
 class RelationalOperators
 {
+
+    private RelationalOperators()
+    {
+        // Private constructor.
+    }
 
     /** Implements the "eq" operator. */
     static class Eq implements Operator

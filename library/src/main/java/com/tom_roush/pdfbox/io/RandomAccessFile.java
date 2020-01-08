@@ -42,14 +42,14 @@ public class RandomAccessFile implements RandomAccess
     {
         ras = new java.io.RandomAccessFile(file, mode);
     }
-
+    
     @Override
     public void close() throws IOException
     {
         ras.close();
         isClosed = true;
     }
-
+    
     @Override
     public void clear() throws IOException
     {
@@ -57,41 +57,42 @@ public class RandomAccessFile implements RandomAccess
         ras.seek(0);
         ras.setLength(0);
     }
-
+    
     @Override
     public void seek(long position) throws IOException
     {
         checkClosed();
         ras.seek(position);
     }
-
+    
     @Override
     public long getPosition() throws IOException
     {
         checkClosed();
         return ras.getFilePointer();
     }
-
+    
     @Override
     public int read() throws IOException
     {
+        checkClosed();
         return ras.read();
     }
-
+    
     @Override
     public int read(byte[] b) throws IOException
     {
         checkClosed();
         return ras.read(b);
     }
-
+    
     @Override
     public int read(byte[] b, int offset, int length) throws IOException
     {
         checkClosed();
         return ras.read(b, offset, length);
     }
-
+    
     @Override
     public long length() throws IOException
     {
@@ -101,7 +102,7 @@ public class RandomAccessFile implements RandomAccess
 
     /**
      * Ensure that the RandomAccessFile is not closed
-     *
+     * 
      * @throws IOException
      */
     private void checkClosed() throws IOException
@@ -110,6 +111,7 @@ public class RandomAccessFile implements RandomAccess
         {
             throw new IOException("RandomAccessFile already closed");
         }
+
     }
 
     @Override
@@ -117,27 +119,27 @@ public class RandomAccessFile implements RandomAccess
     {
         return isClosed;
     }
-
+    
     @Override
     public void write(byte[] b, int offset, int length) throws IOException
     {
         checkClosed();
         ras.write(b, offset, length);
     }
-
+    
     @Override
     public void write(byte[] b) throws IOException
     {
         write(b, 0, b.length);
     }
-
+    
     @Override
     public void write(int b) throws IOException
     {
         checkClosed();
         ras.write(b);
     }
-
+    
     @Override
     public int peek() throws IOException
     {
@@ -155,7 +157,7 @@ public class RandomAccessFile implements RandomAccess
         checkClosed();
         ras.seek(ras.getFilePointer() - bytes);
     }
-
+    
     @Override
     public byte[] readFully(int length) throws IOException
     {

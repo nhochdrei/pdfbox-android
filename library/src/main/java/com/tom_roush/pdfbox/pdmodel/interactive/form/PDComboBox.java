@@ -25,27 +25,27 @@ import com.tom_roush.pdfbox.cos.COSName;
 /**
  * A combo box consisting of a drop-down list.
  * May be accompanied by an editable text box in which non-predefined values may be entered.
- *
+ * 
  * @author John Hewson
  */
 public final class PDComboBox extends PDChoice
 {
     private static final int FLAG_EDIT = 1 << 18;
-
+    
     /**
      * @see PDField#PDField(PDAcroForm)
      *
-     * @param acroForm The acroForm.
+     * @param acroForm The acroform.
      */
     public PDComboBox(PDAcroForm acroForm)
     {
         super(acroForm);
         setCombo(true);
-    }
+    }    
 
     /**
      * Constructor.
-     *
+     * 
      * @param acroForm The form that this field is part of.
      * @param field the PDF object to represent as a field.
      * @param parent the parent node of the node
@@ -57,7 +57,7 @@ public final class PDComboBox extends PDChoice
 
     /**
      * Determines if Edit is set.
-     *
+     * 
      * @return true if the combo box shall include an editable text box as well as a drop-down list.
      */
     public boolean isEdit()
@@ -74,14 +74,14 @@ public final class PDComboBox extends PDChoice
     {
         getCOSObject().setFlag(COSName.FF, FLAG_EDIT, edit);
     }
-
+    
     @Override
     void constructAppearances() throws IOException
     {
         AppearanceGeneratorHelper apHelper;
         apHelper = new AppearanceGeneratorHelper(this);
         List<String> values = getValue();
-
+        
         if (!values.isEmpty())
         {
             apHelper.setAppearanceValue(values.get(0));

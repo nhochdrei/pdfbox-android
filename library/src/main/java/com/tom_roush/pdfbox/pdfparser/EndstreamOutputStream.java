@@ -1,10 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * Copyright 2014 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -14,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.tom_roush.pdfbox.pdfparser;
 
 import java.io.BufferedOutputStream;
@@ -55,7 +55,7 @@ class EndstreamOutputStream extends BufferedOutputStream
      * @throws IOException 
      */
     @Override
-    public void write(byte[] b, int off, int len) throws IOException
+    public synchronized void write(byte[] b, int off, int len) throws IOException
     {
         if (pos == 0 && len > 10)
         {
@@ -86,7 +86,7 @@ class EndstreamOutputStream extends BufferedOutputStream
                     // reset hasCR done too to avoid CR getting written in the flush
                     return;
                 }
-                super.write('\r');
+                super.write('\r');               
             }
             if (hasLF)
             {
@@ -124,7 +124,7 @@ class EndstreamOutputStream extends BufferedOutputStream
      * @throws IOException 
      */
     @Override
-    public void flush() throws IOException
+    public synchronized void flush() throws IOException
     {
         // if there is only a CR and no LF, write it
         if (hasCR && !hasLF)

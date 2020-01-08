@@ -22,9 +22,15 @@ import java.util.Stack;
 
 /**
  * Provides the stack operators such as "pop" and "dup".
+ *
  */
 class StackOperators
 {
+
+    private StackOperators()
+    {
+        // Private constructor.
+    }
 
     /** Implements the "copy" operator. */
     static class Copy implements Operator

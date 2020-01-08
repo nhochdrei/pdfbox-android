@@ -24,6 +24,7 @@ import java.io.InputStream;
  * This class represents an ASCII85 stream.
  *
  * @author Ben Litchfield
+ *
  */
 final class ASCII85InputStream extends FilterInputStream
 {
@@ -256,7 +257,7 @@ final class ASCII85InputStream extends FilterInputStream
      * @param readlimit ignored.
      */
     @Override
-    public void mark(int readlimit)
+    public synchronized void mark(int readlimit)
     {
     }
 
@@ -266,7 +267,7 @@ final class ASCII85InputStream extends FilterInputStream
      * @throws IOException telling that this is an unsupported action.
      */
     @Override
-    public void reset() throws IOException
+    public synchronized void reset() throws IOException
     {
         throw new IOException("Reset is not supported");
     }

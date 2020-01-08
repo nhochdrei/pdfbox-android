@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.tom_roush.pdfbox.io.MemoryUsageSetting;
 import com.tom_roush.pdfbox.pdmodel.PDDocument;
 import com.tom_roush.pdfbox.pdmodel.PDPage;
 import com.tom_roush.pdfbox.pdmodel.interactive.action.PDAction;
@@ -46,6 +47,26 @@ public class Splitter
     private List<PDDocument> destinationDocuments;
 
     private int currentPageNumber = 0;
+
+    private MemoryUsageSetting memoryUsageSetting = null;
+
+    /**
+     * @return the current memory setting.
+     */
+    public MemoryUsageSetting getMemoryUsageSetting()
+    {
+        return memoryUsageSetting;
+    }
+
+    /**
+     * Set the memory setting.
+     * 
+     * @param memoryUsageSetting 
+     */
+    public void setMemoryUsageSetting(MemoryUsageSetting memoryUsageSetting)
+    {
+        this.memoryUsageSetting = memoryUsageSetting;
+    }
 
     /**
      * This will take a document and split into several other documents.
@@ -86,7 +107,7 @@ public class Splitter
     /**
      * This will set the start page.
      *
-     * @param start the start page
+     * @param start the 1-based start page
      * @throws IllegalArgumentException if the start page is smaller than one.
      */
     public void setStartPage(int start)
@@ -101,7 +122,7 @@ public class Splitter
     /**
      * This will set the end page.
      *
-     * @param end the end page
+     * @param end the 1-based end page
      * @throws IllegalArgumentException if the end page is smaller than one.
      */
     public void setEndPage(int end)
@@ -120,9 +141,8 @@ public class Splitter
      */
     private void processPages() throws IOException
     {
-        for (int i = 0; i < sourceDocument.getNumberOfPages(); i++)
+        for (PDPage page : sourceDocument.getPages())
         {
-            PDPage page = sourceDocument.getPage(i);
             if (currentPageNumber + 1 >= startPage && currentPageNumber + 1 <= endPage)
             {
                 processPage(page);
@@ -158,8 +178,8 @@ public class Splitter
 
     /**
      * Check if it is necessary to create a new document.
-     * By default a split occurs at every page. If you wanted to split
-     * based on some complex logic then you could override this method. For example.
+     * By default a split occurs at every page.  If you wanted to split
+     * based on some complex logic then you could override this method.  For example.
      * <code>
      * protected void splitAtPage()
      * {
@@ -167,14 +187,13 @@ public class Splitter
      *     return isPrime(pageNumber);
      * }
      * </code>
+     * @param pageNumber the 0-based page number to be checked as splitting page
      * 
-     * @param pageNumber the page number to be checked as splitting page
-     *
      * @return true If a new document should be created.
      */
     protected boolean splitAtPage(int pageNumber)
     {
-        return pageNumber % splitLength == 0;
+        return (pageNumber + 1 - Math.max(1, startPage)) % splitLength == 0;
     }
 
     /**
@@ -185,7 +204,8 @@ public class Splitter
      */
     protected PDDocument createNewDocument() throws IOException
     {
-        PDDocument document = new PDDocument();
+        PDDocument document = memoryUsageSetting == null ?
+                                new PDDocument() : new PDDocument(memoryUsageSetting);
         document.getDocument().setVersion(getSourceDocument().getVersion());
         document.setDocumentInformation(getSourceDocument().getDocumentInformation());
         document.getDocumentCatalog().setViewerPreferences(
@@ -205,11 +225,7 @@ public class Splitter
         createNewDocumentIfNecessary();
         
         PDPage imported = getDestinationDocument().importPage(page);
-        imported.setCropBox(page.getCropBox());
-        imported.setMediaBox(page.getMediaBox());
-        // only the resources of the page will be copied
         imported.setResources(page.getResources());
-        imported.setRotation(page.getRotation());
         // remove page links to avoid copying not needed resources 
         processAnnotations(imported);
     }
@@ -221,7 +237,7 @@ public class Splitter
         {
             if (annotation instanceof PDAnnotationLink)
             {
-                PDAnnotationLink link = (PDAnnotationLink)annotation;
+                PDAnnotationLink link = (PDAnnotationLink)annotation;   
                 PDDestination destination = link.getDestination();
                 if (destination == null && link.getAction() != null)
                 {
@@ -233,19 +249,18 @@ public class Splitter
                 }
                 if (destination instanceof PDPageDestination)
                 {
-                    // TODO preserve links to pages within the splitted result
-                    ((PDPageDestination)destination).setPage(null);
+                    // TODO preserve links to pages within the split result  
+                    ((PDPageDestination) destination).setPage(null);
                 }
             }
-            // TODO preserve links to pages within the splitted result
+            // TODO preserve links to pages within the split result  
             annotation.setPage(null);
         }
     }
-
     /**
      * The source PDF document.
      * 
-     * @return the pdf to be splitted
+     * @return the pdf to be split
      */
     protected final PDDocument getSourceDocument()
     {
