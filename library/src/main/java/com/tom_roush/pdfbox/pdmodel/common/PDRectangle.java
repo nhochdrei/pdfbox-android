@@ -16,16 +16,14 @@
  */
 package com.tom_roush.pdfbox.pdmodel.common;
 
-import java.awt.geom.GeneralPath;
-import java.awt.geom.Point2D;
-import java.util.Arrays;
+import android.graphics.Path;
+import android.graphics.PointF;
+
+import com.tom_roush.fontbox.util.BoundingBox;
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSFloat;
 import com.tom_roush.pdfbox.cos.COSNumber;
-
-import com.tom_roush.fontbox.util.BoundingBox;
-
 import com.tom_roush.pdfbox.util.Matrix;
 
 /**
@@ -35,38 +33,35 @@ import com.tom_roush.pdfbox.util.Matrix;
  */
 public class PDRectangle implements COSObjectable
 {
-    /** user space units per inch */
     private static final float POINTS_PER_INCH = 72;
-    
-    /** user space units per millimeter */
-    private static final float POINTS_PER_MM = 1 / (10 * 2.54f) * POINTS_PER_INCH;
+    private static final float MM_PER_INCH = 1 / (10 * 2.54f) * POINTS_PER_INCH;
 
     /** A rectangle the size of U.S. Letter, 8.5" x 11". */
     public static final PDRectangle LETTER = new PDRectangle(8.5f * POINTS_PER_INCH,
-                                                             11f *POINTS_PER_INCH);
+        11f *POINTS_PER_INCH);
     /**  A rectangle the size of U.S. Legal, 8.5" x 14". */
     public static final PDRectangle LEGAL = new PDRectangle(8.5f * POINTS_PER_INCH,
-                                                            14f * POINTS_PER_INCH);
+        14f * POINTS_PER_INCH);
     /**  A rectangle the size of A0 Paper. */
-    public static final PDRectangle A0 = new PDRectangle(841 * POINTS_PER_MM, 1189 * POINTS_PER_MM);
+    public static final PDRectangle A0 = new PDRectangle(841 * MM_PER_INCH, 1189 * MM_PER_INCH);
 
     /** A rectangle the size of A1 Paper. */
-    public static final PDRectangle A1 = new PDRectangle(594 * POINTS_PER_MM, 841 * POINTS_PER_MM);
+    public static final PDRectangle A1 = new PDRectangle(594 * MM_PER_INCH, 841 * MM_PER_INCH);
 
     /**  A rectangle the size of A2 Paper. */
-    public static final PDRectangle A2 = new PDRectangle(420 * POINTS_PER_MM, 594 * POINTS_PER_MM);
+    public static final PDRectangle A2 = new PDRectangle(420 * MM_PER_INCH, 594 * MM_PER_INCH);
 
     /** A rectangle the size of A3 Paper.  */
-    public static final PDRectangle A3 = new PDRectangle(297 * POINTS_PER_MM, 420 * POINTS_PER_MM);
+    public static final PDRectangle A3 = new PDRectangle(297 * MM_PER_INCH, 420 * MM_PER_INCH);
 
     /**  A rectangle the size of A4 Paper. */
-    public static final PDRectangle A4 = new PDRectangle(210 * POINTS_PER_MM, 297 * POINTS_PER_MM);
+    public static final PDRectangle A4 = new PDRectangle(210 * MM_PER_INCH, 297 * MM_PER_INCH);
 
     /** A rectangle the size of A5 Paper. */
-    public static final PDRectangle A5 = new PDRectangle(148 * POINTS_PER_MM, 210 * POINTS_PER_MM);
+    public static final PDRectangle A5 = new PDRectangle(148 * MM_PER_INCH, 210 * MM_PER_INCH);
 
     /**  A rectangle the size of A6 Paper. */
-    public static final PDRectangle A6 = new PDRectangle(105 * POINTS_PER_MM, 148 * POINTS_PER_MM);
+    public static final PDRectangle A6 = new PDRectangle(105 * MM_PER_INCH, 148 * MM_PER_INCH);
 
     private final COSArray rectArray;
 
@@ -129,7 +124,7 @@ public class PDRectangle implements COSObjectable
      */
     public PDRectangle( COSArray array )
     {
-        float[] values = Arrays.copyOf(array.toFloatArray(), 4);
+        float[] values = array.toFloatArray();
         rectArray = new COSArray();
         // we have to start with the lower left corner
         rectArray.add( new COSFloat( Math.min(values[0],values[2] )) );
@@ -151,14 +146,14 @@ public class PDRectangle implements COSObjectable
         float lly = getLowerLeftY();
         float ury = getUpperRightY();
         return x >= llx && x <= urx &&
-               y >= lly && y <= ury;
+            y >= lly && y <= ury;
     }
 
     /**
      * This will create a translated rectangle based off of this rectangle, such
      * that the new rectangle retains the same dimensions(height/width), but the
-     * lower left x,y values are zero. <br>
-     * 100, 100, 400, 400 (llx, lly, urx, ury ) <br>
+     * lower left x,y values are zero. <br />
+     * 100, 100, 400, 400 (llx, lly, urx, ury ) <br />
      * will be translated to 0,0,300,300
      *
      * @return A new rectangle that has been translated back to the origin.
@@ -284,31 +279,27 @@ public class PDRectangle implements COSObjectable
     }
 
     /**
-     * Returns a path which represents this rectangle having been transformed by the given matrix. Note that the
-     * resulting path need not be rectangular.
-     * 
-     * @param matrix the matrix to be used for the transformation.
-     * 
-     * @return the resulting path.
+     * Returns a path which represents this rectangle having been transformed by the given matrix.
+     * Note that the resulting path need not be rectangular.
      */
-    public GeneralPath transform(Matrix matrix)
+    public Path transform(Matrix matrix)
     {
         float x1 = getLowerLeftX();
         float y1 = getLowerLeftY();
         float x2 = getUpperRightX();
         float y2 = getUpperRightY();
 
-        Point2D.Float p0 = matrix.transformPoint(x1, y1);
-        Point2D.Float p1 = matrix.transformPoint(x2, y1);
-        Point2D.Float p2 = matrix.transformPoint(x2, y2);
-        Point2D.Float p3 = matrix.transformPoint(x1, y2);
+        PointF p0 = matrix.transformPoint(x1, y1);
+        PointF p1 = matrix.transformPoint(x2, y1);
+        PointF p2 = matrix.transformPoint(x2, y2);
+        PointF p3 = matrix.transformPoint(x1, y2);
 
-        GeneralPath path = new GeneralPath();
-        path.moveTo(p0.getX(), p0.getY());
-        path.lineTo(p1.getX(), p1.getY());
-        path.lineTo(p2.getX(), p2.getY());
-        path.lineTo(p3.getX(), p3.getY());
-        path.closePath();
+        Path path = new Path();
+        path.moveTo(p0.x, p0.y);
+        path.lineTo(p1.x, p1.y);
+        path.lineTo(p2.x, p2.y);
+        path.lineTo(p3.x, p3.y);
+        path.close();
         return path;
     }
 
@@ -324,23 +315,21 @@ public class PDRectangle implements COSObjectable
     }
 
     /**
-     * Returns a general path equivalent to this rectangle. This method avoids the problems caused by Rectangle2D not
-     * working well with -ve rectangles.
-     * 
-     * @return the general path.
+     * Returns a general path equivalent to this rectangle. This method avoids the problems
+     * caused by Rectangle2D not working well with -ve rectangles.
      */
-    public GeneralPath toGeneralPath()
+    public Path toGeneralPath()
     {
         float x1 = getLowerLeftX();
         float y1 = getLowerLeftY();
         float x2 = getUpperRightX();
         float y2 = getUpperRightY();
-        GeneralPath path = new GeneralPath();
+        Path path = new Path();
         path.moveTo(x1, y1);
         path.lineTo(x2, y1);
         path.lineTo(x2, y2);
         path.lineTo(x1, y2);
-        path.closePath();
+        path.close();
         return path;
     }
 
@@ -353,6 +342,6 @@ public class PDRectangle implements COSObjectable
     public String toString()
     {
         return "[" + getLowerLeftX() + "," + getLowerLeftY() + "," +
-                     getUpperRightX() + "," + getUpperRightY() +"]";
+            getUpperRightX() + "," + getUpperRightY() +"]";
     }
 }

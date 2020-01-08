@@ -24,8 +24,6 @@ import java.util.List;
 import java.util.Map;
 
 import java.util.Set;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;
@@ -41,8 +39,7 @@ import com.tom_roush.pdfbox.cos.COSString;
  */
 public abstract class PDNameTreeNode<T extends COSObjectable> implements COSObjectable
 {
-    private static final Log LOG = LogFactory.getLog(PDNameTreeNode.class);
-    
+
     private final COSDictionary node;
     private PDNameTreeNode<T> parent;
 
@@ -198,7 +195,6 @@ public abstract class PDNameTreeNode<T extends COSObjectable> implements COSObje
                 catch (IOException exception)
                 {
                     node.setItem(COSName.LIMITS, null);
-                    LOG.error("Error while calculating the Limits of a PageNameTreeNode:", exception);
                 }
             }
         }
@@ -239,7 +235,6 @@ public abstract class PDNameTreeNode<T extends COSObjectable> implements COSObje
             }
             else
             {
-                LOG.warn("NameTreeNode does not have \"names\" nor \"kids\" objects.");
             }
         }
         return retval;
