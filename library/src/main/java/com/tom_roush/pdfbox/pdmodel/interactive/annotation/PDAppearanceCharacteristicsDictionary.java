@@ -24,14 +24,12 @@ import com.tom_roush.pdfbox.cos.COSStream;
 import com.tom_roush.pdfbox.pdmodel.common.COSObjectable;
 import com.tom_roush.pdfbox.pdmodel.graphics.color.PDColor;
 import com.tom_roush.pdfbox.pdmodel.graphics.color.PDColorSpace;
-import com.tom_roush.pdfbox.pdmodel.graphics.color.PDDeviceCMYK;
 import com.tom_roush.pdfbox.pdmodel.graphics.color.PDDeviceGray;
 import com.tom_roush.pdfbox.pdmodel.graphics.color.PDDeviceRGB;
 import com.tom_roush.pdfbox.pdmodel.graphics.form.PDFormXObject;
 
 /**
  * This class represents an appearance characteristics dictionary.
- *
  */
 public class PDAppearanceCharacteristicsDictionary implements COSObjectable
 {
@@ -49,8 +47,8 @@ public class PDAppearanceCharacteristicsDictionary implements COSObjectable
     }
 
     /**
-     * returns the dictionary.
-     * 
+     * Returns the dictionary.
+     *
      * @return the dictionary
      */
     @Override
@@ -60,8 +58,8 @@ public class PDAppearanceCharacteristicsDictionary implements COSObjectable
     }
 
     /**
-     * This will retrieve the rotation of the annotation widget. It must be a multiple of 90. Default is 0
-     * 
+     * This will retrieve the rotation of the annotation widget.
+     * It must be a multiple of 90. Default is 0 
      * @return the rotation
      */
     public int getRotation()
@@ -126,7 +124,7 @@ public class PDAppearanceCharacteristicsDictionary implements COSObjectable
      */
     public String getNormalCaption()
     {
-        return this.getCOSObject().getString(COSName.CA);
+        return this.getCOSObject().getString("CA");
     }
 
     /**
@@ -136,7 +134,7 @@ public class PDAppearanceCharacteristicsDictionary implements COSObjectable
      */
     public void setNormalCaption(String caption)
     {
-        this.getCOSObject().setString(COSName.CA, caption);
+        this.getCOSObject().setString("CA", caption);
     }
 
     /**
@@ -146,7 +144,7 @@ public class PDAppearanceCharacteristicsDictionary implements COSObjectable
      */
     public String getRolloverCaption()
     {
-        return this.getCOSObject().getString(COSName.RC);
+        return this.getCOSObject().getString("RC");
     }
 
     /**
@@ -156,7 +154,7 @@ public class PDAppearanceCharacteristicsDictionary implements COSObjectable
      */
     public void setRolloverCaption(String caption)
     {
-        this.getCOSObject().setString(COSName.RC, caption);
+        this.getCOSObject().setString("RC", caption);
     }
 
     /**
@@ -166,7 +164,7 @@ public class PDAppearanceCharacteristicsDictionary implements COSObjectable
      */
     public String getAlternateCaption()
     {
-        return this.getCOSObject().getString(COSName.AC);
+        return this.getCOSObject().getString("AC");
     }
 
     /**
@@ -176,7 +174,7 @@ public class PDAppearanceCharacteristicsDictionary implements COSObjectable
      */
     public void setAlternateCaption(String caption)
     {
-        this.getCOSObject().setString(COSName.AC, caption);
+        this.getCOSObject().setString("AC", caption);
     }
 
     /**
@@ -186,10 +184,10 @@ public class PDAppearanceCharacteristicsDictionary implements COSObjectable
      */
     public PDFormXObject getNormalIcon()
     {
-        COSBase i = this.getCOSObject().getDictionaryObject(COSName.I);
+        COSBase i = this.getCOSObject().getDictionaryObject("I");
         if (i instanceof COSStream)
         {
-            return new PDFormXObject((COSStream)i);
+            return new PDFormXObject((COSStream) i);
         }
         return null;
     }
@@ -201,10 +199,10 @@ public class PDAppearanceCharacteristicsDictionary implements COSObjectable
      */
     public PDFormXObject getRolloverIcon()
     {
-        COSBase i = this.getCOSObject().getDictionaryObject(COSName.RI);
+        COSBase i = this.getCOSObject().getDictionaryObject("RI");
         if (i instanceof COSStream)
         {
-            return new PDFormXObject((COSStream)i);
+            return new PDFormXObject((COSStream) i);
         }
         return null;
     }
@@ -216,10 +214,10 @@ public class PDAppearanceCharacteristicsDictionary implements COSObjectable
      */
     public PDFormXObject getAlternateIcon()
     {
-        COSBase i = this.getCOSObject().getDictionaryObject(COSName.IX);
+        COSBase i = this.getCOSObject().getDictionaryObject("IX");
         if (i instanceof COSStream)
         {
-            return new PDFormXObject((COSStream)i);
+            return new PDFormXObject((COSStream) i);
         }
         return null;
     }
@@ -229,8 +227,8 @@ public class PDAppearanceCharacteristicsDictionary implements COSObjectable
         COSBase c = this.getCOSObject().getItem(itemName);
         if (c instanceof COSArray)
         {
-            PDColorSpace colorSpace;
-            switch (((COSArray) c).size())
+            PDColorSpace colorSpace = null;
+            switch (((COSArray)c).size())
             {
             case 1:
                 colorSpace = PDDeviceGray.INSTANCE;
@@ -239,14 +237,13 @@ public class PDAppearanceCharacteristicsDictionary implements COSObjectable
                 colorSpace = PDDeviceRGB.INSTANCE;
                 break;
             case 4:
-                colorSpace = PDDeviceCMYK.INSTANCE;
+//    			colorSpace = PDDeviceCMYK.INSTANCE; TODO: PdfBox-Android
                 break;
             default:
-                return null;
+                break;
             }
-            return new PDColor((COSArray) c, colorSpace);
+            return new PDColor((COSArray)c, colorSpace);
         }
         return null;
     }
-
 }

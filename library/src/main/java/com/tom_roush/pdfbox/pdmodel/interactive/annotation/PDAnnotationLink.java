@@ -22,12 +22,9 @@ import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
-import com.tom_roush.pdfbox.pdmodel.PDDocument;
-import com.tom_roush.pdfbox.pdmodel.interactive.action.PDActionFactory;
 import com.tom_roush.pdfbox.pdmodel.interactive.action.PDAction;
+import com.tom_roush.pdfbox.pdmodel.interactive.action.PDActionFactory;
 import com.tom_roush.pdfbox.pdmodel.interactive.action.PDActionURI;
-import com.tom_roush.pdfbox.pdmodel.interactive.annotation.handlers.PDAppearanceHandler;
-import com.tom_roush.pdfbox.pdmodel.interactive.annotation.handlers.PDLinkAppearanceHandler;
 import com.tom_roush.pdfbox.pdmodel.interactive.documentnavigation.destination.PDDestination;
 
 /**
@@ -38,8 +35,7 @@ import com.tom_roush.pdfbox.pdmodel.interactive.documentnavigation.destination.P
  */
 public class PDAnnotationLink extends PDAnnotation
 {
-    private PDAppearanceHandler customAppearanceHandler;
-    
+
     /**
      * Constant values of the Text as defined in the PDF 1.6 reference Table 8.19.
      */
@@ -67,17 +63,19 @@ public class PDAnnotationLink extends PDAnnotation
      */
     public PDAnnotationLink()
     {
-        getCOSObject().setName(COSName.SUBTYPE, SUB_TYPE);
+        super();
+        getCOSObject().setItem(COSName.SUBTYPE, COSName.getPDFName(SUB_TYPE));
     }
 
     /**
-     * Creates a Link annotation from a COSDictionary, expected to be a correct object definition.
+     * Creates a Link annotation from a COSDictionary, expected to be
+     * a correct object definition.
      *
-     * @param field the PDF object to represent as a field.
+     * @param field the PDF objet to represent as a field.
      */
     public PDAnnotationLink(COSDictionary field)
     {
-        super(field);
+        super( field );
     }
 
     /**
@@ -88,19 +86,15 @@ public class PDAnnotationLink extends PDAnnotation
      */
     public PDAction getAction()
     {
-        COSBase base = getCOSObject().getDictionaryObject(COSName.A);
-        if (base instanceof COSDictionary)
-        {
-            return PDActionFactory.createAction((COSDictionary) base);
-        }
-        return null;
+        COSDictionary action = (COSDictionary)
+            this.getCOSObject().getDictionaryObject(COSName.A);
+        return PDActionFactory.createAction( action );
     }
 
     /**
      * Set the annotation action. Either this or the destination entry should be set, but not both.
      *
      * @param action The annotation action.
-     *
      */
     public void setAction(PDAction action)
     {
@@ -110,8 +104,7 @@ public class PDAnnotationLink extends PDAnnotation
     /**
      * This will set the border style dictionary, specifying the width and dash pattern used in drawing the line.
      *
-     * @param bs the border style dictionary to set. 
-     * 
+     * @param bs the border style dictionary to set.
      */
     public void setBorderStyle(PDBorderStyleDictionary bs)
     {
@@ -119,8 +112,8 @@ public class PDAnnotationLink extends PDAnnotation
     }
 
     /**
-     * This will retrieve the border style dictionary, specifying the width and dash pattern used in
-     * drawing the line.
+     * This will retrieve the border style dictionary, specifying the width and
+     * dash pattern used in drawing the line.
      *
      * @return the border style dictionary.
      */
@@ -129,7 +122,7 @@ public class PDAnnotationLink extends PDAnnotation
         COSBase bs = getCOSObject().getDictionaryObject(COSName.BS);
         if (bs instanceof COSDictionary)
         {
-            return new PDBorderStyleDictionary((COSDictionary) bs);
+            return new PDBorderStyleDictionary((COSDictionary)bs);
         }
         return null;
     }
@@ -153,13 +146,14 @@ public class PDAnnotationLink extends PDAnnotation
      *
      * @param dest The updated destination.
      */
-    public void setDestination(PDDestination dest)
+    public void setDestination( PDDestination dest )
     {
         getCOSObject().setItem(COSName.DEST, dest);
     }
 
     /**
-     * Set the highlight mode for when the mouse is depressed. See the HIGHLIGHT_MODE_XXX constants.
+     * Set the highlight mode for when the mouse is depressed.
+     * See the HIGHLIGHT_MODE_XXX constants.
      *
      * @return The string representation of the highlight mode.
      */
@@ -173,91 +167,66 @@ public class PDAnnotationLink extends PDAnnotation
      *
      * @param mode The new highlight mode.
      */
-    public void setHighlightMode(String mode)
+    public void setHighlightMode( String mode )
     {
         getCOSObject().setName(COSName.H, mode);
     }
 
     /**
-     * This will set the previous URI action, in case it needs to be retrieved at later date.
+     * This will set the previous URI action, in case it
+     * needs to be retrieved at later date.
      *
      * @param pa The previous URI.
      */
-    public void setPreviousURI(PDActionURI pa)
+    public void setPreviousURI( PDActionURI pa )
     {
         getCOSObject().setItem("PA", pa);
     }
 
     /**
-     * This will set the previous URI action, in case it's needed.
+     * This will set the previous URI action, in case it's
+     * needed.
      *
      * @return The previous URI.
      */
     public PDActionURI getPreviousURI()
     {
-        COSBase base = getCOSObject().getDictionaryObject("PA");
-        if (base instanceof COSDictionary)
+        COSDictionary pa = (COSDictionary) getCOSObject().getDictionaryObject("PA");
+        if ( pa != null )
         {
-            return new PDActionURI((COSDictionary) base);
+            return new PDActionURI( pa );
         }
         return null;
     }
 
     /**
-     * This will set the set of quadpoints which encompass the areas of this annotation which will activate.
+     * This will set the set of quadpoints which encompass the areas of this
+     * annotation which will activate.
      *
-     * @param quadPoints an array representing the set of area covered.
+     * @param quadPoints
+     *            an array representing the set of area covered.
      */
-    public void setQuadPoints(float[] quadPoints)
+    public void setQuadPoints( float[] quadPoints )
     {
         COSArray newQuadPoints = new COSArray();
-        newQuadPoints.setFloatArray(quadPoints);
-        getCOSObject().setItem(COSName.QUADPOINTS, newQuadPoints);
+        newQuadPoints.setFloatArray( quadPoints );
+        getCOSObject().setItem("QuadPoints", newQuadPoints);
     }
 
     /**
-     * This will retrieve the set of quadpoints which encompass the areas of this annotation which will activate.
+     * This will retrieve the set of quadpoints which encompass the areas of
+     * this annotation which will activate.
      *
      * @return An array of floats representing the quad points.
      */
     public float[] getQuadPoints()
     {
-        COSBase base = getCOSObject().getDictionaryObject(COSName.QUADPOINTS);
-        if (base instanceof COSArray)
+        COSArray quadPoints = (COSArray) getCOSObject().getDictionaryObject("QuadPoints");
+        if (quadPoints != null)
         {
-            return ((COSArray) base).toFloatArray();
+            return quadPoints.toFloatArray();
         }
         // Should never happen as this is a required item
-        return null; 
-    }
-
-        /**
-     * Set a custom appearance handler for generating the annotations appearance streams.
-     * 
-     * @param appearanceHandler
-     */
-    public void setCustomAppearanceHandler(PDAppearanceHandler appearanceHandler)
-    {
-        customAppearanceHandler = appearanceHandler;
-    }
-
-    @Override
-    public void constructAppearances()
-    {
-        this.constructAppearances(null);
-    }
-
-    @Override
-    public void constructAppearances(PDDocument document)
-    {
-        if (customAppearanceHandler == null)
-        {
-            PDLinkAppearanceHandler appearanceHandler = new PDLinkAppearanceHandler(this, document);
-            appearanceHandler.generateAppearanceStreams();
-        }
-        else
-        {
-            customAppearanceHandler.generateAppearanceStreams();
-        }
+        return null;
     }
 }

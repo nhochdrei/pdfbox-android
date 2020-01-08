@@ -23,7 +23,7 @@ import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.pdmodel.common.filespecification.PDFileSpecification;
 
 /**
- * This is the class that represents a file attachment.
+ * This is the class that represents a file attachement.
  *
  * @author Ben Litchfield
  */
@@ -56,17 +56,19 @@ public class PDAnnotationFileAttachment extends PDAnnotationMarkup
      */
     public PDAnnotationFileAttachment()
     {
-        getCOSObject().setName(COSName.SUBTYPE, SUB_TYPE);
+        super();
+        getCOSObject().setItem(COSName.SUBTYPE, COSName.getPDFName(SUB_TYPE));
     }
 
     /**
-     * Creates a Link annotation from a COSDictionary, expected to be a correct object definition.
+     * Creates a Link annotation from a COSDictionary, expected to be
+     * a correct object definition.
      *
-     * @param field the PDF object to represent as a field.
+     * @param field the PDF objet to represent as a field.
      */
     public PDAnnotationFileAttachment(COSDictionary field)
     {
-        super(field);
+        super( field );
     }
 
     /**
@@ -86,40 +88,30 @@ public class PDAnnotationFileAttachment extends PDAnnotationMarkup
      *
      * @param file The file that is attached.
      */
-    public void setFile(PDFileSpecification file)
+    public void setFile( PDFileSpecification file )
     {
         getCOSObject().setItem("FS", file);
     }
 
     /**
-     * This is the name used to draw the type of attachment. See the ATTACHMENT_NAME_XXX constants.
+     * This is the name used to draw the type of attachment.
+     * See the ATTACHMENT_NAME_XXX constants.
      *
      * @return The name that describes the visual cue for the attachment.
      */
     public String getAttachmentName()
     {
-        return getCOSObject().getNameAsString(COSName.NAME, ATTACHMENT_NAME_PUSH_PIN);
+        return getCOSObject().getNameAsString("Name", ATTACHMENT_NAME_PUSH_PIN);
     }
 
     /**
-     * Set the name used to draw the attachment icon. See the ATTACHMENT_NAME_XXX constants.
-     *
-     * @param name The name of the visual icon to draw.
-     * @deprecated use {@link #setAttachmentName(java.lang.String)}.
-     */
-    @Deprecated
-    public void setAttachementName(String name)
-    {
-        getCOSObject().setName(COSName.NAME, name);
-    }
-
-    /**
-     * Set the name used to draw the attachment icon. See the ATTACHMENT_NAME_XXX constants.
+     * Set the name used to draw the attachement icon.
+     * See the ATTACHMENT_NAME_XXX constants.
      *
      * @param name The name of the visual icon to draw.
      */
-    public void setAttachmentName(String name)
+    public void setAttachementName( String name )
     {
-        getCOSObject().setName(COSName.NAME, name);
+        getCOSObject().setName("Name", name);
     }
 }
