@@ -16,7 +16,6 @@
  */
 package com.tom_roush.pdfbox.pdmodel.interactive.documentnavigation.outline;
 
-import java.awt.Color;
 import java.io.IOException;
 
 import com.tom_roush.pdfbox.cos.COSArray;
@@ -347,19 +346,6 @@ public final class PDOutlineItem extends PDOutlineNode
         getCOSObject().setItem( COSName.C, textColor.toCOSArray() );
     }
 
-    /**
-     * Set the RGB text color for this node.
-     *
-     * @param textColor The text color for this node.
-     */
-    public void setTextColor( Color textColor )
-    {
-        COSArray array = new COSArray();
-        array.add( new COSFloat( textColor.getRed()/255f));
-        array.add( new COSFloat( textColor.getGreen()/255f));
-        array.add( new COSFloat( textColor.getBlue()/255f));
-        getCOSObject().setItem( COSName.C, array );
-    }
 
     /**
      * A flag telling if the text should be italic.

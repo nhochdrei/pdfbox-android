@@ -64,8 +64,7 @@ class ScratchFileBuffer implements RandomAccess
     /** number of pages held by this buffer */
     private int pageCount = 0;
     
-    private static final Log LOG = LogFactory.getLog(ScratchFileBuffer.class);
-    
+
     /**
      * Creates a new buffer using pages handled by provided {@link ScratchFile}.
      * 
@@ -511,10 +510,6 @@ class ScratchFileBuffer implements RandomAccess
     {
         try
         {
-            if ((pageHandler != null) && LOG.isDebugEnabled())
-            {
-                LOG.debug("ScratchFileBuffer not closed!");
-            }
             close();
         }
         finally

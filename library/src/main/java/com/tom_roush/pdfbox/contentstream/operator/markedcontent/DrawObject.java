@@ -40,7 +40,6 @@ import com.tom_roush.pdfbox.text.PDFMarkedContentExtractor;
  */
 public class DrawObject extends OperatorProcessor
 {
-    private static final Log LOG = LogFactory.getLog(DrawObject.class);
 
     @Override
     public void process(Operator operator, List<COSBase> arguments) throws IOException

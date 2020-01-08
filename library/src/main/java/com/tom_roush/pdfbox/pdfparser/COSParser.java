@@ -169,7 +169,6 @@ public class COSParser extends BaseParser
      */
     private int readTrailBytes = DEFAULT_TRAIL_BYTECOUNT; 
 
-    private static final Log LOG = LogFactory.getLog(COSParser.class);
 
     /** 
      * Collects all Xref/trailer objects and resolves them into single
@@ -339,7 +338,6 @@ public class COSParser extends BaseParser
                     fixedOffset = checkXRefOffset(streamOffset);
                     if (fixedOffset > -1 && fixedOffset != streamOffset)
                     {
-                        LOG.warn("/XRefStm offset " + streamOffset + " is incorrect, corrected to " + fixedOffset);
                         streamOffset = (int)fixedOffset;
                         trailer.setInt(COSName.XREF_STM, streamOffset);
                     }
@@ -355,7 +353,6 @@ public class COSParser extends BaseParser
                         {
                             if (isLenient)
                             {
-                                LOG.error("Failed to parse /XRefStm at offset " + streamOffset, ex);
                             }
                             else
                             {
@@ -367,7 +364,6 @@ public class COSParser extends BaseParser
                     {
                         if(isLenient)
                         {
-                            LOG.error("Skipped XRef stream due to a corrupt offset:"+streamOffset);
                         }
                         else
                         {
@@ -492,8 +488,7 @@ public class COSParser extends BaseParser
             {
                 // in lenient mode the '%%EOF' isn't needed
                 bufOff = buf.length;
-                LOG.debug("Missing end of file marker '" + new String(EOF_MARKER) + "'");
-            } 
+            }
             else 
             {
                 throw new IOException("Missing end of file marker '" + new String(EOF_MARKER) + "'");
@@ -678,7 +673,6 @@ public class COSParser extends BaseParser
                             fileOffset = bfSearchCOSObjectKeyOffsets.get(objKey);
                             if (fileOffset != null)
                             {
-                                LOG.debug("Set missing " + fileOffset + " for object " + objKey);
                                 document.getXrefTable().put(objKey, fileOffset);
                             }
                         }
@@ -704,14 +698,9 @@ public class COSParser extends BaseParser
                                         fileOffset = bfSearchCOSObjectKeyOffsets.get(key);
                                         if (fileOffset != null)
                                         {
-                                            LOG.debug("Set missing " + fileOffset + " for object "
-                                                    + key);
-                                            document.getXrefTable().put(key, fileOffset);
                                         }
                                         else
                                         {
-                                            LOG.warn("Invalid object stream xref object reference for key '"
-                                                        + objKey + "': " + fileOffset);
                                             continue;
                                         }
                                     }
@@ -722,7 +711,6 @@ public class COSParser extends BaseParser
                                                         + objKey + "': " + fileOffset;
                                         if (isLenient && fileOffset == null)
                                         {
-                                            LOG.warn(msg);
                                             continue;
                                         }
                                         throw new IOException(msg);
@@ -840,7 +828,6 @@ public class COSParser extends BaseParser
                 offsetOrObjstmObNr = bfSearchCOSObjectKeyOffsets.get(objKey);
                 if (offsetOrObjstmObNr != null)
                 {
-                    LOG.debug("Set missing offset " + offsetOrObjstmObNr + " for object " + objKey);
                     document.getXrefTable().put(objKey, offsetOrObjstmObNr);
                 }
             }
@@ -859,7 +846,6 @@ public class COSParser extends BaseParser
                 bfSearchForObjects();
                 if (bfSearchCOSObjectKeyOffsets != null && !bfSearchCOSObjectKeyOffsets.isEmpty())
                 {
-                    LOG.debug("Add all new read objects from brute force search to the xref table");
                     Map<COSObjectKey, Long> xrefOffset = document.getXrefTable();
                     final Set<Map.Entry<COSObjectKey, Long>> entries = bfSearchCOSObjectKeyOffsets.entrySet();
                     for (Entry<COSObjectKey, Long> entry : entries)
@@ -964,9 +950,6 @@ public class COSParser extends BaseParser
         {
             if (isLenient)
             {
-                LOG.warn("Object (" + readObjNr + ":" + readObjGen + ") at offset "
-                        + offsetOrObjstmObNr + " does not end with 'endobj' but with '"
-                        + endObjectKey + "'");
             }
             else
             {
@@ -992,7 +975,6 @@ public class COSParser extends BaseParser
             {
                 if (isLenient)
                 {
-                    LOG.error("object stream " + objstmObjNr + " could not be parsed due to an exception", ex);
                     return;
                 }
                 else
@@ -1009,7 +991,6 @@ public class COSParser extends BaseParser
             {
                 if (isLenient)
                 {
-                    LOG.debug("Stop reading object stream "+objstmObjNr+" due to an exception", exception);
                     // the error is handled in parseDictObjects
                     return;
                 }
@@ -1068,8 +1049,6 @@ public class COSParser extends BaseParser
             }
             if (COSNull.NULL == length)
             {
-                LOG.warn("Length object (" + lengthObj.getObjectNumber() + " "
-                        + lengthObj.getGenerationNumber() + ") not found");
                 return null;
             }
             if (!(length instanceof COSNumber))
@@ -1121,8 +1100,6 @@ public class COSParser extends BaseParser
         {
             if (isLenient)
             {
-               LOG.warn("The stream doesn't provide any stream length, using fallback readUntilEnd, at offset "
-                    + source.getPosition());
             }
             else
             {
@@ -1165,15 +1142,11 @@ public class COSParser extends BaseParser
         String endStream = readString();
         if (endStream.equals("endobj") && isLenient)
         {
-            LOG.warn("stream ends with 'endobj' instead of 'endstream' at offset "
-                    + source.getPosition());
             // avoid follow-up warning about missing endobj
             source.rewind(ENDOBJ.length);
         }
         else if (endStream.length() > 9 && isLenient && endStream.substring(0,9).equals(ENDSTREAM_STRING))
         {
-            LOG.warn("stream ends with '" + endStream + "' instead of 'endstream' at offset "
-                    + source.getPosition());
             // unread the "extra" bytes
             source.rewind(endStream.substring(9).getBytes(ISO_8859_1).length);
         }
@@ -1321,9 +1294,6 @@ public class COSParser extends BaseParser
         if (expectedEndOfStream > fileLen)
         {
             streamLengthIsValid = false;
-            LOG.warn("The end of the stream is out of range, using workaround to read the stream, "
-                    + "stream start position: " + originOffset + ", length: " + streamLength
-                    + ", expected end position: " + expectedEndOfStream);
         }
         else
         {
@@ -1332,9 +1302,6 @@ public class COSParser extends BaseParser
             if (!isString(ENDSTREAM))
             {
                 streamLengthIsValid = false;
-                LOG.warn("The end of the stream doesn't point to the correct offset, using workaround to read the stream, "
-                        + "stream start position: " + originOffset + ", length: " + streamLength
-                        + ", expected end position: " + expectedEndOfStream);
             }
             source.seek(originOffset);
         }
@@ -1436,17 +1403,14 @@ public class COSParser extends BaseParser
     {
         if (objectOffset < 0)
         {
-            LOG.error("Invalid object offset " + objectOffset + " when searching for a xref table/stream");
             return 0;
         }
         // start a brute force search for all xref tables and try to find the offset we are looking for
         long newOffset = bfSearchForXRef(objectOffset, streamsOnly);
         if (newOffset > -1)
         {
-            LOG.debug("Fixed reference for xref table/stream " + objectOffset + " -> " + newOffset);
             return newOffset;
         }
-        LOG.error("Can't find the object xref table/stream at offset " + objectOffset);
         return 0;
     }
 
@@ -1465,8 +1429,6 @@ public class COSParser extends BaseParser
             if (objectOffset != null && objectOffset >= 0
                     && !checkObjectKey(objectKey, objectOffset))
             {
-                LOG.debug("Stop checking xref offsets as at least one (" + objectKey
-                        + ") couldn't be dereferenced");
                 return false;
             }
         }
@@ -1491,7 +1453,6 @@ public class COSParser extends BaseParser
             bfSearchForObjects();
             if (bfSearchCOSObjectKeyOffsets != null && !bfSearchCOSObjectKeyOffsets.isEmpty())
             {
-                LOG.debug("Replaced read xref table with the results of a brute force search");
                 xrefOffset.clear();
                 xrefOffset.putAll(bfSearchCOSObjectKeyOffsets);
             }
@@ -1961,7 +1922,6 @@ public class COSParser extends BaseParser
                                         }
                                     }
                                 }
-                                LOG.debug("Dictionary start for object stream -> " + newOffset);
                                 objFound = true;
                                 break;
                             }
@@ -1984,8 +1944,6 @@ public class COSParser extends BaseParser
             // incomplete object stream found?
             if (bfOffset == null)
             {
-                LOG.warn("Skipped incomplete object stream:" + bfSearchObjStreamsOffsets.get(offset)
-                        + " at " + offset);
                 continue;
             }
             // check if the object was overwritten
@@ -2020,8 +1978,6 @@ public class COSParser extends BaseParser
                 }
                 catch (IOException exception)
                 {
-                    LOG.debug(
-                            "Skipped corrupt stream: (" + stmObjNumber + " 0 at offset " + offset);
                     continue;
                 }
                 finally
@@ -2047,8 +2003,6 @@ public class COSParser extends BaseParser
                 String[] numbers = numbersStr.split(" ");
                 if (numbers.length < nrOfObjects * 2)
                 {
-                    LOG.debug(
-                            "Skipped corrupt stream: (" + stmObjNumber + " 0 at offset " + offset);
                     continue;
                 }
                 Map<COSObjectKey, Long> xrefOffset = xrefTrailerResolver.getXrefTable();
@@ -2073,7 +2027,6 @@ public class COSParser extends BaseParser
                     }
                     catch (NumberFormatException exception)
                     {
-                        LOG.debug("Skipped corrupt object key in stream: " + stmObjNumber);
                     }
                 }
             }
@@ -2172,8 +2125,6 @@ public class COSParser extends BaseParser
                                             }
                                         }
                                     }
-                                    LOG.debug("Fixed reference for xref stream " + xrefOffset
-                                            + " -> " + newOffset);
                                     objFound = true;
                                     break;
                                 }
@@ -2319,8 +2270,6 @@ public class COSParser extends BaseParser
             }
             catch (IOException exception)
             {
-                LOG.debug("Skipped object " + key
-                        + ", either it's corrupt or not a dictionary");
             }
         }
         return dictionary;
@@ -2365,7 +2314,6 @@ public class COSParser extends BaseParser
                 // object wasn't dereferenced -> remove it
                 if (kidBaseobject == null || kidBaseobject.equals(COSNull.NULL))
                 {
-                    LOG.warn("Removed null object " + kid + " from pages dictionary");
                     kidsArray.remove(kid);
                 }
                 else if (kidBaseobject instanceof COSDictionary)
@@ -2518,8 +2466,6 @@ public class COSParser extends BaseParser
                 if (source.getPosition() == trailerOffset)
                 {
                     // warn only the first time
-                    LOG.warn("Expected trailer object at offset " + trailerOffset
-                            + ", keep trying");
                 }
                 readLine();
                 nextCharacter = source.peek();
@@ -2629,7 +2575,6 @@ public class COSParser extends BaseParser
             {
                 // No version number at all, set to 1.4 as default
                 header = headerMarker + defaultVersion;
-                LOG.debug("No version found, set to " + defaultVersion + " as default.");
             }
             else
             {
@@ -2649,7 +2594,6 @@ public class COSParser extends BaseParser
         }
         catch (NumberFormatException exception)
         {
-            LOG.debug("Can't parse the header version.", exception);
         }
         if (headerVersion < 0)
         {
@@ -2697,7 +2641,6 @@ public class COSParser extends BaseParser
     
         if (str.startsWith("trailer"))
         {
-            LOG.warn("skipping empty xref table");
             return false;
         }
         
@@ -2708,7 +2651,6 @@ public class COSParser extends BaseParser
             String[] splitString = currentLine.split("\\s");
             if (splitString.length != 2)
             {
-                LOG.warn("Unexpected XRefTable Entry: " + currentLine);
                 return false;
             }
             // first obj id
@@ -2719,7 +2661,6 @@ public class COSParser extends BaseParser
             }
             catch (NumberFormatException exception)
             {
-                LOG.warn("XRefTable: invalid ID for the first object: " + currentLine);
                 return false;
             }
 
@@ -2731,7 +2672,6 @@ public class COSParser extends BaseParser
             }
             catch (NumberFormatException exception)
             {
-                LOG.warn("XRefTable: invalid number of objects: " + currentLine);
                 return false;
             }
             
@@ -2751,7 +2691,6 @@ public class COSParser extends BaseParser
                 splitString = currentLine.split("\\s");
                 if (splitString.length < 3)
                 {
-                    LOG.warn("invalid xref line: " + currentLine);
                     break;
                 }
                 /* This supports the corrupt table as reported in

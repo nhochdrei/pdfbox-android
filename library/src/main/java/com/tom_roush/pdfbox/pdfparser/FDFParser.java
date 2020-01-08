@@ -32,7 +32,6 @@ import com.tom_roush.pdfbox.io.RandomAccessFile;
 
 public class FDFParser extends COSParser
 {
-    private static final Log LOG = LogFactory.getLog(FDFParser.class);
 
     /**
      * Constructs parser for given file using memory buffer.
@@ -97,8 +96,6 @@ public class FDFParser extends COSParser
             }
             catch (NumberFormatException nfe)
             {
-                LOG.warn("System property " + SYSPROP_EOFLOOKUPRANGE
-                        + " does not contain an integer value, but: '" + eofLookupRangeStr + "'");
             }
         }
         document = new COSDocument();

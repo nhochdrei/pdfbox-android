@@ -32,7 +32,6 @@ import java.util.Map;
  */
 public class CMap
 {
-    private static final Log LOG = LogFactory.getLog(CMap.class);
 
     private int wmode = 0;
     private String cmapName = null;
@@ -129,7 +128,6 @@ public class CMap
         {
             seq += String.format("0x%02X (%04o) ", bytes[i], bytes[i]);
         }
-        LOG.warn("Invalid character code sequence " + seq + "in CMap " + cmapName);
         return 0;
     }
 

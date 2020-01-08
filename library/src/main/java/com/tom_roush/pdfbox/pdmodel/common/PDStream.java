@@ -32,7 +32,6 @@ import com.tom_roush.pdfbox.cos.COSInputStream;
 import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.cos.COSNull;
 import com.tom_roush.pdfbox.cos.COSStream;
-import com.tom_roush.pdfbox.filter.DecodeOptions;
 import com.tom_roush.pdfbox.filter.Filter;
 import com.tom_roush.pdfbox.filter.FilterFactory;
 import com.tom_roush.pdfbox.io.IOUtils;
@@ -234,11 +233,6 @@ public class PDStream implements COSObjectable
     public COSInputStream createInputStream() throws IOException
     {
         return stream.createInputStream();
-    }
-
-    public COSInputStream createInputStream(DecodeOptions options) throws IOException
-    {
-        return stream.createInputStream(options);
     }
 
     /**

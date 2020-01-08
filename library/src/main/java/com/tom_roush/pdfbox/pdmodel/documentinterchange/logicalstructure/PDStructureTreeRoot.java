@@ -43,7 +43,6 @@ public class PDStructureTreeRoot extends PDStructureNode
     /**
      * Log instance.
      */
-    private static final Log LOG = LogFactory.getLog(PDStructureTreeRoot.class);
 
     private static final String TYPE = "StructTreeRoot";
 
@@ -203,7 +202,6 @@ public class PDStructureTreeRoot extends PDStructureNode
             }
             catch (IOException e)
             {
-                LOG.error(e,e);
             }
         }
         return new HashMap<String, Object>();

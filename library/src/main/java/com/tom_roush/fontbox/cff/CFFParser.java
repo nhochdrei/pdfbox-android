@@ -38,7 +38,6 @@ public class CFFParser
     /**
      * Log instance.
      */
-    private static final Log LOG = LogFactory.getLog(CFFParser.class);
 
     private static final String TAG_OTTO = "OTTO";
     private static final String TAG_TTCF = "ttcf";
@@ -371,7 +370,6 @@ public class CFFParser
                 case 0xb:
                     if (hasExponent)
                     {
-                        LOG.warn("duplicate 'E' ignored after " + sb);
                         break;
                     }
                     sb.append("E");
@@ -381,7 +379,6 @@ public class CFFParser
                 case 0xc:
                     if (hasExponent)
                     {
-                        LOG.warn("duplicate 'E-' ignored after " + sb);
                         break;
                     }
                     sb.append("E-");

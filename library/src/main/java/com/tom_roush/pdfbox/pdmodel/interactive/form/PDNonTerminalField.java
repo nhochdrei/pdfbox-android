@@ -44,7 +44,6 @@ import com.tom_roush.pdfbox.pdmodel.interactive.annotation.PDAnnotationWidget;
  */
 public class PDNonTerminalField extends PDField
 {
-    private static final Log LOG = LogFactory.getLog(PDNonTerminalField.class);
 
     /**
      * Constructor.
@@ -142,7 +141,6 @@ public class PDNonTerminalField extends PDField
             {
                 if (kid.getCOSObject() == this.getCOSObject())
                 {
-                    LOG.warn("Child field is same object as parent");
                     continue;
                 }
                 PDField field = PDField.fromDictionary(getAcroForm(), (COSDictionary) kid, this);

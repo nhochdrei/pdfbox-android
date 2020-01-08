@@ -44,7 +44,6 @@ import org.w3c.dom.NodeList;
 public class FDFDictionary implements COSObjectable
 {
 
-    private static final Log LOG = LogFactory.getLog(FDFDictionary.class);
 
     private COSDictionary fdf;
 
@@ -98,8 +97,6 @@ public class FDFDictionary implements COSObjectable
                     }
                     catch (IOException e)
                     {
-                        LOG.warn("Error parsing ID entry for attribute 'original' [" + original
-                                + "]. ID entry ignored.", e);
                     }
                     try
                     {
@@ -107,8 +104,6 @@ public class FDFDictionary implements COSObjectable
                     }
                     catch (IOException e)
                     {
-                        LOG.warn("Error parsing ID entry for attribute 'modified' [" + modified
-                                + "]. ID entry ignored.", e);
                     }
                     setID(ids);
                 }
@@ -128,8 +123,6 @@ public class FDFDictionary implements COSObjectable
                             }
                             catch (IOException e)
                             {
-                                LOG.warn("Error parsing field entry [" + currentNode.getNodeValue()
-                                        + "]. Field ignored.", e);
                             }
                         }
                     }
@@ -220,15 +213,10 @@ public class FDFDictionary implements COSObjectable
                                 }
                                 else
                                 {
-                                    LOG.warn("Unknown or unsupported annotation type '"
-                                            + annotationName + "'");
                                 }
                             }
                             catch (IOException e)
                             {
-                                LOG.warn(
-                                        "Error parsing annotation information ["
-                                                + annot.getNodeValue() + "]. Annotation ignored", e);
                             }
                         }
                     }

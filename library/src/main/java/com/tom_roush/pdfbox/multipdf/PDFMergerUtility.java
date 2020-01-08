@@ -87,7 +87,6 @@ public class PDFMergerUtility
     /**
      * Log instance.
      */
-    private static final Log LOG = LogFactory.getLog(PDFMergerUtility.class);
 
     private final List<Object> sources;
     private String destinationFileName;

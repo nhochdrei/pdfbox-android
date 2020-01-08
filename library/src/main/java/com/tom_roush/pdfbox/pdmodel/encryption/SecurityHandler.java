@@ -59,7 +59,6 @@ import com.tom_roush.pdfbox.util.Charsets;
  */
 public abstract class SecurityHandler
 {
-    private static final Log LOG = LogFactory.getLog(SecurityHandler.class);
 
     private static final int DEFAULT_KEY_LENGTH = 40;
 
@@ -340,7 +339,6 @@ public abstract class SecurityHandler
             {
                 throw exception;
             }
-            LOG.debug("A GeneralSecurityException occurred when decrypting some stream data", exception);
         }
         finally
         {
@@ -465,8 +463,6 @@ public abstract class SecurityHandler
             is.close();
             if (Arrays.equals(buf, "<?xpacket ".getBytes(Charsets.ISO_8859_1)))
             {
-                LOG.warn("Metadata is not encrypted, but was expected to be");
-                LOG.warn("Read PDF specification about EncryptMetadata (default value: true)");
                 return;
             }
         }
@@ -574,8 +570,6 @@ public abstract class SecurityHandler
         }
         catch (IOException ex)
         {
-            LOG.error("Failed to decrypt COSString of length " + string.getBytes().length + 
-                    " in object " + objNum + ": " + ex.getMessage());
         }
     }
 

@@ -60,8 +60,7 @@ import com.tom_roush.pdfbox.util.Matrix;
  */
 public final class PDAcroForm implements COSObjectable
 {
-    private static final Log LOG = LogFactory.getLog(PDAcroForm.class);
-    
+
     private static final int FLAG_SIGNATURES_EXIST = 1;
     private static final int FLAG_APPEND_ONLY = 1 << 1;
 
@@ -239,7 +238,6 @@ public final class PDAcroForm implements COSObjectable
         // from the XFA content into a static PDF.
         if (xfaIsDynamic())
         {
-            LOG.warn("Flatten for a dynamix XFA form is not supported");
             return;
         }
         
@@ -275,17 +273,14 @@ public final class PDAcroForm implements COSObjectable
         
         if (!refreshAppearances && getNeedAppearances())
         {
-            LOG.warn("acroForm.getNeedAppearances() returns true, " +
-                     "visual field appearances may not have been set");
-            LOG.warn("call acroForm.refreshAppearances() or " +
-                     "use the flatten() method with refreshAppearances parameter");
+
         }
 
         // for dynamic XFA forms there is no flatten as this would mean to do a rendering
         // from the XFA content into a static PDF.
         if (xfaIsDynamic())
         {
-            LOG.warn("Flatten for a dynamix XFA form is not supported");
+
             return;
         }
         
@@ -848,7 +843,6 @@ public final class PDAcroForm implements COSObjectable
 
         // If there is a widget with a missing page reference we need to build the map reverse i.e. 
         // from the annotations to the widget.
-        LOG.warn("There has been a widget with a missing page reference, will check all page annotations");
         for (PDPage page : document.getPages())
         {
             for (PDAnnotation annotation : page.getAnnotations())

@@ -32,7 +32,6 @@ import com.tom_roush.pdfbox.util.Matrix;
  */
 public final class TextPosition
 {
-    private static final Log LOG = LogFactory.getLog(TextPosition.class);
 
     private static final Map<Integer, String> DIACRITICS = createDiacritics();
 
@@ -598,8 +597,6 @@ public final class TextPosition
         {
             if (i >= widths.length)
             {
-                LOG.info("diacritic " + diacritic.getUnicode() + " on ligature " + unicode + 
-                        " is not supported yet and is ignored (PDFBOX-2831)");
                 break;
             }
             float currCharXEnd = currCharXStart + widths[i];

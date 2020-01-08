@@ -36,8 +36,7 @@ import com.tom_roush.pdfbox.cos.COSNumber;
  */
 public class SetLineDashPattern extends OperatorProcessor
 {
-    private static final Log LOG = LogFactory.getLog(SetLineDashPattern.class);
-    
+
     @Override
     public void process(Operator operator, List<COSBase> arguments) throws MissingOperandException
     {
@@ -72,14 +71,12 @@ public class SetLineDashPattern extends OperatorProcessor
             }
             else
             {
-                LOG.warn("dash array has non number element " + base + ", ignored");
                 dashArray = new COSArray();
                 break;
             }
         }
         if (dashArray.size() > 0 && allZero)
         {
-            LOG.warn("dash lengths all zero, ignored");
             dashArray = new COSArray();
         }
         context.setLineDashPattern(dashArray, dashPhase);

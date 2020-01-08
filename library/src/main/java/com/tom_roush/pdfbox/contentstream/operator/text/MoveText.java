@@ -35,7 +35,6 @@ import com.tom_roush.pdfbox.util.Matrix;
  */
 public class MoveText extends OperatorProcessor
 {
-    private static final Log LOG = LogFactory.getLog(MoveText.class);
 
     @Override
     public void process(Operator operator, List<COSBase> arguments) throws MissingOperandException
@@ -47,7 +46,6 @@ public class MoveText extends OperatorProcessor
         Matrix textLineMatrix = context.getTextLineMatrix();
         if (textLineMatrix == null)
         {
-            LOG.warn("TextLineMatrix is null, " + getName() + " operator will be ignored");
             return;
         }        
         

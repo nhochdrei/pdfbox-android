@@ -78,7 +78,6 @@ import com.tom_roush.pdfbox.util.Hex;
  */
 public class COSWriter implements ICOSVisitor, Closeable
 {
-    private static final Log LOG = LogFactory.getLog(COSWriter.class);
 
     /**
      * The dictionary open token.
@@ -292,7 +291,6 @@ public class COSWriter implements ICOSVisitor, Closeable
       }
       catch (IOException e)
       {
-          LOG.error(e,e);
       }
     }
     

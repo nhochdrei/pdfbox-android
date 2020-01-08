@@ -42,7 +42,6 @@ import org.w3c.dom.NodeList;
  */
 public class FDFAnnotationInk extends FDFAnnotation
 {
-    private static final Log LOG = LogFactory.getLog(FDFAnnotationInk.class);
     /**
      * COS Model value for SubType entry.
      */
@@ -108,7 +107,6 @@ public class FDFAnnotationInk extends FDFAnnotation
         }
         catch (XPathExpressionException e)
         {
-            LOG.debug("Error while evaluating XPath expression for inklist gestures");
         }
     }
 

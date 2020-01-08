@@ -38,8 +38,7 @@ import com.tom_roush.pdfbox.pdmodel.interactive.digitalsignature.PDSignature;
  */
 public class PDSignatureField extends PDTerminalField
 {
-	private static final Log LOG = LogFactory.getLog(PDSignatureField.class);
-	
+
     /**
      * @see PDTerminalField#PDTerminalField(PDAcroForm)
      *
@@ -237,7 +236,6 @@ public class PDSignatureField extends PDTerminalField
             }
 
             // TODO: implement appearance generation for signatures
-            LOG.warn("Appearance generation for signature fields not yet implemented - you need to generate/update that manually");
         }
     }
 }

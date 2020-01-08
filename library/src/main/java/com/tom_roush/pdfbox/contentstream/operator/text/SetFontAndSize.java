@@ -40,7 +40,6 @@ import com.tom_roush.pdfbox.pdmodel.font.PDFont;
  */
 public class SetFontAndSize extends OperatorProcessor
 {
-    private static final Log LOG = LogFactory.getLog(SetFontAndSize.class);
 
     @Override
     public void process(Operator operator, List<COSBase> arguments) throws IOException
@@ -66,7 +65,6 @@ public class SetFontAndSize extends OperatorProcessor
         PDFont font = context.getResources().getFont(fontName);
         if (font == null)
         {
-            LOG.warn("font '" + fontName.getName() + "' not found in resources");
         }
         context.getGraphicsState().getTextState().setFont(font);
     }

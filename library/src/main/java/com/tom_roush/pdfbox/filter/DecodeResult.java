@@ -17,7 +17,6 @@
 package com.tom_roush.pdfbox.filter;
 
 import com.tom_roush.pdfbox.cos.COSDictionary;
-import com.tom_roush.pdfbox.pdmodel.graphics.color.PDJPXColorSpace;
 
 /**
  * The result of a filter decode operation. Allows information such as color space to be
@@ -31,18 +30,18 @@ public final class DecodeResult
     public static final DecodeResult DEFAULT = new DecodeResult(new COSDictionary());
 
     private final COSDictionary parameters;
-    private PDJPXColorSpace colorSpace;
+//    private PDJPXColorSpace colorSpace;TODO: PdfBox-Android
 
     DecodeResult(COSDictionary parameters)
     {
         this.parameters = parameters;
     }
 
-    DecodeResult(COSDictionary parameters, PDJPXColorSpace colorSpace)
-    {
-        this.parameters = parameters;
-        this.colorSpace = colorSpace;
-    }
+//    DecodeResult(COSDictionary parameters, PDJPXColorSpace colorSpace)
+//    {
+//        this.parameters = parameters;
+//        this.colorSpace = colorSpace;
+//    }TODO: PdfBox-Android
 
     /**
      * Returns the stream parameters, repaired using the embedded stream data.
@@ -55,16 +54,16 @@ public final class DecodeResult
 
     /**
      * Returns the embedded JPX color space, if any.
-     * @return the embedded JPX color space, or null if there is none.
+     * @return the the embedded JPX color space, or null if there is none.
      */
-    public PDJPXColorSpace getJPXColorSpace()
-    {
-        return colorSpace;
-    }
+//    public PDJPXColorSpace getJPXColorSpace()
+//    {
+//        return colorSpace;
+//    }TODO: PdfBox-Android
 
     // Sets the JPX color space
-    void setColorSpace(PDJPXColorSpace colorSpace)
-    {
-        this.colorSpace = colorSpace;
-    }
+//    void setColorSpace(PDJPXColorSpace colorSpace)
+//    {
+//        this.colorSpace = colorSpace;
+//    }TODO: PdfBox-Android
 }

@@ -30,7 +30,6 @@ import java.io.IOException;
  */
 public class RandomAccessInputStream extends InputStream
 {
-    private static final Log LOG = LogFactory.getLog(RandomAccessInputStream.class);
 
     private final RandomAccessRead input;
     private long position;
@@ -81,8 +80,6 @@ public class RandomAccessInputStream extends InputStream
         {
             // should never happen due to prior isEOF() check
             // unless there is an unsynchronized concurrent access
-            LOG.error("read() returns -1, assumed position: " +
-                       position + ", actual position: " + input.getPosition());
         }
         return b;
     }
@@ -104,8 +101,6 @@ public class RandomAccessInputStream extends InputStream
         {
             // should never happen due to prior isEOF() check
             // unless there is an unsynchronized concurrent access
-            LOG.error("read() returns -1, assumed position: " +
-                       position + ", actual position: " + input.getPosition());
         }
         return n;
     }

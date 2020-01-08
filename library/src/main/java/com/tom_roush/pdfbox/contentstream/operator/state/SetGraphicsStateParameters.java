@@ -36,7 +36,6 @@ import com.tom_roush.pdfbox.contentstream.operator.MissingOperandException;
  */
 public class SetGraphicsStateParameters extends OperatorProcessor
 {
-    private static final Log LOG = LogFactory.getLog(SetGraphicsStateParameters.class);
 
     @Override
     public void process(Operator operator, List<COSBase> arguments) throws IOException
@@ -56,7 +55,6 @@ public class SetGraphicsStateParameters extends OperatorProcessor
         PDExtendedGraphicsState gs = context.getResources().getExtGState(graphicsName);
         if (gs == null)
         {
-            LOG.error("name for 'gs' operator not found in resources: /" + graphicsName.getName());
             return;
         }
         gs.copyIntoGraphicsState( context.getGraphicsState() );
