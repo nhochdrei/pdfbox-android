@@ -16,19 +16,19 @@
  */
 package com.tom_roush.pdfbox.pdmodel.graphics.image;
 
-import java.awt.Paint;
-import java.awt.Rectangle;
-import java.awt.image.BufferedImage;
+import android.graphics.Bitmap;
+import android.graphics.Paint;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
-import com.tom_roush.pdfbox.filter.DecodeOptions;
 import com.tom_roush.pdfbox.filter.DecodeResult;
 import com.tom_roush.pdfbox.filter.Filter;
 import com.tom_roush.pdfbox.filter.FilterFactory;
@@ -65,7 +65,7 @@ public final class PDInlineImage implements PDImage
      * @throws IOException if the stream cannot be decoded
      */
     public PDInlineImage(COSDictionary parameters, byte[] data, PDResources resources)
-            throws IOException
+        throws IOException
     {
         this.parameters = parameters;
         this.resources = resources;
@@ -128,6 +128,7 @@ public final class PDInlineImage implements PDImage
     public PDColorSpace getColorSpace() throws IOException
     {
         COSBase cs = parameters.getDictionaryObject(COSName.CS, COSName.COLORSPACE);
+
         if (cs != null)
         {
             return createColorSpace(cs);
@@ -143,7 +144,7 @@ public final class PDInlineImage implements PDImage
             throw new IOException("could not determine inline image color space");
         }
     }
-    
+
     // deliver the long name of a device colorspace, or the parameter
     private COSBase toLongName(COSBase cs)
     {
@@ -161,7 +162,7 @@ public final class PDInlineImage implements PDImage
         }
         return cs;
     }
-    
+
     private PDColorSpace createColorSpace(COSBase cs) throws IOException
     {
         if (cs instanceof COSName)
@@ -169,9 +170,9 @@ public final class PDInlineImage implements PDImage
             return PDColorSpace.create(toLongName(cs), resources);
         }
 
-        if (cs instanceof COSArray && ((COSArray) cs).size() > 1)
+        if (cs instanceof COSArray && ((COSArray)cs).size() > 1)
         {
-            COSArray srcArray = (COSArray) cs;
+            COSArray srcArray = (COSArray)cs;
             COSBase csType = srcArray.get(0);
             if (COSName.I.equals(csType) || COSName.INDEXED.equals(csType))
             {
@@ -299,19 +300,12 @@ public final class PDInlineImage implements PDImage
     }
 
     @Override
-    public InputStream createInputStream(DecodeOptions options) throws IOException
-    {
-        // Decode options are irrelevant for inline image, as the data is always buffered.
-        return createInputStream();
-    }
-
-    @Override
     public InputStream createInputStream(List<String> stopFilters) throws IOException
     {
         List<String> filters = getFilters();
         ByteArrayInputStream in = new ByteArrayInputStream(rawData);
         ByteArrayOutputStream out = new ByteArrayOutputStream(rawData.length);
-        for (int i = 0; filters != null && i < filters.size(); i++)
+        for (int i = 0; i < filters.size(); i++)
         {
             // TODO handling of abbreviated names belongs here, rather than in other classes
             out.reset();
@@ -342,21 +336,15 @@ public final class PDInlineImage implements PDImage
     {
         return decodedData;
     }
-    
+
     @Override
-    public BufferedImage getImage() throws IOException
+    public Bitmap getImage() throws IOException
     {
-        return SampledImageReader.getRGBImage(this, null);
+        return SampledImageReader.getRGBImage(this, getColorKeyMask());
     }
 
     @Override
-    public BufferedImage getImage(Rectangle region, int subsampling) throws IOException
-    {
-        return SampledImageReader.getRGBImage(this, region, subsampling, null);
-    }
-
-    @Override
-    public BufferedImage getStencilImage(Paint paint) throws IOException
+    public Bitmap getStencilImage(Paint paint) throws IOException
     {
         if (!isStencil())
         {
@@ -370,9 +358,7 @@ public final class PDInlineImage implements PDImage
      * there is none.
      *
      * @return Mask Image XObject
-     * @deprecated inline images don't have a color key mask.
      */
-    @Deprecated
     public COSArray getColorKeyMask()
     {
         COSBase mask = parameters.getDictionaryObject(COSName.IM, COSName.MASK);

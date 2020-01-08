@@ -16,7 +16,6 @@
  */
 package com.tom_roush.pdfbox.pdmodel.graphics.shading;
 
-import java.awt.Paint;
 import com.tom_roush.harmony.awt.geom.AffineTransform;
 
 import com.tom_roush.pdfbox.cos.COSArray;
@@ -100,9 +99,9 @@ public class PDShadingType1 extends PDShading
         getCOSObject().setItem(COSName.DOMAIN, newDomain);
     }
 
-    @Override
-    public Paint toPaint(Matrix matrix)
-    {
-        return new Type1ShadingPaint(this, matrix);
-    }
+//    @Override
+//    public Paint toPaint(Matrix matrix)
+//    {
+//        return new Type1ShadingPaint(this, matrix);
+//    }
 }

@@ -16,7 +16,6 @@
  */
 package com.tom_roush.pdfbox.pdmodel.graphics.shading;
 
-import java.awt.Paint;
 import java.io.IOException;
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
@@ -427,5 +426,5 @@ public abstract class PDShading implements COSObjectable
      *               this matrix which maps the pattern's internal coordinate system to user space
      * @return an AWT Paint instance
      */
-    public abstract Paint toPaint(Matrix matrix);
+//    public abstract Paint toPaint(Matrix matrix);
 }

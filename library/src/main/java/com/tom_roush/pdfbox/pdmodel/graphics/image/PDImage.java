@@ -16,14 +16,14 @@
  */
 package com.tom_roush.pdfbox.pdmodel.graphics.image;
 
-import java.awt.Paint;
-import java.awt.Rectangle;
-import java.awt.image.BufferedImage;
+import android.graphics.Bitmap;
+import android.graphics.Paint;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+
 import com.tom_roush.pdfbox.cos.COSArray;
-import com.tom_roush.pdfbox.filter.DecodeOptions;
 import com.tom_roush.pdfbox.pdmodel.common.COSObjectable;
 import com.tom_roush.pdfbox.pdmodel.graphics.color.PDColorSpace;
 
@@ -35,29 +35,12 @@ import com.tom_roush.pdfbox.pdmodel.graphics.color.PDColorSpace;
 public interface PDImage extends COSObjectable
 {
     /**
-     * Returns the content of this image as an AWT buffered image with an (A)RGB color space.
-     * The size of the returned image is the larger of the size of the image itself or its mask. 
+     * Returns the content of this image as a Bitmap with ARGB_888.
+     * The size of the returned image is the larger of the size of the image itself or its mask.
      * @return content of this image as a buffered image.
      * @throws IOException
      */
-    BufferedImage getImage() throws IOException;
-
-    /**
-     * Returns the content of this image as an AWT buffered image with an (A)RGB colored space. Only
-     * the subregion specified is rendered, and is subsampled by advancing the specified amount of
-     * rows and columns in the source image for every resulting pixel.
-     *
-     * Note that unlike {@link PDImage#getImage() the unparameterized version}, this method does not
-     * cache the resulting image.
-     *
-     * @param region The region of the source image to get, or null if the entire image is needed.
-     * The actual region will be clipped to the dimensions of the source image.
-     * @param subsampling The amount of rows and columns to advance for every output pixel, a value
-     * of 1 meaning every pixel will be read
-     * @return subsampled content of the requested subregion as a buffered image.
-     * @throws IOException
-     */
-    BufferedImage getImage(Rectangle region, int subsampling) throws IOException;
+    Bitmap getImage() throws IOException;
 
     /**
      * Returns an ARGB image filled with the given paint and using this image as a mask.
@@ -66,11 +49,12 @@ public interface PDImage extends COSObjectable
      * @throws IOException if the image cannot be read
      * @throws IllegalStateException if the image is not a stencil.
      */
-    BufferedImage getStencilImage(Paint paint) throws IOException;
-    
+    Bitmap getStencilImage(Paint paint) throws IOException;
+
     /**
      * Returns an InputStream containing the image data, irrespective of whether this is an
      * inline image or an image XObject.
+     *
      * @return Decoded stream
      * @throws IOException if the data could not be read.
      */
@@ -79,21 +63,11 @@ public interface PDImage extends COSObjectable
     /**
      * Returns an InputStream containing the image data, irrespective of whether this is an
      * inline image or an image XObject. The given filters will not be decoded.
-     * @param stopFilters A list of filters to stop decoding at.
+     *
      * @return Decoded stream
      * @throws IOException if the data could not be read.
      */
     InputStream createInputStream(List<String> stopFilters) throws IOException;
-
-    /**
-     * Returns an InputStream, passing additional options to each filter. As a side effect, the
-     * filterSubsampled flag is set in {@link DecodeOptions}.
-     *
-     * @param options Additional decoding options passed to the filters used
-     * @return Decoded stream
-     * @throws IOException if the data could not be read
-     */
-    InputStream createInputStream(DecodeOptions options) throws IOException;
 
     /**
      * Returns true if the image has no data.

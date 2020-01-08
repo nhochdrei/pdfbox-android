@@ -16,15 +16,15 @@
  */
 package com.tom_roush.pdfbox.pdmodel.graphics.state;
 
-import java.awt.BasicStroke;
-import java.awt.Composite;
-import java.awt.geom.Area;
-import java.awt.geom.GeneralPath;
-import com.tom_roush.pdfbox.cos.COSBase;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.Rect;
+import android.graphics.RectF;
+import android.graphics.Region;
 
+import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.pdmodel.common.PDRectangle;
 import com.tom_roush.pdfbox.pdmodel.graphics.PDLineDashPattern;
-import com.tom_roush.pdfbox.pdmodel.graphics.blend.BlendComposite;
 import com.tom_roush.pdfbox.pdmodel.graphics.blend.BlendMode;
 import com.tom_roush.pdfbox.pdmodel.graphics.color.PDColor;
 import com.tom_roush.pdfbox.pdmodel.graphics.color.PDColorSpace;
@@ -39,7 +39,7 @@ import com.tom_roush.pdfbox.util.Matrix;
 public class PDGraphicsState implements Cloneable
 {
     private boolean isClippingPathDirty;
-    private Area clippingPath;
+    private Region clippingPath;
     private Matrix currentTransformationMatrix = new Matrix();
     private PDColor strokingColor = PDDeviceGray.INSTANCE.getInitialColor();
     private PDColor nonStrokingColor = PDDeviceGray.INSTANCE.getInitialColor();
@@ -47,8 +47,8 @@ public class PDGraphicsState implements Cloneable
     private PDColorSpace nonStrokingColorSpace = PDDeviceGray.INSTANCE;
     private PDTextState textState = new PDTextState();
     private float lineWidth = 1;
-    private int lineCap = BasicStroke.CAP_BUTT;
-    private int lineJoin = BasicStroke.JOIN_MITER;
+    private Paint.Cap lineCap = Paint.Cap.BUTT;
+    private Paint.Join lineJoin = Paint.Join.MITER;
     private float miterLimit = 10;
     private PDLineDashPattern lineDashPattern = new PDLineDashPattern();
     private RenderingIntent renderingIntent;
@@ -61,7 +61,6 @@ public class PDGraphicsState implements Cloneable
 
     // DEVICE-DEPENDENT parameters
     private boolean overprint = false;
-    private boolean nonStrokingOverprint = false;
     private double overprintMode = 0;
     //black generation
     //undercolor removal
@@ -76,7 +75,13 @@ public class PDGraphicsState implements Cloneable
      */
     public PDGraphicsState(PDRectangle page)
     {
-        clippingPath = new Area(page.toGeneralPath());
+//        clippingPath = new Area(new GeneralPath(page.toGeneralPath()));TODO: PdfBox-Android
+        RectF bounds = new RectF();
+        page.toGeneralPath().computeBounds(bounds, true);
+        clippingPath = new Region();
+        Rect boundsRounded = new Rect();
+        bounds.round(boundsRounded);
+        clippingPath.setPath(page.toGeneralPath(), new Region(boundsRounded));
     }
 
     /**
@@ -124,7 +129,7 @@ public class PDGraphicsState implements Cloneable
      *
      * @return The current line cap.
      */
-    public int getLineCap()
+    public Paint.Cap getLineCap()
     {
         return lineCap;
     }
@@ -134,7 +139,7 @@ public class PDGraphicsState implements Cloneable
      *
      * @param value The current line cap.
      */
-    public void setLineCap(int value)
+    public void setLineCap(Paint.Cap value)
     {
         lineCap = value;
     }
@@ -144,7 +149,7 @@ public class PDGraphicsState implements Cloneable
      *
      * @return The current line join value.
      */
-    public int getLineJoin()
+    public Paint.Join getLineJoin()
     {
         return lineJoin;
     }
@@ -154,7 +159,7 @@ public class PDGraphicsState implements Cloneable
      *
      * @param value The current line join
      */
-    public void setLineJoin(int value)
+    public void setLineJoin(Paint.Join value)
     {
         lineJoin = value;
     }
@@ -200,9 +205,9 @@ public class PDGraphicsState implements Cloneable
     }
 
     /**
-     * Get the value of the stroke alpha constant property.
+     * Get the value of the stroke alpha constants property.
      *
-     * @return The value of the stroke alpha constant parameter.
+     * @return The value of the stroke alpha constants parameter.
      */
     public double getAlphaConstant()
     {
@@ -210,9 +215,9 @@ public class PDGraphicsState implements Cloneable
     }
 
     /**
-     * set the value of the stroke alpha constant property.
+     * set the value of the stroke alpha constants property.
      *
-     * @param value The value of the stroke alpha constant parameter.
+     * @param value The value of the stroke alpha constants parameter.
      */
     public void setAlphaConstant(double value)
     {
@@ -220,33 +225,9 @@ public class PDGraphicsState implements Cloneable
     }
 
     /**
-     * Get the value of the non-stroke alpha constant property.
+     * Get the value of the non-stroke alpha constants property.
      *
-     * @return The value of the non-stroke alpha constant parameter.
-     * @deprecated use {@link #getNonStrokeAlphaConstant() }
-     */
-    @Deprecated
-    public double getNonStrokeAlphaConstants()
-    {
-        return nonStrokingAlphaConstant;
-    }
-
-    /**
-     * set the value of the non-stroke alpha constant property.
-     *
-     * @param value The value of the non-stroke alpha constant parameter.
-     * @deprecated use {@link #setNonStrokeAlphaConstant(double) }
-     */
-    @Deprecated
-    public void setNonStrokeAlphaConstants(double value)
-    {
-        nonStrokingAlphaConstant = value;
-    }
-
-    /**
-     * Get the value of the non-stroke alpha constant property.
-     *
-     * @return The value of the non-stroke alpha constant parameter.
+     * @return The value of the non-stroke alpha constants parameter.
      */
     public double getNonStrokeAlphaConstant()
     {
@@ -254,9 +235,9 @@ public class PDGraphicsState implements Cloneable
     }
 
     /**
-     * set the value of the non-stroke alpha constant property.
+     * set the value of the non-stroke alpha constants property.
      *
-     * @param value The value of the non-stroke alpha constant parameter.
+     * @param value The value of the non-stroke alpha constants parameter.
      */
     public void setNonStrokeAlphaConstant(double value)
     {
@@ -288,7 +269,7 @@ public class PDGraphicsState implements Cloneable
      *
      * @return softMask
      */
-    public PDSoftMask getSoftMask() 
+    public PDSoftMask getSoftMask()
     {
         return softMask;
     }
@@ -325,6 +306,8 @@ public class PDGraphicsState implements Cloneable
     }
 
     /**
+
+     /**
      * get the value of the overprint property.
      *
      * @return The value of the overprint parameter.
@@ -342,26 +325,6 @@ public class PDGraphicsState implements Cloneable
     public void setOverprint(boolean value)
     {
         overprint = value;
-    }
-
-    /**
-     * get the value of the non stroking overprint property.
-     *
-     * @return The value of the non stroking overprint parameter.
-     */
-    public boolean isNonStrokingOverprint()
-    {
-        return nonStrokingOverprint;
-    }
-
-    /**
-     * set the value of the non stroking overprint property.
-     *
-     * @param value The value of the non stroking overprint parameter.
-     */
-    public void setNonStrokingOverprint(boolean value)
-    {
-        nonStrokingOverprint = value;
     }
 
     /**
@@ -559,7 +522,7 @@ public class PDGraphicsState implements Cloneable
     }
 
     /**
-     * Sets the stroking color space.
+     * Sets the the stroking color space.
      *
      * @param colorSpace The new stroking color space.
      */
@@ -579,7 +542,7 @@ public class PDGraphicsState implements Cloneable
     }
 
     /**
-     * Sets the non-stroking color space.
+     * Sets the the non-stroking color space.
      *
      * @param colorSpace The new non-stroking color space.
      */
@@ -592,30 +555,37 @@ public class PDGraphicsState implements Cloneable
      * Modify the current clipping path by intersecting it with the given path.
      * @param path path to intersect with the clipping path
      */
-    public void intersectClippingPath(GeneralPath path)
+    public void intersectClippingPath(Path path)
     {
-        intersectClippingPath(new Area(path));
+        RectF bounds = new RectF();
+        path.computeBounds(bounds, true);
+        Region r = new Region();
+        Rect boundsRounded = new Rect();
+        bounds.round(boundsRounded);
+        r.setPath(path, new Region(boundsRounded));
+        intersectClippingPath(r);
+        // TODO: PdfBox-Android Verify correct behavior
     }
 
     /**
      * Modify the current clipping path by intersecting it with the given path.
      * @param area area to intersect with the clipping path
      */
-    public void intersectClippingPath(Area area)
+    public void intersectClippingPath(Region area)
     {
         // lazy cloning of clipping path for performance
         if (!isClippingPathDirty)
         {
             // deep copy (can't use clone() as it performs only a shallow copy)
-            Area cloned = new Area();
-            cloned.add(clippingPath);
+            Region cloned = new Region(area);
+//        	cloned.add(clippingPath);
             clippingPath = cloned;
 
             isClippingPathDirty = true;
         }
 
         // intersection as usual
-        clippingPath.intersect(area);
+        clippingPath.op(area, Region.Op.INTERSECT);
     }
 
     /**
@@ -623,20 +593,20 @@ public class PDGraphicsState implements Cloneable
      *
      * @return The current clipping path.
      */
-    public Area getCurrentClippingPath()
+    public Region getCurrentClippingPath()
     {
         return clippingPath;
     }
 
-    public Composite getStrokingJavaComposite()
-    {
-        return BlendComposite.getInstance(blendMode, (float) alphaConstant);
-    }
+//    public Composite getStrokingJavaComposite()
+//    {
+//        return BlendComposite.getInstance(blendMode, (float) alphaConstants);
+//    }TODO: PdfBox-Android
 
-    public Composite getNonStrokingJavaComposite()
-    {
-        return BlendComposite.getInstance(blendMode, (float) nonStrokingAlphaConstant);
-    }
+//    public Composite getNonStrokingJavaComposite()
+//    {
+//        return BlendComposite.getInstance(blendMode, (float) nonStrokingAlphaConstants);
+//    }TODO: PdfBox-Android
 
     /**
      * This will get the transfer function.

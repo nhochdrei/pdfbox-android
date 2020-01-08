@@ -16,7 +16,6 @@
  */
 package com.tom_roush.pdfbox.pdmodel.graphics.shading;
 
-import java.awt.Paint;
 
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
@@ -64,9 +63,9 @@ public class PDShadingType4 extends PDTriangleBasedShadingType
         getCOSObject().setInt(COSName.BITS_PER_FLAG, bitsPerFlag);
     }
 
-    @Override
-    public Paint toPaint(Matrix matrix)
-    {
-        return new Type4ShadingPaint(this, matrix);
-    }
+//    @Override
+//    public Paint toPaint(Matrix matrix)
+//    {
+//        return new Type4ShadingPaint(this, matrix);
+//    }
 }

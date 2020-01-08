@@ -16,14 +16,13 @@
  */
 package com.tom_roush.pdfbox.pdmodel.graphics.image;
 
-import java.awt.Graphics2D;
-import java.awt.Paint;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.image.BufferedImage;
-import java.awt.image.WritableRaster;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.util.Log;
+
 import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -31,17 +30,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ref.SoftReference;
 import java.util.List;
-import javax.imageio.ImageIO;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSInputStream;
 import com.tom_roush.pdfbox.cos.COSName;
-import com.tom_roush.pdfbox.cos.COSObject;
 import com.tom_roush.pdfbox.cos.COSStream;
-import com.tom_roush.pdfbox.filter.DecodeOptions;
-import com.tom_roush.pdfbox.filter.DecodeResult;
 import com.tom_roush.pdfbox.io.IOUtils;
 import com.tom_roush.pdfbox.pdmodel.PDDocument;
 import com.tom_roush.pdfbox.pdmodel.PDResources;
@@ -61,93 +55,9 @@ import com.tom_roush.pdfbox.util.filetypedetector.FileTypeDetector;
  */
 public final class PDImageXObject extends PDXObject implements PDImage
 {
-    /**
-     * Log instance.
-     */
-    private static final Log LOG = LogFactory.getLog(PDImageXObject.class);
-
-    private SoftReference<BufferedImage> cachedImage;
+    private SoftReference<Bitmap> cachedImage;
     private PDColorSpace colorSpace;
-
-    // initialize to MAX_VALUE as we prefer lower subsampling when keeping/replacing cache.
-    private int cachedImageSubsampling = Integer.MAX_VALUE;
-
-    /**
-     * current resource dictionary (has color spaces)
-     */
-    private final PDResources resources;
-
-    /**
-     * Creates an Image XObject in the given document. This constructor is for internal PDFBox use
-     * and is not for PDF generation. Users who want to create images should look at {@link #createFromFileByExtension(File, PDDocument)
-     * }.
-     *
-     * @param document the current document
-     * @throws java.io.IOException if there is an error creating the XObject.
-     */
-    public PDImageXObject(PDDocument document) throws IOException
-    {
-        this(new PDStream(document), null);
-    }
-
-    /**
-     * Creates an Image XObject in the given document using the given filtered stream. This
-     * constructor is for internal PDFBox use and is not for PDF generation. Users who want to
-     * create images should look at {@link #createFromFileByExtension(File, PDDocument) }.
-     *
-     * @param document the current document
-     * @param encodedStream an encoded stream of image data
-     * @param cosFilter the filter or a COSArray of filters
-     * @param width the image width
-     * @param height the image height
-     * @param bitsPerComponent the bits per component
-     * @param initColorSpace the color space
-     * @throws IOException if there is an error creating the XObject.
-     */
-    public PDImageXObject(PDDocument document, InputStream encodedStream, 
-            COSBase cosFilter, int width, int height, int bitsPerComponent, 
-            PDColorSpace initColorSpace) throws IOException
-    {
-        super(createRawStream(document, encodedStream), COSName.IMAGE);
-        getCOSObject().setItem(COSName.FILTER, cosFilter);
-        resources = null;
-        colorSpace = null;
-        setBitsPerComponent(bitsPerComponent);
-        setWidth(width);
-        setHeight(height);
-        setColorSpace(initColorSpace);
-    }
-
-    /**
-     * Creates an Image XObject with the given stream as its contents and current color spaces. This
-     * constructor is for internal PDFBox use and is not for PDF generation. Users who want to
-     * create images should look at {@link #createFromFileByExtension(File, PDDocument) }.
-     *
-     * @param stream the XObject stream to read
-     * @param resources the current resources
-     * @throws java.io.IOException if there is an error creating the XObject.
-     */
-    public PDImageXObject(PDStream stream, PDResources resources) throws IOException
-    {
-        super(stream, COSName.IMAGE);
-        this.resources = resources;
-        List<COSName> filters = stream.getFilters();
-        if (filters != null && !filters.isEmpty() && COSName.JPX_DECODE.equals(filters.get(filters.size()-1)))
-        {
-            COSInputStream is = null;
-            try
-            {
-                is = stream.createInputStream();
-                DecodeResult decodeResult = is.getDecodeResult();
-                stream.getCOSObject().addAll(decodeResult.getParameters());
-                this.colorSpace = decodeResult.getJPXColorSpace();
-            }
-            finally
-            {
-                IOUtils.closeQuietly(is);
-            }
-        }
-    }
+    private final PDResources resources; // current resource dictionary (has color spaces)
 
     /**
      * Creates a thumbnail Image XObject from the given COSBase and name.
@@ -163,10 +73,44 @@ public final class PDImageXObject extends PDXObject implements PDImage
     }
 
     /**
+     * Creates an Image XObject in the given document.
+     * @param document the current document
+     * @throws java.io.IOException if there is an error creating the XObject.
+     */
+    public PDImageXObject(PDDocument document) throws IOException
+    {
+        this(new PDStream(document), null);
+    }
+
+    /**
+     * Creates an Image XObject in the given document using the given filtered stream.
+     * @param document the current document
+     * @param encodedStream an encoded stream of image data
+     * @param cosFilter the filter or a COSArray of filters
+     * @param width the image width
+     * @param height the image height
+     * @param bitsPerComponent the bits per component
+     * @param initColorSpace the color space
+     * @throws IOException if there is an error creating the XObject.
+     */
+    public PDImageXObject(PDDocument document, InputStream encodedStream, COSBase cosFilter,
+                          int width, int height, int bitsPerComponent, PDColorSpace initColorSpace) throws IOException
+    {
+        super(createRawStream(document, encodedStream), COSName.IMAGE);
+        getCOSObject().setItem(COSName.FILTER, cosFilter);
+        resources = null;
+        colorSpace = null;
+        setBitsPerComponent(bitsPerComponent);
+        setWidth(width);
+        setHeight(height);
+        setColorSpace(initColorSpace);
+    }
+
+    /**
      * Creates a COS stream from raw (encoded) data.
      */
     private static COSStream createRawStream(PDDocument document, InputStream rawInput)
-            throws IOException
+        throws IOException
     {
         COSStream stream = document.getDocument().createCOSStream();
         OutputStream output = null;
@@ -186,6 +130,17 @@ public final class PDImageXObject extends PDXObject implements PDImage
     }
 
     /**
+     * Creates an Image XObject with the given stream as its contents and current color spaces.
+     * @param stream the XObject stream to read
+     * @param resources the current resources
+     * @throws java.io.IOException if there is an error creating the XObject.
+     */
+    public PDImageXObject(PDStream stream, PDResources resources) throws IOException
+    {
+        this(stream, resources, stream.createInputStream());
+    }
+
+    /**
      * Create a PDImageXObject from an image file, see {@link #createFromFileByExtension(File, PDDocument)} for
      * more details.
      *
@@ -202,17 +157,11 @@ public final class PDImageXObject extends PDXObject implements PDImage
 
     /**
      * Create a PDImageXObject from an image file. The file format is determined by the file name
-     * suffix. The following suffixes are supported: JPG, JPEG, TIF, TIFF, GIF, BMP and PNG. This is
+     * suffix. The following suffixes are supported: jpg, jpeg, tif, tiff, gif, bmp and png. This is
      * a convenience method that calls {@link JPEGFactory#createFromStream},
      * {@link CCITTFactory#createFromFile} or {@link ImageIO#read} combined with
      * {@link LosslessFactory#createFromImage}. (The later can also be used to create a
-     * PDImageXObject from a BufferedImage). Starting with 2.0.18, this call will create an image
-     * directly from a PNG file without decoding it (when possible), which is faster. However the
-     * result size depends on the compression skill of the software that created the PNG file. If
-     * file size or bandwidth are important to you or to your clients, then create your PNG files
-     * with a tool that has implemented the
-     * <a href="https://blog.codinghorror.com/zopfli-optimization-literally-free-bandwidth/">Zopfli
-     * algorithm</a>, or use the two-step process mentioned above.
+     * PDImageXObject from a BufferedImage).
      *
      * @param file the image file.
      * @param doc the document that shall use this PDImageXObject.
@@ -232,16 +181,10 @@ public final class PDImageXObject extends PDXObject implements PDImage
         String ext = name.substring(dot + 1).toLowerCase();
         if ("jpg".equals(ext) || "jpeg".equals(ext))
         {
-            FileInputStream fis = null;
-            try
-            {
-                fis = new FileInputStream(file);
-                return JPEGFactory.createFromStream(doc, fis);
-            }
-            finally
-            {
-                IOUtils.closeQuietly(fis);
-            }
+            FileInputStream fis = new FileInputStream(file);
+            PDImageXObject imageXObject = JPEGFactory.createFromStream(doc, fis);
+            fis.close();
+            return imageXObject;
         }
         if ("tif".equals(ext) || "tiff".equals(ext))
         {
@@ -249,25 +192,19 @@ public final class PDImageXObject extends PDXObject implements PDImage
         }
         if ("gif".equals(ext) || "bmp".equals(ext) || "png".equals(ext))
         {
-            BufferedImage bim = ImageIO.read(file);
+            Bitmap bim = BitmapFactory.decodeFile(file.getPath());
             return LosslessFactory.createFromImage(doc, bim);
         }
-        throw new IllegalArgumentException("Image type not supported: " + name);
+        throw new IOException("Image type not supported: " + name);
     }
 
     /**
      * Create a PDImageXObject from an image file. The file format is determined by the file
-     * content. The following file types are supported: JPG, JPEG, TIF, TIFF, GIF, BMP and PNG. This
+     * content. The following file types are supported: jpg, jpeg, tif, tiff, gif, bmp and png. This
      * is a convenience method that calls {@link JPEGFactory#createFromStream},
      * {@link CCITTFactory#createFromFile} or {@link ImageIO#read} combined with
      * {@link LosslessFactory#createFromImage}. (The later can also be used to create a
-     * PDImageXObject from a BufferedImage). Starting with 2.0.18, this call will create an image
-     * directly from a png file without decoding it (when possible), which is faster. However the
-     * result size depends on the compression skill of the software that created the PNG file. If
-     * file size or bandwidth are important to you or to your clients, then create your PNG files
-     * with a tool that has implemented the
-     * <a href="https://blog.codinghorror.com/zopfli-optimization-literally-free-bandwidth/">Zopfli
-     * algorithm</a>, or use the two-step process mentioned above.
+     * PDImageXObject from a BufferedImage).
      *
      * @param file the image file.
      * @param doc the document that shall use this PDImageXObject.
@@ -310,100 +247,29 @@ public final class PDImageXObject extends PDXObject implements PDImage
         }
         if (fileType.equals(FileType.TIFF))
         {
-            try
-            {
-                return CCITTFactory.createFromFile(doc, file);
-            }
-            catch (IOException ex)
-            {
-                LOG.debug("Reading as TIFF failed, setting fileType to PNG", ex);
-                // Plan B: try reading with ImageIO
-                // common exception:
-                // First image in tiff is not CCITT T4 or T6 compressed
-                fileType = FileType.PNG;
-            }
+            return CCITTFactory.createFromFile(doc, file);
         }
         if (fileType.equals(FileType.BMP) || fileType.equals(FileType.GIF) || fileType.equals(FileType.PNG))
         {
-            BufferedImage bim = ImageIO.read(file);
+            Bitmap bim = BitmapFactory.decodeFile(file.getPath());
             return LosslessFactory.createFromImage(doc, bim);
         }
-        throw new IllegalArgumentException("Image type " + fileType + " not supported: " + file.getName());
+        throw new IllegalArgumentException("Image type not supported: " + file.getName());
     }
 
-    /**
-     * Create a PDImageXObject from bytes of an image file. The file format is determined by the
-     * file content. The following file types are supported: JPG, JPEG, TIF, TIFF, GIF, BMP and PNG.
-     * This is a convenience method that calls {@link JPEGFactory#createFromByteArray},
-     * {@link CCITTFactory#createFromFile} or {@link ImageIO#read} combined with
-     * {@link LosslessFactory#createFromImage}. (The later can also be used to create a
-     * PDImageXObject from a BufferedImage). Starting with 2.0.18, this call will create an image
-     * directly from a PNG file without decoding it (when possible), which is faster. However the
-     * result size depends on the compression skill of the software that created the PNG file. If
-     * file size or bandwidth are important to you or to your clients, then create your PNG files
-     * with a tool that has implemented the
-     * <a href="https://blog.codinghorror.com/zopfli-optimization-literally-free-bandwidth/">Zopfli
-     * algorithm</a>, or use the two-step process mentioned above.
-     *
-     * @param byteArray bytes from an image file.
-     * @param document the document that shall use this PDImageXObject.
-     * @param name name of image file for exception messages, can be null.
-     * @return a PDImageXObject.
-     * @throws IOException if there is an error when reading the file or creating the
-     * PDImageXObject.
-     * @throws IllegalArgumentException if the image type is not supported.
-     */
-    public static PDImageXObject createFromByteArray(PDDocument document, byte[] byteArray, String name) throws IOException
+    // repairs parameters using decode result
+    private PDImageXObject(PDStream stream, PDResources resources, COSInputStream input)
     {
-        FileType fileType;
-        try
-        {
-            fileType = FileTypeDetector.detectFileType(byteArray);
-        }
-        catch (IOException e)
-        {
-            throw new IOException("Could not determine file type: " + name, e);
-        }
-        if (fileType == null)
-        {
-            throw new IllegalArgumentException("Image type not supported: " + name);
-        }
+        super(repair(stream, input), COSName.IMAGE);
+        this.resources = resources;
+//        this.colorSpace = input.getDecodeResult().getJPXColorSpace();TODO: PdfBox-Android
+    }
 
-        if (fileType.equals(FileType.JPEG))
-        {
-            return JPEGFactory.createFromByteArray(document, byteArray);
-        }
-        if (fileType.equals(FileType.PNG))
-        {
-            // Try to directly convert the image without recoding it.
-            PDImageXObject image = PNGConverter.convertPNGImage(document, byteArray);
-            if (image != null)
-            {
-                return image;
-            }
-        }
-        if (fileType.equals(FileType.TIFF))
-        {
-            try
-            {
-                return CCITTFactory.createFromByteArray(document, byteArray);
-            }
-            catch (IOException ex)
-            {
-                LOG.debug("Reading as TIFF failed, setting fileType to PNG", ex);
-                // Plan B: try reading with ImageIO
-                // common exception:
-                // First image in tiff is not CCITT T4 or T6 compressed
-                fileType = FileType.PNG;
-            }
-        }
-        if (fileType.equals(FileType.BMP) || fileType.equals(FileType.GIF) || fileType.equals(FileType.PNG))
-        {
-            ByteArrayInputStream bais = new ByteArrayInputStream(byteArray);
-            BufferedImage bim = ImageIO.read(bais);
-            return LosslessFactory.createFromImage(document, bim);
-        }
-        throw new IllegalArgumentException("Image type " + fileType + " not supported: " + name);
+    // repairs parameters using decode result
+    private static PDStream repair(PDStream stream, COSInputStream input)
+    {
+        stream.getCOSObject().addAll(input.getDecodeResult().getParameters());
+        return stream;
     }
 
     /**
@@ -412,7 +278,7 @@ public final class PDImageXObject extends PDXObject implements PDImage
      */
     public PDMetadata getMetadata()
     {
-        COSStream cosStream = getCOSObject().getCOSStream(COSName.METADATA);
+        COSStream cosStream = (COSStream) getCOSObject().getDictionaryObject(COSName.METADATA);
         if (cosStream != null)
         {
             return new PDMetadata(cosStream);
@@ -431,12 +297,11 @@ public final class PDImageXObject extends PDXObject implements PDImage
 
     /**
      * Returns the key of this XObject in the structural parent tree.
-     *
-     * @return this object's key the structural parent tree or -1 if there isn't any.
+     * @return this object's key the structural parent tree
      */
     public int getStructParent()
     {
-        return getCOSObject().getInt(COSName.STRUCT_PARENT);
+        return getCOSObject().getInt(COSName.STRUCT_PARENT, 0);
     }
 
     /**
@@ -453,20 +318,11 @@ public final class PDImageXObject extends PDXObject implements PDImage
      * The returned images are cached via a SoftReference.
      */
     @Override
-    public BufferedImage getImage() throws IOException
+    public Bitmap getImage() throws IOException
     {
-        return getImage(null, 1);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public BufferedImage getImage(Rectangle region, int subsampling) throws IOException
-    {
-        if (region == null && subsampling == cachedImageSubsampling && cachedImage != null)
+        if (cachedImage != null)
         {
-            BufferedImage cached = cachedImage.get();
+            Bitmap cached = cachedImage.get();
             if (cached != null)
             {
                 return cached;
@@ -474,14 +330,13 @@ public final class PDImageXObject extends PDXObject implements PDImage
         }
 
         // get image as RGB
-        BufferedImage image = SampledImageReader.getRGBImage(this, region, subsampling, getColorKeyMask());
+        Bitmap image = SampledImageReader.getRGBImage(this, getColorKeyMask());
 
         // soft mask (overrides explicit mask)
         PDImageXObject softMask = getSoftMask();
         if (softMask != null)
         {
-            float[] matte = extractMatte(softMask);
-            image = applyMask(image, softMask.getOpaqueImage(), true, matte);
+            image = applyMask(image, softMask.getOpaqueImage(), true);
         }
         else
         {
@@ -489,41 +344,12 @@ public final class PDImageXObject extends PDXObject implements PDImage
             PDImageXObject mask = getMask();
             if (mask != null && mask.isStencil())
             {
-                image = applyMask(image, mask.getOpaqueImage(), false, null);
+                image = applyMask(image, mask.getOpaqueImage(), false);
             }
         }
 
-        if (region == null && subsampling <= cachedImageSubsampling)
-        {
-            // only cache full-image renders, and prefer lower subsampling frequency, as lower
-            // subsampling means higher quality and longer render times.
-            cachedImageSubsampling = subsampling;
-            cachedImage = new SoftReference<BufferedImage>(image);
-        }
-
+        cachedImage = new SoftReference<Bitmap>(image);
         return image;
-    }
-
-    /**
-     * Extract the matte color from a softmask.
-     * 
-     * @param softMask
-     * @return the matte color.
-     * @throws IOException if the color conversion fails.
-     */
-    private float[] extractMatte(PDImageXObject softMask) throws IOException
-    {
-        COSBase base = softMask.getCOSObject().getItem(COSName.MATTE);
-        float[] matte = null;
-        if (base instanceof COSArray)
-        {
-            // PDFBOX-4267: process /Matte
-            // see PDF specification 1.7, 11.6.5.3 Soft-Mask Images
-            matte = ((COSArray) base).toFloatArray();
-            // convert to RGB
-            matte = getColorSpace().toRGB(matte);
-        }
-        return matte;
     }
 
     /**
@@ -531,7 +357,7 @@ public final class PDImageXObject extends PDXObject implements PDImage
      * The returned images are not cached.
      */
     @Override
-    public BufferedImage getStencilImage(Paint paint) throws IOException
+    public Bitmap getStencilImage(Paint paint) throws IOException
     {
         if (!isStencil())
         {
@@ -546,15 +372,15 @@ public final class PDImageXObject extends PDXObject implements PDImage
      * @return the image without any masks applied
      * @throws IOException if the image cannot be read
      */
-    public BufferedImage getOpaqueImage() throws IOException
+    public Bitmap getOpaqueImage() throws IOException
     {
         return SampledImageReader.getRGBImage(this, null);
     }
 
     // explicit mask: RGB + Binary -> ARGB
     // soft mask: RGB + Gray -> ARGB
-    private BufferedImage applyMask(BufferedImage image, BufferedImage mask,
-                                    boolean isSoft, float[] matte)
+    private Bitmap applyMask(Bitmap image, Bitmap mask, boolean isSoft)
+        throws IOException
     {
         if (mask == null)
         {
@@ -575,82 +401,51 @@ public final class PDImageXObject extends PDXObject implements PDImage
             height = mask.getHeight();
             image = scaleImage(image, width, height);
         }
-        else if (image.getRaster().getPixel(0, 0, (int[]) null).length < 3)
-        {
-            // PDFBOX-4470 bitonal image has only one element => copy into RGB
-            image = scaleImage(image, width, height);
-        }
 
         // compose to ARGB
-        BufferedImage masked = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-        WritableRaster src = image.getRaster();
-        WritableRaster dest = masked.getRaster();
-        WritableRaster alpha = mask.getRaster();
+        Bitmap masked = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 
-        float[] rgb = new float[4];
-        float[] rgba = new float[4];
-        float[] alphaPixel = null;
-        for (int y = 0; y < height; y++)
+        int[] src = new int[width * height];
+        image.getPixels(src, 0, width, 0, 0, width, height);
+
+        int[] dest = new int[width * height];
+        mask.getPixels(dest, 0, width, 0, 0, width, height);
+
+        int alphaPixel;
+        for (int pixelIdx = 0; pixelIdx < width * height; pixelIdx++)
         {
-            for (int x = 0; x < width; x++)
+            int rgb = src[pixelIdx];
+
+            // Greyscale, any rgb component should do
+            if (isSoft)
             {
-                src.getPixel(x, y, rgb);
-
-                rgba[0] = rgb[0];
-                rgba[1] = rgb[1];
-                rgba[2] = rgb[2];
-
-                alphaPixel = alpha.getPixel(x, y, alphaPixel);
-                if (isSoft)
-                {
-                    rgba[3] = alphaPixel[0];
-                    if (matte != null && Float.compare(alphaPixel[0], 0) != 0)
-                    {
-                        rgba[0] = clampColor(((rgba[0] / 255 - matte[0]) / (alphaPixel[0] / 255) + matte[0]) * 255);
-                        rgba[1] = clampColor(((rgba[1] / 255 - matte[1]) / (alphaPixel[0] / 255) + matte[1]) * 255);
-                        rgba[2] = clampColor(((rgba[2] / 255 - matte[2]) / (alphaPixel[0] / 255) + matte[2]) * 255);
-                    }
-                }
-                else
-                {
-                    rgba[3] = 255 - alphaPixel[0];
-                }
-
-                dest.setPixel(x, y, rgba);
+                alphaPixel = Color.red(dest[pixelIdx]);
             }
+            else
+            {
+                alphaPixel = 255 - Color.red(dest[pixelIdx]);
+            }
+
+            dest[pixelIdx] = Color.argb(alphaPixel, Color.red(rgb), Color.green(rgb),
+                Color.blue(rgb));
         }
+        masked.setPixels(dest, 0, width, 0, 0, width, height);
 
         return masked;
-    }
-
-    private float clampColor(float color)
-    {
-        return color < 0 ? 0 : (color > 255 ? 255 : color);        
     }
 
     /**
      * High-quality image scaling.
      */
-    private BufferedImage scaleImage(BufferedImage image, int width, int height)
+    private Bitmap scaleImage(Bitmap image, int width, int height)
     {
-        BufferedImage image2 = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        Graphics2D g = image2.createGraphics();
-        if (getInterpolate())
-        {
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                    RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-            g.setRenderingHint(RenderingHints.KEY_RENDERING,
-                    RenderingHints.VALUE_RENDER_QUALITY);
-        }
-        g.drawImage(image, 0, 0, width, height, 0, 0, image.getWidth(), image.getHeight(), null);
-        g.dispose();
-        return image2;
+        return Bitmap.createScaledBitmap(image, width, height, true);
     }
 
     /**
      * Returns the Mask Image XObject associated with this image, or null if there is none.
      * @return Mask Image XObject
-     * @throws java.io.IOException
+     * @#throws java.io.IOException
      */
     public PDImageXObject getMask() throws IOException
     {
@@ -662,7 +457,7 @@ public final class PDImageXObject extends PDXObject implements PDImage
         }
         else
         {
-            COSStream cosStream = getCOSObject().getCOSStream(COSName.MASK);
+            COSStream cosStream = (COSStream)getCOSObject().getDictionaryObject(COSName.MASK);
             if (cosStream != null)
             {
                 // always DeviceGray
@@ -693,7 +488,7 @@ public final class PDImageXObject extends PDXObject implements PDImage
      */
     public PDImageXObject getSoftMask() throws IOException
     {
-        COSStream cosStream = getCOSObject().getCOSStream(COSName.SMASK);
+        COSStream cosStream = (COSStream)getCOSObject().getDictionaryObject(COSName.SMASK);
         if (cosStream != null)
         {
             // always DeviceGray
@@ -726,27 +521,10 @@ public final class PDImageXObject extends PDXObject implements PDImage
     {
         if (colorSpace == null)
         {
-            COSBase cosBase = getCOSObject().getItem(COSName.COLORSPACE, COSName.CS);
+            COSBase cosBase = getCOSObject().getDictionaryObject(COSName.COLORSPACE, COSName.CS);
             if (cosBase != null)
             {
-                COSObject indirect = null;
-                if (cosBase instanceof COSObject &&
-                        resources != null && resources.getResourceCache() != null)
-                {
-                    // PDFBOX-4022: use the resource cache because several images
-                    // might have the same colorspace indirect object.
-                    indirect = (COSObject) cosBase;
-                    colorSpace = resources.getResourceCache().getColorSpace(indirect);
-                    if (colorSpace != null)
-                    {
-                        return colorSpace;
-                    }
-                }
                 colorSpace = PDColorSpace.create(cosBase, resources);
-                if (indirect != null)
-                {
-                    resources.getResourceCache().put(indirect, colorSpace);
-                }
             }
             else if (isStencil())
             {
@@ -767,12 +545,6 @@ public final class PDImageXObject extends PDXObject implements PDImage
     {
         return getStream().createInputStream();
     }
-    
-    @Override
-    public InputStream createInputStream(DecodeOptions options) throws IOException
-    {
-        return getStream().createInputStream(options);
-    }
 
     @Override
     public InputStream createInputStream(List<String> stopFilters) throws IOException
@@ -790,8 +562,6 @@ public final class PDImageXObject extends PDXObject implements PDImage
     public void setColorSpace(PDColorSpace cs)
     {
         getCOSObject().setItem(COSName.COLORSPACE, cs != null ? cs.getCOSObject() : null);
-        colorSpace = null;
-        cachedImage = null;
     }
 
     @Override
@@ -885,18 +655,15 @@ public final class PDImageXObject extends PDXObject implements PDImage
             return "tiff";
         }
         else if (filters.contains(COSName.FLATE_DECODE)
-                || filters.contains(COSName.LZW_DECODE)
-                || filters.contains(COSName.RUN_LENGTH_DECODE))
+            || filters.contains(COSName.LZW_DECODE)
+            || filters.contains(COSName.RUN_LENGTH_DECODE))
         {
             return "png";
         }
-        else if (filters.contains(COSName.JBIG2_DECODE))
-        {
-            return "jb2";
-        }
         else
         {
-            LOG.warn("getSuffix() returns null, filters: " + filters);
+            Log.w("PdfBox-Android", "getSuffix() returns null, filters: " + filters);
+            // TODO more...
             return null;
         }
     }

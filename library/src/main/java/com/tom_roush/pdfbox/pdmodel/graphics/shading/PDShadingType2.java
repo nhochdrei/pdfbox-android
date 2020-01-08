@@ -16,7 +16,6 @@
  */
 package com.tom_roush.pdfbox.pdmodel.graphics.shading;
 
-import java.awt.Paint;
 
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSDictionary;
@@ -123,9 +122,9 @@ public class PDShadingType2 extends PDShading
         getCOSObject().setItem(COSName.COORDS, newCoords);
     }
 
-    @Override
-    public Paint toPaint(Matrix matrix)
-    {
-        return new AxialShadingPaint(this, matrix);
-    }
+//    @Override
+//    public Paint toPaint(Matrix matrix)
+//    {
+//        return new AxialShadingPaint(this, matrix);
+//    }
 }
