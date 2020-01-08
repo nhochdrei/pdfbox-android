@@ -17,7 +17,8 @@
 
 package com.tom_roush.fontbox.ttf;
 
-import java.awt.geom.GeneralPath;
+import android.graphics.Path;
+
 import java.io.IOException;
 
 /**
@@ -69,7 +70,7 @@ public class OpenTypeFont extends TrueTypeFont
     }
 
     @Override
-    public GeneralPath getPath(String name) throws IOException
+    public Path getPath(String name) throws IOException
     {
         int gid = nameToGID(name);
         return getCFF().getFont().getType2CharString(gid).getPath();

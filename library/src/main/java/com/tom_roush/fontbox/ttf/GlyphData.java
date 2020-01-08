@@ -16,7 +16,8 @@
  */
 package com.tom_roush.fontbox.ttf;
 
-import java.awt.geom.GeneralPath;
+import android.graphics.Path;
+
 import java.io.IOException;
 
 import com.tom_roush.fontbox.util.BoundingBox;
@@ -111,7 +112,7 @@ public class GlyphData
      * Returns the path of the glyph.
      * @return the path
      */
-    public GeneralPath getPath()
+    public Path getPath()
     {
         return new GlyphRenderer(glyphDescription).getPath();
     }

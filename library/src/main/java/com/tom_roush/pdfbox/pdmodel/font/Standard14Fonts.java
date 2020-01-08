@@ -14,18 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.tom_roush.pdfbox.pdmodel.font;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
 import com.tom_roush.fontbox.afm.AFMParser;
 import com.tom_roush.fontbox.afm.FontMetrics;
+import com.tom_roush.pdfbox.util.PDFBoxResourceLoader;
 
 /**
  * The "Standard 14" PDF fonts, also known as the "base 14" fonts.
@@ -35,9 +37,14 @@ import com.tom_roush.fontbox.afm.FontMetrics;
  */
 final class Standard14Fonts
 {
+    private Standard14Fonts()
+    {
+    }
+
     private static final Set<String> STANDARD_14_NAMES = new HashSet<String>(34);
     private static final Map<String, String> STANDARD_14_MAPPING = new HashMap<String, String>(34);
-    private static final Map<String, FontMetrics> STANDARD14_AFM_MAP =  new HashMap<String, FontMetrics>(34);
+    private static final Map<String, FontMetrics> STANDARD14_AFM_MAP =
+        new HashMap<String, FontMetrics>(34);
     static
     {
         try
@@ -80,21 +87,11 @@ final class Standard14Fonts
             addAFM("Times,Italic", "Times-Italic");
             addAFM("Times,Bold", "Times-Bold");
             addAFM("Times,BoldItalic", "Times-BoldItalic");
-
-            // PDFBOX-3457: PDF.js file bug864847.pdf
-            addAFM("ArialMT", "Helvetica");
-            addAFM("Arial-ItalicMT", "Helvetica-Oblique");
-            addAFM("Arial-BoldMT", "Helvetica-Bold");
-            addAFM("Arial-BoldItalicMT", "Helvetica-BoldOblique");
         }
         catch (IOException e)
         {
             throw new RuntimeException(e);
         }
-    }
-
-    private Standard14Fonts()
-    {
     }
 
     private static void addAFM(String fontName) throws IOException
@@ -112,16 +109,27 @@ final class Standard14Fonts
             STANDARD14_AFM_MAP.put(fontName, STANDARD14_AFM_MAP.get(afmName));
         }
 
-        String resourceName = "/org/apache/pdfbox/resources/afm/" + afmName + ".afm";
-        InputStream afmStream = PDType1Font.class.getResourceAsStream(resourceName);
-        if (afmStream == null)
-        {
-            throw new IOException(resourceName + " not found");
+        String resourceName = "com/tom_roush/pdfbox/resources/afm/" + afmName + ".afm";
+        InputStream afmStream;
+        if(PDFBoxResourceLoader.isReady()) {
+            afmStream = PDFBoxResourceLoader.getStream(resourceName);
+        } else {
+            // Fallback
+            URL url = PDType1Font.class.getClassLoader().getResource(resourceName);
+            if (url != null)
+            {
+                afmStream = url.openStream();
+            }
+            else
+            {
+                throw new IOException(resourceName + " not found");
+            }
         }
+
         try
         {
             AFMParser parser = new AFMParser(afmStream);
-            FontMetrics metric = parser.parse(true);
+            FontMetrics metric = parser.parse();
             STANDARD14_AFM_MAP.put(fontName, metric);
         }
         finally

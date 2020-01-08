@@ -29,13 +29,13 @@ public final class FontMappers
     private FontMappers()
     {
     }
-    
+
     // lazy thread safe singleton
     private static class DefaultFontMapper
     {
         private static final FontMapper INSTANCE = new FontMapperImpl();
     }
-    
+
     /**
      * Returns the singleton FontMapper instance.
      */
@@ -47,7 +47,7 @@ public final class FontMappers
         }
         return instance;
     }
-    
+
     /**
      * Sets the singleton FontMapper instance.
      */

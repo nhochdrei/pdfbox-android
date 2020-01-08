@@ -17,7 +17,8 @@
 
 package com.tom_roush.fontbox.type1;
 
-import java.awt.geom.GeneralPath;
+import android.graphics.Path;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -168,7 +169,7 @@ public final class Type1Font implements Type1CharStringReader, EncodedFont, Font
     }
 
     @Override
-    public GeneralPath getPath(String name) throws IOException
+    public Path getPath(String name) throws IOException
     {
         return getType1CharString(name).getPath();
     }

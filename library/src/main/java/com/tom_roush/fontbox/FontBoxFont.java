@@ -17,7 +17,8 @@
 
 package com.tom_roush.fontbox;
 
-import java.awt.geom.GeneralPath;
+import android.graphics.Path;
+
 import java.io.IOException;
 import java.util.List;
 import com.tom_roush.fontbox.util.BoundingBox;
@@ -50,7 +51,7 @@ public interface FontBoxFont
      * @return glyph path
      * @throws IOException if the path could not be read
      */
-    GeneralPath getPath(String name) throws IOException;
+    Path getPath(String name) throws IOException;
 
     /**
      * Returns the advance width for the character with the given name.

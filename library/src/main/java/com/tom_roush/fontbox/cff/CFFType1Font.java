@@ -16,12 +16,14 @@
  */
 package com.tom_roush.fontbox.cff;
 
-import java.awt.geom.GeneralPath;
+import android.graphics.Path;
+
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
 import com.tom_roush.fontbox.EncodedFont;
 import com.tom_roush.fontbox.type1.Type1CharStringReader;
 
@@ -37,7 +39,7 @@ public class CFFType1Font extends CFFFont implements EncodedFont
     private CFFEncoding encoding;
 
     private final Map<Integer, Type2CharString> charStringCache =
-            new ConcurrentHashMap<Integer, Type2CharString>();
+        new ConcurrentHashMap<Integer, Type2CharString>();
 
     private final PrivateType1CharStringReader reader = new PrivateType1CharStringReader();
 
@@ -55,7 +57,7 @@ public class CFFType1Font extends CFFFont implements EncodedFont
     }
 
     @Override
-    public GeneralPath getPath(String name) throws IOException
+    public Path getPath(String name) throws IOException
     {
         return getType1CharString(name).getPath();
     }
@@ -97,7 +99,7 @@ public class CFFType1Font extends CFFFont implements EncodedFont
 
     /**
      * Returns the GID for the given PostScript glyph name.
-     * 
+     *
      * @param name a PostScript glyph name.
      * @return GID
      */
@@ -140,7 +142,7 @@ public class CFFType1Font extends CFFFont implements EncodedFont
             Type2CharStringParser parser = new Type2CharStringParser(fontName, name);
             List<Object> type2seq = parser.parse(bytes, globalSubrIndex, getLocalSubrIndex());
             type2 = new Type2CharString(reader, fontName, name, gid, type2seq, getDefaultWidthX(),
-                    getNominalWidthX());
+                getNominalWidthX());
             charStringCache.put(gid, type2);
         }
         return type2;

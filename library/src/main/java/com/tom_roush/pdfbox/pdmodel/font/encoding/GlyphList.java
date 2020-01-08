@@ -16,16 +16,16 @@
  */
 package com.tom_roush.pdfbox.pdmodel.font.encoding;
 
+import android.util.Log;
+
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+
+import com.tom_roush.pdfbox.util.PDFBoxResourceLoader;
 
 /**
  * PostScript glyph list, maps glyph names to sequences of Unicode characters.
@@ -33,23 +33,31 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class GlyphList
 {
-    private static final Log LOG = LogFactory.getLog(GlyphList.class);
-
     // Adobe Glyph List (AGL)
     private static final GlyphList DEFAULT = load("glyphlist.txt", 4281);
-    
+
     // Zapf Dingbats has its own glyph list
-    private static final GlyphList ZAPF_DINGBATS = load("zapfdingbats.txt",201);
-    
+    private static final GlyphList ZAPF_DINGBATS = load("zapfdingbats.txt", 201);
+
     /**
      * Loads a glyph list from disk.
      */
     private static GlyphList load(String filename, int numberOfEntries)
     {
-        String path = "/org/apache/pdfbox/resources/glyphlist/";
         try
         {
-            return new GlyphList(GlyphList.class.getResourceAsStream(path + filename), numberOfEntries);
+            String path = "com/tom_roush/pdfbox/resources/glyphlist/";
+            if (PDFBoxResourceLoader.isReady())
+            {
+                return new GlyphList(PDFBoxResourceLoader.getStream(path + filename),
+                    numberOfEntries);
+            }
+            else
+            {
+                // Fallback
+                ClassLoader loader = GlyphList.class.getClassLoader();
+                return new GlyphList(loader.getResourceAsStream(path + filename), numberOfEntries);
+            }
         }
         catch (IOException e)
         {
@@ -66,15 +74,15 @@ public final class GlyphList
             if (location != null)
             {
                 throw new UnsupportedOperationException("glyphlist_ext is no longer supported, "
-                        + "use GlyphList.DEFAULT.addGlyphs(Properties) instead");
+                    + "use GlyphList.DEFAULT.addGlyphs(Properties) instead");
             }
         }
-        catch (SecurityException e)  // can occur on System.getProperty
+        catch (SecurityException e) // can occur on System.getProperty
         {
             // PDFBOX-1946 ignore and continue
         }
     }
-    
+
     /**
      * Returns the Adobe Glyph List (AGL).
      */
@@ -94,15 +102,15 @@ public final class GlyphList
     // read-only mappings, never modified outside GlyphList's constructor
     private final Map<String, String> nameToUnicode;
     private final Map<String, String> unicodeToName;
-    
+
     // additional read/write cache for uniXXXX names
-    private final Map<String, String> uniNameToUnicodeCache = new ConcurrentHashMap<String, String>();
+    private final Map<String, String> uniNameToUnicodeCache = new HashMap<String, String>();
 
     /**
      * Creates a new GlyphList from a glyph list file.
      *
-     * @param numberOfEntries number of expected values used to preallocate the correct amount of memory
      * @param input glyph list in Adobe format
+     * @param numberOfEntries number of expected values used to preallocate the correct amount of memory
      * @throws IOException if the glyph list could not be read
      */
     public GlyphList(InputStream input, int numberOfEntries) throws IOException
@@ -147,8 +155,8 @@ public final class GlyphList
 
                     if (nameToUnicode.containsKey(name))
                     {
-                        LOG.warn("duplicate value for " + name + " -> " + parts[1] + " " +
-                                 nameToUnicode.get(name));
+                        Log.w("PdfBox-Android", "duplicate value for " + name + " -> " + parts[1] + " " +
+                            nameToUnicode.get(name));
                     }
 
                     int[] codePoints = new int[unicodeList.length];
@@ -163,15 +171,7 @@ public final class GlyphList
                     nameToUnicode.put(name, string);
 
                     // reverse mapping
-                    // PDFBOX-3884: take the various standard encodings as canonical, 
-                    // e.g. tilde over ilde
-                    final boolean forceOverride =
-                          WinAnsiEncoding.INSTANCE.contains(name) ||
-                          MacRomanEncoding.INSTANCE.contains(name) || 
-                          MacExpertEncoding.INSTANCE.contains(name) ||
-                          SymbolEncoding.INSTANCE.contains(name) ||
-                          ZapfDingbatsEncoding.INSTANCE.contains(name);
-                    if (!unicodeToName.containsKey(string) || forceOverride)
+                    if (!unicodeToName.containsKey(string))
                     {
                         unicodeToName.put(string, name);
                     }
@@ -234,7 +234,7 @@ public final class GlyphList
         {
             return unicode;
         }
-        
+
         // separate read/write cache for thread safety
         unicode = uniNameToUnicodeCache.get(name);
         if (unicode == null)
@@ -256,7 +256,7 @@ public final class GlyphList
                         int codePoint = Integer.parseInt(name.substring(chPos, chPos + 4), 16);
                         if (codePoint > 0xD7FF && codePoint < 0xE000)
                         {
-                            LOG.warn("Unicode character name with disallowed code area: " + name);
+                            Log.w("PdfBox-Android", "Unicode character name with disallowed code area: " + name);
                         }
                         else
                         {
@@ -267,7 +267,7 @@ public final class GlyphList
                 }
                 catch (NumberFormatException nfe)
                 {
-                    LOG.warn("Not a number in Unicode character name: " + name);
+                    Log.w("PdfBox-Android", "Not a number in Unicode character name: " + name);
                 }
             }
             else if (name.startsWith("u") && name.length() == 5)
@@ -278,7 +278,7 @@ public final class GlyphList
                     int codePoint = Integer.parseInt(name.substring(1), 16);
                     if (codePoint > 0xD7FF && codePoint < 0xE000)
                     {
-                        LOG.warn("Unicode character name with disallowed code area: " + name);
+                        Log.w("PdfBox-Android", "Unicode character name with disallowed code area: " + name);
                     }
                     else
                     {
@@ -287,14 +287,10 @@ public final class GlyphList
                 }
                 catch (NumberFormatException nfe)
                 {
-                    LOG.warn("Not a number in Unicode character name: " + name);
+                    Log.w("PdfBox-Android", "Not a number in Unicode character name: " + name);
                 }
             }
-            if (unicode != null)
-            {
-                // null value not allowed in ConcurrentHashMap
-                uniNameToUnicodeCache.put(name, unicode);
-            }
+            uniNameToUnicodeCache.put(name, unicode);
         }
         return unicode;
     }

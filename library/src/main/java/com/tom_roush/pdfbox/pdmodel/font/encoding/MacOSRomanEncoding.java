@@ -24,33 +24,32 @@ import com.tom_roush.pdfbox.cos.COSBase;
  */
 public class MacOSRomanEncoding extends MacRomanEncoding
 {
-
     private static final int CHAR_CODE = 0;
     private static final int CHAR_NAME = 1;
-    
+
     /**
      * Table of octal character codes and their corresponding names
      * on top of {@link MacRomanEncoding}.
      */
     private static final Object[][] MAC_OS_ROMAN_ENCODING_TABLE = {
-            {255, "notequal"},
-            {260, "infinity"},
-            {262, "lessequal"},
-            {263, "greaterequal"},
-            {266, "partialdiff"},
-            {267, "summation"},
-            {270, "product"},
-            {271, "pi"},
-            {272, "integral"},
-            {275, "Omega"},
-            {303, "radical"},
-            {305, "approxequal"},
-            {306, "Delta"},
-            {327, "lozenge"},
-            {333, "Euro"},
-            {360, "apple"}    
+        {255, "notequal"},
+        {260, "infinity"},
+        {262, "lessequal"},
+        {263, "greaterequal"},
+        {266, "partialdiff"},
+        {267, "summation"},
+        {270, "product"},
+        {271, "pi"},
+        {272, "integral"},
+        {275, "Omega"},
+        {303, "radical"},
+        {305, "approxequal"},
+        {306, "Delta"},
+        {327, "lozenge"},
+        {333, "Euro"},
+        {360, "apple"}
     };
-    
+
     /**
      * Singleton instance of this class.
      *
@@ -68,12 +67,15 @@ public class MacOSRomanEncoding extends MacRomanEncoding
         // differences and additions to MacRomanEncoding
         for (Object[] encodingEntry : MAC_OS_ROMAN_ENCODING_TABLE)
         {
-            add((Integer) encodingEntry[CHAR_CODE], encodingEntry[CHAR_NAME].toString());
+            add((Integer)encodingEntry[CHAR_CODE], encodingEntry[CHAR_NAME].toString());
         }
-
     }
 
-    @Override
+    /**
+     * Convert this standard java object to a COS object.
+     *
+     * @return The cos object that matches this Java object.
+     */
     public COSBase getCOSObject()
     {
         return null;

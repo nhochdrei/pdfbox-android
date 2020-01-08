@@ -16,7 +16,8 @@
  */
 package com.tom_roush.fontbox.ttf;
 
-import java.awt.geom.GeneralPath;
+import android.graphics.Path;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -660,7 +661,7 @@ public class TrueTypeFont implements FontBoxFont, Closeable
     }
     
     @Override
-    public GeneralPath getPath(String name) throws IOException
+    public Path getPath(String name) throws IOException
     {
         int gid = nameToGID(name);
 
@@ -668,7 +669,7 @@ public class TrueTypeFont implements FontBoxFont, Closeable
         GlyphData glyph = getGlyph().getGlyph(gid);
         if (glyph == null)
         {
-            return new GeneralPath();
+            return new Path();
         }
         else
         {

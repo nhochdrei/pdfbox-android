@@ -16,11 +16,11 @@
  */
 package com.tom_roush.pdfbox.pdmodel.font.encoding;
 
+import java.util.Map;
+
 import com.tom_roush.fontbox.afm.CharMetric;
 import com.tom_roush.fontbox.afm.FontMetrics;
 import com.tom_roush.pdfbox.cos.COSBase;
-
-import java.util.Map;
 
 /**
  * An encoding for a Type 1 font.

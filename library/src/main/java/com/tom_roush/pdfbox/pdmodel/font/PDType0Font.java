@@ -16,14 +16,15 @@
  */
 package com.tom_roush.pdfbox.pdmodel.font;
 
-import java.awt.geom.GeneralPath;
+import android.graphics.Path;
+import android.util.Log;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Set;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
 import com.tom_roush.fontbox.cmap.CMap;
 import com.tom_roush.fontbox.ttf.TTFParser;
 import com.tom_roush.fontbox.ttf.TrueTypeFont;
@@ -43,19 +44,15 @@ import com.tom_roush.pdfbox.util.Vector;
  */
 public class PDType0Font extends PDFont implements PDVectorFont
 {
-    private static final Log LOG = LogFactory.getLog(PDType0Font.class);
-
     private final PDCIDFont descendantFont;
     private CMap cMap, cMapUCS2;
     private boolean isCMapPredefined;
     private boolean isDescendantCJK;
     private PDCIDFontType2Embedder embedder;
-    private final Set<Integer> noUnicode = new HashSet<Integer>(); 
-    private TrueTypeFont ttf;
-    
+    private final Set<Integer> noUnicode = new HashSet<Integer>();
+
     /**
-     * Loads a TTF to be embedded and subset into a document as a Type 0 font. If you are loading a
-     * font for AcroForm, then use the 3-parameter constructor instead.
+     * Loads a TTF to be embedded into a document as a Type 0 font.
      *
      * @param doc The PDF document that will hold the embedded font.
      * @param file A TrueType font.
@@ -64,37 +61,36 @@ public class PDType0Font extends PDFont implements PDVectorFont
      */
     public static PDType0Font load(PDDocument doc, File file) throws IOException
     {
-        return new PDType0Font(doc, new TTFParser().parse(file), true, true, false);
+        return new PDType0Font(doc, new TTFParser().parse(file), true);
     }
 
     /**
-     * Loads a TTF to be embedded and subset into a document as a Type 0 font. If you are loading a
-     * font for AcroForm, then use the 3-parameter constructor instead.
+     * Loads a TTF to be embedded into a document as a Type 0 font.
      *
      * @param doc The PDF document that will hold the embedded font.
-     * @param input An input stream of a TrueType font. It will be closed before returning.
+     * @param input A TrueType font.
+     *
      * @return A Type0 font with a CIDFontType2 descendant.
      * @throws IOException If there is an error reading the font stream.
      */
     public static PDType0Font load(PDDocument doc, InputStream input) throws IOException
     {
-        return new PDType0Font(doc, new TTFParser().parse(input), true, true, false);
+        return new PDType0Font(doc, new TTFParser().parse(input), true);
     }
 
     /**
      * Loads a TTF to be embedded into a document as a Type 0 font.
      *
      * @param doc The PDF document that will hold the embedded font.
-     * @param input An input stream of a TrueType font. It will be closed before returning.
-     * @param embedSubset True if the font will be subset before embedding. Set this to false when
-     * creating a font for AcroForm.
+     * @param input A TrueType font.
+     * @param embedSubset True if the font will be subset before embedding
      * @return A Type0 font with a CIDFontType2 descendant.
      * @throws IOException If there is an error reading the font stream.
      */
     public static PDType0Font load(PDDocument doc, InputStream input, boolean embedSubset)
-            throws IOException
+        throws IOException
     {
-        return new PDType0Font(doc, new TTFParser().parse(input), embedSubset, true, false);
+        return new PDType0Font(doc, new TTFParser().parse(input), embedSubset);
     }
 
     /**
@@ -102,138 +98,49 @@ public class PDType0Font extends PDFont implements PDVectorFont
      *
      * @param doc The PDF document that will hold the embedded font.
      * @param ttf A TrueType font.
-     * @param embedSubset True if the font will be subset before embedding. Set this to false when
-     * creating a font for AcroForm.
+     * @param embedSubset True if the font will be subset before embedding
+     *
      * @return A Type0 font with a CIDFontType2 descendant.
      * @throws IOException If there is an error reading the font stream.
      */
     public static PDType0Font load(PDDocument doc, TrueTypeFont ttf, boolean embedSubset)
-            throws IOException
+        throws IOException
     {
-        return new PDType0Font(doc, ttf, embedSubset, false, false);
+        return new PDType0Font(doc, ttf, embedSubset);
     }
 
-    /**
-     * Loads a TTF to be embedded into a document as a vertical Type 0 font.
-     *
-     * @param doc The PDF document that will hold the embedded font.
-     * @param file A TrueType font.
-     * @return A Type0 font with a CIDFontType2 descendant.
-     * @throws IOException If there is an error reading the font file.
-     */
-    public static PDType0Font loadVertical(PDDocument doc, File file) throws IOException
-    {
-        return new PDType0Font(doc, new TTFParser().parse(file), true, true, true);
-    }
-
-    /**
-     * Loads a TTF to be embedded into a document as a vertical Type 0 font.
-     *
-     * @param doc The PDF document that will hold the embedded font.
-     * @param input A TrueType font.
-     * @return A Type0 font with a CIDFontType2 descendant.
-     * @throws IOException If there is an error reading the font stream.
-     */
-    public static PDType0Font loadVertical(PDDocument doc, InputStream input) throws IOException
-    {
-        return new PDType0Font(doc, new TTFParser().parse(input), true, true, true);
-    }
-
-    /**
-     * Loads a TTF to be embedded into a document as a vertical Type 0 font.
-     *
-     * @param doc The PDF document that will hold the embedded font.
-     * @param input A TrueType font.
-     * @param embedSubset True if the font will be subset before embedding
-     * @return A Type0 font with a CIDFontType2 descendant.
-     * @throws IOException If there is an error reading the font stream.
-     */
-    public static PDType0Font loadVertical(PDDocument doc, InputStream input, boolean embedSubset)
-            throws IOException
-    {
-        return new PDType0Font(doc, new TTFParser().parse(input), embedSubset, true, true);
-    }
-
-    /**
-     * Loads a TTF to be embedded into a document as a vertical Type 0 font.
-     *
-     * @param doc The PDF document that will hold the embedded font.
-     * @param ttf A TrueType font.
-     * @param embedSubset True if the font will be subset before embedding
-     * @return A Type0 font with a CIDFontType2 descendant.
-     * @throws IOException If there is an error reading the font stream.
-     */
-    public static PDType0Font loadVertical(PDDocument doc, TrueTypeFont ttf, boolean embedSubset)
-            throws IOException
-    {
-        return new PDType0Font(doc, ttf, embedSubset, false, true);
-    }
-    
     /**
      * Constructor for reading a Type0 font from a PDF file.
-     * 
+     *
      * @param fontDictionary The font dictionary according to the PDF specification.
      * @throws IOException if the descendant font is missing.
      */
     public PDType0Font(COSDictionary fontDictionary) throws IOException
     {
         super(fontDictionary);
-        COSBase base = dict.getDictionaryObject(COSName.DESCENDANT_FONTS);
-        if (!(base instanceof COSArray))
-        {
-            throw new IOException("Missing descendant font array");
-        }
-        COSArray descendantFonts = (COSArray) base;
-        if (descendantFonts.size() == 0)
-        {
-            throw new IOException("Descendant font array is empty");
-        }
-        COSBase descendantFontDictBase = descendantFonts.getObject(0);
-        if (!(descendantFontDictBase instanceof COSDictionary))
+        COSArray descendantFonts = (COSArray)dict.getDictionaryObject(COSName.DESCENDANT_FONTS);
+        COSDictionary descendantFontDictionary = (COSDictionary) descendantFonts.getObject(0);
+
+        if (descendantFontDictionary == null)
         {
             throw new IOException("Missing descendant font dictionary");
         }
-        descendantFont = PDFontFactory.createDescendantFont((COSDictionary) descendantFontDictBase, this);
+
+        descendantFont = PDFontFactory.createDescendantFont(descendantFontDictionary, this);
         readEncoding();
         fetchCMapUCS2();
     }
 
     /**
-     * Private. Creates a new PDType0Font font for embedding.
-     *
-     * @param document
-     * @param ttf
-     * @param embedSubset
-     * @param closeTTF whether to close the ttf parameter after embedding. Must be true when the ttf
-     * parameter was created in the load() method, false when the ttf parameter was passed to the
-     * load() method.
-     * @param vertical
-     * @throws IOException
+     * Private. Creates a new TrueType font for embedding.
      */
-    private PDType0Font(PDDocument document, TrueTypeFont ttf, boolean embedSubset,
-            boolean closeTTF, boolean vertical) throws IOException
+    private PDType0Font(PDDocument document, TrueTypeFont ttf, boolean embedSubset)
+        throws IOException
     {
-        if (vertical)
-        {
-            ttf.enableVerticalSubstitutions();
-        }
-        embedder = new PDCIDFontType2Embedder(document, dict, ttf, embedSubset, this, vertical);
+        embedder = new PDCIDFontType2Embedder(document, dict, ttf, embedSubset, this);
         descendantFont = embedder.getCIDFont();
         readEncoding();
         fetchCMapUCS2();
-        if (closeTTF)
-        {
-            if (embedSubset)
-            {
-                this.ttf = ttf;
-                document.registerTrueTypeFontForClosing(ttf);
-            }
-            else
-            {
-                // the TTF is fully loaded and it is safe to close the underlying data source
-                ttf.close();
-            }
-        }
     }
 
     @Override
@@ -245,7 +152,7 @@ public class PDType0Font extends PDFont implements PDVectorFont
         }
         embedder.addToSubset(codePoint);
     }
-    
+
     @Override
     public void subset() throws IOException
     {
@@ -254,13 +161,8 @@ public class PDType0Font extends PDFont implements PDVectorFont
             throw new IllegalStateException("This font was created with subsetting disabled");
         }
         embedder.subset();
-        if (ttf != null)
-        {
-            ttf.close();
-            ttf = null;
-        }
     }
-    
+
     @Override
     public boolean willBeSubset()
     {
@@ -296,19 +198,19 @@ public class PDType0Font extends PDFont implements PDVectorFont
             }
             else if (!cMap.hasCIDMappings())
             {
-                LOG.warn("Invalid Encoding CMap in font " + getName());
+                Log.w("PdfBox-Android", "Invalid Encoding CMap in font " + getName());
             }
         }
-        
+
         // check if the descendant font is CJK
         PDCIDSystemInfo ros = descendantFont.getCIDSystemInfo();
         if (ros != null)
         {
-            isDescendantCJK = "Adobe".equals(ros.getRegistry()) &&
-                    ("GB1".equals(ros.getOrdering()) || 
-                     "CNS1".equals(ros.getOrdering()) ||
-                     "Japan1".equals(ros.getOrdering()) ||
-                     "Korea1".equals(ros.getOrdering()));
+            isDescendantCJK = ros.getRegistry().equals("Adobe") &&
+                (ros.getOrdering().equals("GB1") ||
+                    ros.getOrdering().equals("CNS1") ||
+                    ros.getOrdering().equals("Japan1") ||
+                    ros.getOrdering().equals("Korea1"));
         }
     }
 
@@ -335,21 +237,56 @@ public class PDType0Font extends PDFont implements PDVectorFont
             if (isDescendantCJK)
             {
                 strName = descendantFont.getCIDSystemInfo().getRegistry() + "-" +
-                          descendantFont.getCIDSystemInfo().getOrdering() + "-" +
-                          descendantFont.getCIDSystemInfo().getSupplement();
+                    descendantFont.getCIDSystemInfo().getOrdering() + "-" +
+                    descendantFont.getCIDSystemInfo().getSupplement();
             }
             else if (name != null)
             {
                 strName = name.getName();
             }
-            
+
             // try to find the corresponding Unicode (UC2) CMap
             if (strName != null)
             {
-                CMap prdCMap = CMapManager.getPredefinedCMap(strName);
-                String ucs2Name = prdCMap.getRegistry() + "-" + prdCMap.getOrdering() + "-UCS2";
-                cMapUCS2 = CMapManager.getPredefinedCMap(ucs2Name);
+                CMap cMap = CMapManager.getPredefinedCMap(strName);
+                if (cMap != null)
+                {
+                    String ucs2Name = cMap.getRegistry() + "-" + cMap.getOrdering() + "-UCS2";
+                    CMap ucs2CMap = CMapManager.getPredefinedCMap(ucs2Name);
+                    if (ucs2CMap != null)
+                    {
+                        cMapUCS2 = ucs2CMap;
+                    }
+                }
             }
+        }
+    }
+
+    /**
+     * Returns the name of CJK CMap represented by the given CIDSystemInfo, if any.
+     */
+    private String getCJKCMap(PDCIDSystemInfo ros)
+    {
+        // CJK can fallback to using CIDSystemInfo
+        if (ros.getOrdering().equals("GB1"))
+        {
+            return "Adobe-GB1-0";
+        }
+        else if (ros.getOrdering().equals("CNS1"))
+        {
+            return "Adobe-CNS1-0";
+        }
+        else if (ros.getOrdering().equals("Japan1"))
+        {
+            return "Adobe-Japan1-1";
+        }
+        else if (ros.getOrdering().equals("Korea1"))
+        {
+            return "Adobe-Korea1-0";
+        }
+        else
+        {
+            throw new IllegalStateException();
         }
     }
 
@@ -416,12 +353,6 @@ public class PDType0Font extends PDFont implements PDVectorFont
     }
 
     @Override
-    public boolean hasExplicitWidth(int code) throws IOException
-    {
-        return descendantFont.hasExplicitWidth(code);
-    }
-
-    @Override
     public float getAverageFontWidth()
     {
         return descendantFont.getAverageFontWidth();
@@ -456,7 +387,7 @@ public class PDType0Font extends PDFont implements PDVectorFont
     @Override
     protected float getStandard14Width(int code)
     {
-        throw new UnsupportedOperationException("not supported");
+        throw new UnsupportedOperationException("not suppported");
     }
 
     @Override
@@ -484,7 +415,7 @@ public class PDType0Font extends PDFont implements PDVectorFont
         if ((isCMapPredefined || isDescendantCJK) && cMapUCS2 != null)
         {
             // if the font is composite and uses a predefined cmap (excluding Identity-H/V) then
-            // or if its descendant font uses Adobe-GB1/CNS1/Japan1/Korea1
+            // or if its decendant font uses Adobe-GB1/CNS1/Japan1/Korea1
 
             // a) Map the character code to a character identifier (CID) according to the font?s CMap
             int cid = codeToCID(code);
@@ -494,11 +425,12 @@ public class PDType0Font extends PDFont implements PDVectorFont
         }
         else
         {
-            if (LOG.isWarnEnabled() && !noUnicode.contains(code))
+            if (!noUnicode.contains(code))
             {
                 // if no value has been produced, there is no way to obtain Unicode for the character.
                 String cid = "CID+" + codeToCID(code);
-                LOG.warn("No Unicode mapping for " + cid + " (" + code + ") in font " + getName());
+                Log.w("PdfBox-Android",
+                    "No Unicode mapping for " + cid + " (" + code + ") in font " + getName());
                 // we keep track of which warnings have been issued, so we don't log multiple times
                 noUnicode.add(code);
             }
@@ -567,11 +499,11 @@ public class PDType0Font extends PDFont implements PDVectorFont
         {
             descendant = getDescendantFont().getClass().getSimpleName();
         }
-        return getClass().getSimpleName() + "/" + descendant + ", PostScript name: " + getBaseFont();
+        return getClass().getSimpleName() + "/" + descendant + " " + getBaseFont();
     }
 
     @Override
-    public GeneralPath getPath(int code) throws IOException
+    public Path getPath(int code) throws IOException
     {
         return descendantFont.getPath(code);
     }

@@ -21,7 +21,7 @@ import com.tom_roush.fontbox.ttf.TrueTypeFont;
 
 /**
  * Font mapper, locates non-embedded fonts. If you implement this then you're responsible for
- * caching the fonts. SoftReference&lt;FontBoxFont&gt; is recommended.
+ * caching the fonts. SoftReference<FontBoxFont> is recommended.
  *
  * @author John Hewson
  */
@@ -33,7 +33,7 @@ public interface FontMapper
      * @param fontDescriptor FontDescriptor
      */
     FontMapping<TrueTypeFont> getTrueTypeFont(String baseFont, PDFontDescriptor fontDescriptor);
-    
+
     /**
      * Finds a font with the given PostScript name, or a suitable substitute, or null. This allows
      * any font to be substituted with a PFB, TTF or OTF.
@@ -41,14 +41,14 @@ public interface FontMapper
      * @param fontDescriptor the FontDescriptor of the font to find
      */
     FontMapping<FontBoxFont> getFontBoxFont(String baseFont, PDFontDescriptor fontDescriptor);
-    
+
     /**
      * Finds a CFF CID-Keyed font with the given PostScript name, or a suitable substitute, or null.
      * This method can also map CJK fonts via their CIDSystemInfo (ROS).
-     * 
+     *
      * @param fontDescriptor FontDescriptor
      * @param cidSystemInfo the CID system info, e.g. "Adobe-Japan1", if any.
      */
     CIDFontMapping getCIDFont(String baseFont, PDFontDescriptor fontDescriptor,
-                              PDCIDSystemInfo cidSystemInfo);
+        PDCIDSystemInfo cidSystemInfo);
 }

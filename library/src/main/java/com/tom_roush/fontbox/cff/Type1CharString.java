@@ -16,18 +16,19 @@
  */
 package com.tom_roush.fontbox.cff;
 
-import java.awt.geom.AffineTransform;
-import java.awt.geom.GeneralPath;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
+import android.graphics.Path;
+import android.graphics.PathMeasure;
+import android.graphics.PointF;
+import android.graphics.RectF;
+import android.util.Log;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import com.tom_roush.fontbox.encoding.StandardEncoding;
 import com.tom_roush.fontbox.type1.Type1CharStringReader;
+import com.tom_roush.harmony.awt.geom.AffineTransform;
 
 /**
  * This class represents and renders a Type 1 CharString.
@@ -37,25 +38,20 @@ import com.tom_roush.fontbox.type1.Type1CharStringReader;
  */
 public class Type1CharString
 {
-    private static final Log LOG = LogFactory.getLog(Type1CharString.class);
-
     private Type1CharStringReader font;
-    private final String fontName, glyphName;
-    private GeneralPath path = null;
+    private String fontName, glyphName;
+    private Path path = null;
     private int width = 0;
-    private Point2D.Float leftSideBearing = null;
-    private Point2D.Float current = null;
+    private PointF leftSideBearing = null;
+    private PointF current = null;
     private boolean isFlex = false;
-    private final List<Point2D.Float> flexPoints = new ArrayList<Point2D.Float>();
+    private List<PointF> flexPoints = new ArrayList<PointF>();
     protected List<Object> type1Sequence;
     protected int commandCount;
 
     /**
      * Constructs a new Type1CharString object.
-     *
-     * @param font Parent Type 1 CharString font.
-     * @param fontName Name of the font.
-     * @param glyphName Name of the glyph.
+     * @param font Parent Type 1 CharString font
      * @param sequence Type 1 char string sequence
      */
     public Type1CharString(Type1CharStringReader font, String fontName, String glyphName,
@@ -67,17 +63,14 @@ public class Type1CharString
 
     /**
      * Constructor for use in subclasses.
-     *
-     * @param font Parent Type 1 CharString font.
-     * @param fontName Name of the font.
-     * @param glyphName Name of the glyph.
+     * @param font Parent Type 1 CharString font
      */
     protected Type1CharString(Type1CharStringReader font, String fontName, String glyphName)
     {
         this.font = font;
         this.fontName = fontName;
         this.glyphName = glyphName;
-        this.current = new Point2D.Float(0, 0);
+        this.current = new PointF(0, 0);
     }
 
     // todo: NEW name (or CID as hex)
@@ -90,16 +83,15 @@ public class Type1CharString
      * Returns the bounds of the renderer path.
      * @return the bounds as Rectangle2D
      */
-    public Rectangle2D getBounds()
+    public RectF getBounds()
     {
-        synchronized(LOG)
+        if (path == null)
         {
-            if (path == null)
-            {
-                render();
-            }
+            render();
         }
-        return path.getBounds2D();
+        RectF retval = null;
+        path.computeBounds(retval, true);
+        return retval;
     }
 
     /**
@@ -108,12 +100,9 @@ public class Type1CharString
      */
     public int getWidth()
     {
-        synchronized(LOG)
+        if (path == null)
         {
-            if (path == null)
-            {
-                render();
-            }
+            render();
         }
         return width;
     }
@@ -122,14 +111,11 @@ public class Type1CharString
      * Returns the path of the character.
      * @return the path
      */
-    public GeneralPath getPath()
+    public Path getPath()
     {
-        synchronized(LOG)
+        if (path == null)
         {
-            if (path == null)
-            {
-                render();
-            }
+            render();
         }
         return path;
     }
@@ -146,14 +132,14 @@ public class Type1CharString
     /**
      * Renders the Type 1 char string sequence to a GeneralPath.
      */
-    private void render() 
+    private void render()
     {
-        path = new GeneralPath();
-        leftSideBearing = new Point2D.Float(0, 0);
+        path = new Path();
+        leftSideBearing = new PointF(0, 0);
         width = 0;
         CharStringHandler handler = new CharStringHandler() {
             @Override
-            public List<Number> handleCommand(List<Number> numbers, CharStringCommand command)
+            public List<Integer> handleCommand(List<Integer> numbers, CharStringCommand command)
             {
                 return Type1CharString.this.handleCommand(numbers, command);
             }
@@ -161,7 +147,7 @@ public class Type1CharString
         handler.handleSequence(type1Sequence);
     }
 
-    private List<Number> handleCommand(List<Number> numbers, CharStringCommand command)
+    private List<Integer> handleCommand(List<Integer> numbers, CharStringCommand command)
     {
         commandCount++;
         String name = CharStringCommand.TYPE1_VOCABULARY.get(command.getKey());
@@ -172,7 +158,7 @@ public class Type1CharString
             {
                 if (isFlex)
                 {
-                    flexPoints.add(new Point2D.Float(numbers.get(0).floatValue(), numbers.get(1).floatValue()));
+                    flexPoints.add(new PointF(numbers.get(0), numbers.get(1)));
                 }
                 else
                 {
@@ -187,7 +173,7 @@ public class Type1CharString
                 if (isFlex)
                 {
                     // not in the Type 1 spec, but exists in some fonts
-                    flexPoints.add(new Point2D.Float(0f, numbers.get(0).floatValue()));
+                    flexPoints.add(new PointF(0, numbers.get(0)));
                 }
                 else
                 {
@@ -202,7 +188,7 @@ public class Type1CharString
                 if (isFlex)
                 {
                     // not in the Type 1 spec, but exists in some fonts
-                    flexPoints.add(new Point2D.Float(numbers.get(0).floatValue(), 0f));
+                    flexPoints.add(new PointF(numbers.get(0), 0));
                 }
                 else
                 {
@@ -235,8 +221,8 @@ public class Type1CharString
         {
             if (numbers.size() >= 6)
             {
-                rrcurveTo(numbers.get(0), numbers.get(1), numbers.get(2),
-                        numbers.get(3), numbers.get(4), numbers.get(5));
+                rrcurveTo(numbers.get(0), numbers.get(1), numbers.get(2), numbers.get(3),
+                    numbers.get(4), numbers.get(5));
             }
         }
         else if ("closepath".equals(name))
@@ -247,41 +233,40 @@ public class Type1CharString
         {
             if (numbers.size() >= 3)
             {
-                leftSideBearing = new Point2D.Float(numbers.get(0).floatValue(), numbers.get(1).floatValue());
-                width = numbers.get(2).intValue();
-                current.setLocation(leftSideBearing);
+                leftSideBearing = new PointF(numbers.get(0), numbers.get(1));
+                width = numbers.get(2);
+                current.set(leftSideBearing);
             }
         }
         else if ("hsbw".equals(name))
         {
             if (numbers.size() >= 2)
             {
-                leftSideBearing = new Point2D.Float(numbers.get(0).floatValue(), 0);
-                width = numbers.get(1).intValue();
-                current.setLocation(leftSideBearing);
+                leftSideBearing = new PointF(numbers.get(0), 0);
+                width = numbers.get(1);
+                current.set(leftSideBearing);
             }
         }
         else if ("vhcurveto".equals(name))
         {
             if (numbers.size() >= 4)
             {
-                rrcurveTo(0, numbers.get(0), numbers.get(1),
-                        numbers.get(2), numbers.get(3), 0);
+                rrcurveTo(0, numbers.get(0), numbers.get(1), numbers.get(2), numbers.get(3), 0);
             }
         }
         else if ("hvcurveto".equals(name))
         {
             if (numbers.size() >= 4)
             {
-                rrcurveTo(numbers.get(0), 0, numbers.get(1),
-                        numbers.get(2), 0, numbers.get(3));
+                rrcurveTo(numbers.get(0), 0, numbers.get(1), numbers.get(2), 0, numbers.get(3));
             }
         }
         else if ("seac".equals(name))
         {
             if (numbers.size() >= 5)
             {
-                seac(numbers.get(0), numbers.get(1), numbers.get(2), numbers.get(3), numbers.get(4));
+                seac(numbers.get(0), numbers.get(1), numbers.get(2), numbers.get(3),
+                    numbers.get(4));
             }
         }
         else if ("setcurrentpoint".equals(name))
@@ -295,24 +280,24 @@ public class Type1CharString
         {
             if (numbers.size() >= 1)
             {
-                callothersubr(numbers.get(0).intValue());
+                callothersubr(numbers.get(0));
             }
         }
         else if ("div".equals(name))
         {
-            float b = numbers.get(numbers.size() -1).floatValue();
-            float a = numbers.get(numbers.size() -2).floatValue();
+            int b = numbers.get(numbers.size() -1);
+            int a = numbers.get(numbers.size() -2);
 
-            float result = a / b;
+            int result = a / b; // TODO loss of precision, should be float
 
-            List<Number> list = new ArrayList<Number>(numbers);
+            List<Integer> list = new ArrayList<Integer>(numbers);
             list.remove(list.size() - 1);
             list.remove(list.size() - 1);
             list.add(result);
             return list;
         }
         else if ("hstem".equals(name) || "vstem".equals(name) ||
-                 "hstem3".equals(name) || "vstem3".equals(name) || "dotsection".equals(name))
+            "hstem3".equals(name) || "vstem3".equals(name) || "dotsection".equals(name))
         {
             // ignore hints
         }
@@ -323,8 +308,8 @@ public class Type1CharString
         else if ("return".equals(name))
         {
             // indicates an invalid charstring
-            LOG.warn("Unexpected charstring command: " + command.getKey() + " in glyph " +
-                    glyphName + " of font " + fontName);
+            Log.w("PdfBox-Android", "Unexpected charstring command: " + command.getKey() +
+                " in glyph " + glyphName + " of font " + fontName);
         }
         else if (name != null)
         {
@@ -334,8 +319,8 @@ public class Type1CharString
         else
         {
             // indicates an invalid charstring
-            LOG.warn("Unknown charstring command: " + command.getKey() + " in glyph " + glyphName +
-                     " of font " + fontName);
+            Log.w("PdfBox-Android", "Unknown charstring command: " + command.getKey() + " in glyph "
+                + glyphName + " of font " + fontName);
         }
         return null;
     }
@@ -344,9 +329,9 @@ public class Type1CharString
      * Sets the current absolute point without performing a moveto.
      * Used only with results from callothersubr
      */
-    private void setcurrentpoint(Number x, Number y)
+    private void setcurrentpoint(int x, int y)
     {
-        current.setLocation(x.floatValue(), y.floatValue());
+        current.set(x, y);
     }
 
     /**
@@ -362,30 +347,30 @@ public class Type1CharString
 
             if (flexPoints.size() < 7)
             {
-                LOG.warn("flex without moveTo in font " + fontName + ", glyph " + glyphName +
-                         ", command " + commandCount);
+                Log.w("PdfBox-Android", "flex without moveTo in font " + fontName + ", glyph " + glyphName +
+                    ", command " + commandCount);
                 return;
             }
 
             // reference point is relative to start point
-            Point2D.Float reference = flexPoints.get(0);
-            reference.setLocation(current.getX() + reference.getX(),
-                                  current.getY() + reference.getY());
+            PointF reference = flexPoints.get(0);
+            reference.set(current.x + reference.x,
+                current.y + reference.y);
 
             // first point is relative to reference point
-            Point2D.Float first = flexPoints.get(1);
-            first.setLocation(reference.getX() + first.getX(), reference.getY() + first.getY());
+            PointF first = flexPoints.get(1);
+            first.set(reference.x + first.x, reference.y + first.y);
 
             // make the first point relative to the start point
-            first.setLocation(first.getX() - current.getX(), first.getY() - current.getY());
+            first.set(first.x - current.x, first.y - current.y);
 
-            rrcurveTo(flexPoints.get(1).getX(), flexPoints.get(1).getY(),
-                      flexPoints.get(2).getX(), flexPoints.get(2).getY(),
-                      flexPoints.get(3).getX(), flexPoints.get(3).getY());
+            rrcurveTo(flexPoints.get(1).x, flexPoints.get(1).y,
+                flexPoints.get(2).x, flexPoints.get(2).y,
+                flexPoints.get(3).x, flexPoints.get(3).y);
 
-            rrcurveTo(flexPoints.get(4).getX(), flexPoints.get(4).getY(),
-                      flexPoints.get(5).getX(), flexPoints.get(5).getY(),
-                      flexPoints.get(6).getX(), flexPoints.get(6).getY());
+            rrcurveTo(flexPoints.get(4).x, flexPoints.get(4).y,
+                flexPoints.get(5).x, flexPoints.get(5).y,
+                flexPoints.get(6).x, flexPoints.get(6).y);
 
             flexPoints.clear();
         }
@@ -406,10 +391,10 @@ public class Type1CharString
      */
     private void rmoveTo(Number dx, Number dy)
     {
-        float x = (float)current.getX() + dx.floatValue();
-        float y = (float)current.getY() + dy.floatValue();
+        float x = current.x + dx.floatValue();
+        float y = current.y + dy.floatValue();
         path.moveTo(x, y);
-        current.setLocation(x, y);
+        current.set(x, y);
     }
 
     /**
@@ -417,42 +402,42 @@ public class Type1CharString
      */
     private void rlineTo(Number dx, Number dy)
     {
-        float x = (float)current.getX() + dx.floatValue();
-        float y = (float)current.getY() + dy.floatValue();
-        if (path.getCurrentPoint() == null)
+        float x = current.x + dx.floatValue();
+        float y = current.y + dy.floatValue();
+        if(path.isEmpty())
         {
-            LOG.warn("rlineTo without initial moveTo in font " + fontName + ", glyph " + glyphName);
+            Log.w("PdfBox-Android", "rlineTo without initial moveTo in font " + fontName + ", glyph " + glyphName);
             path.moveTo(x, y);
         }
         else
         {
             path.lineTo(x, y);
         }
-        current.setLocation(x, y);
+        current.set(x, y);
     }
 
     /**
      * Relative curveto.
      */
     private void rrcurveTo(Number dx1, Number dy1, Number dx2, Number dy2,
-            Number dx3, Number dy3)
+                           Number dx3, Number dy3)
     {
-        float x1 = (float) current.getX() + dx1.floatValue();
-        float y1 = (float) current.getY() + dy1.floatValue();
+        float x1 = current.x + dx1.floatValue();
+        float y1 = current.y + dy1.floatValue();
         float x2 = x1 + dx2.floatValue();
         float y2 = y1 + dy2.floatValue();
         float x3 = x2 + dx3.floatValue();
         float y3 = y2 + dy3.floatValue();
-        if (path.getCurrentPoint() == null)
+        if(path.isEmpty())
         {
-            LOG.warn("rrcurveTo without initial moveTo in font " + fontName + ", glyph " + glyphName);
+            Log.w("PdfBox-Android", "rrcurveTo without initial moveTo in font " + fontName + ", glyph " + glyphName);
             path.moveTo(x3, y3);
         }
         else
         {
-            path.curveTo(x1, y1, x2, y2, x3, y3);
+            path.cubicTo(x1, y1, x2, y2, x3, y3); // TODO: Should this be relative?
         }
-        current.setLocation(x3, y3);
+        current.set(x3, y3);
     }
 
     /**
@@ -460,49 +445,64 @@ public class Type1CharString
      */
     private void closepath()
     {
-        if (path.getCurrentPoint() == null)
+        if(path.isEmpty())
         {
-            LOG.warn("closepath without initial moveTo in font " + fontName + ", glyph " + glyphName);
+            Log.w("PdfBox-Android", "closepath without initial moveTo in font " + fontName + ", glyph " + glyphName);
         }
         else
         {
-            path.closePath();
+            path.close();
         }
-        path.moveTo(current.getX(), current.getY());
+        path.moveTo(current.x, current.y);
     }
 
     /**
      * Standard Encoding Accented Character
      *
      * Makes an accented character from two other characters.
-     * @param asb 
+     * @param asb
      */
     private void seac(Number asb, Number adx, Number ady, Number bchar, Number achar)
     {
         // base character
         String baseName = StandardEncoding.INSTANCE.getName(bchar.intValue());
-        try
+        if (baseName != null)
         {
-            Type1CharString base = font.getType1CharString(baseName);
-            path.append(base.getPath().getPathIterator(null), false);
-        }
-        catch (IOException e)
-        {
-            LOG.warn("invalid seac character in glyph " + glyphName + " of font " + fontName);
+            try
+            {
+                Type1CharString base = font.getType1CharString(baseName);
+                path.op(base.getPath(), Path.Op.UNION);
+                PathMeasure pm = new PathMeasure(path, false);
+                //coordinates will be here
+                float aCoordinates[] = {0f, 0f};
+
+                //get coordinates of the middle point
+                for (int i = 0; i < pm.getLength(); i++)
+                {
+                    pm.getPosTan(pm.getLength() * 0.5f, aCoordinates, null);
+                }
+            }
+            catch (IOException e)
+            {
+                Log.w("PdfBox-Android", "invalid seac character in glyph " + glyphName + " of font " + fontName);
+            }
         }
         // accent character
         String accentName = StandardEncoding.INSTANCE.getName(achar.intValue());
-        try
+        if (accentName != null)
         {
-            Type1CharString accent = font.getType1CharString(accentName);
-            AffineTransform at = AffineTransform.getTranslateInstance(
-                    leftSideBearing.getX() + adx.floatValue() - asb.floatValue(),
-                    leftSideBearing.getY() + ady.floatValue());
-            path.append(accent.getPath().getPathIterator(at), false);
-        }
-        catch (IOException e)
-        {
-            LOG.warn("invalid seac character in glyph " + glyphName + " of font " + fontName);
+            try
+            {
+                Type1CharString accent = font.getType1CharString(accentName);
+                AffineTransform at = AffineTransform.getTranslateInstance(
+                    leftSideBearing.x + adx.floatValue(),
+                    leftSideBearing.y + ady.floatValue());
+                path.op(accent.getPath(), Path.Op.UNION);
+            }
+            catch (IOException e)
+            {
+                Log.w("PdfBox-Android", "invalid seac character in glyph " + glyphName + " of font " + fontName);
+            }
         }
     }
 

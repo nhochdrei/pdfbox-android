@@ -17,12 +17,14 @@
 
 package com.tom_roush.fontbox.cff;
 
-import java.awt.geom.GeneralPath;
+import android.graphics.Path;
+
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
 import com.tom_roush.fontbox.type1.Type1CharStringReader;
 
 /**
@@ -42,7 +44,7 @@ public class CFFCIDFont extends CFFFont
     private FDSelect fdSelect;
 
     private final Map<Integer, CIDKeyedType2CharString> charStringCache =
-            new ConcurrentHashMap<Integer, CIDKeyedType2CharString>();
+        new ConcurrentHashMap<Integer, CIDKeyedType2CharString>();
 
     private final PrivateType1CharStringReader reader = new PrivateType1CharStringReader();
 
@@ -50,7 +52,7 @@ public class CFFCIDFont extends CFFFont
      * Returns the registry value.
      * * @return the registry
      */
-    public String getRegistry() 
+    public String getRegistry()
     {
         return registry;
     }
@@ -70,7 +72,7 @@ public class CFFCIDFont extends CFFFont
      *
      * @return the ordering
      */
-    public String getOrdering() 
+    public String getOrdering()
     {
         return ordering;
     }
@@ -90,7 +92,7 @@ public class CFFCIDFont extends CFFFont
      *
      * @return the supplement
      */
-    public int getSupplement() 
+    public int getSupplement()
     {
         return supplement;
     }
@@ -235,7 +237,7 @@ public class CFFCIDFont extends CFFFont
             Type2CharStringParser parser = new Type2CharStringParser(fontName, cid);
             List<Object> type2seq = parser.parse(bytes, globalSubrIndex, getLocalSubrIndex(gid));
             type2 = new CIDKeyedType2CharString(reader, fontName, cid, gid, type2seq,
-                                                getDefaultWidthX(gid), getNominalWidthX(gid));
+                getDefaultWidthX(gid), getNominalWidthX(gid));
             charStringCache.put(cid, type2);
         }
         return type2;
@@ -249,7 +251,7 @@ public class CFFCIDFont extends CFFFont
     }
 
     @Override
-    public GeneralPath getPath(String selector) throws IOException
+    public Path getPath(String selector) throws IOException
     {
         int cid = selectorToCID(selector);
         return getType2CharString(cid).getPath();

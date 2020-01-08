@@ -14,10 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.tom_roush.pdfbox.pdmodel.font;
 
-import java.awt.geom.GeneralPath;
+import android.graphics.Path;
+
 import java.io.IOException;
 
 /**
@@ -28,17 +28,17 @@ import java.io.IOException;
 public interface PDVectorFont
 {
     /**
-     * Returns the glyph path for the given character code in a PDF.
+     * Returns the glyph path for the given character code.
      *
-     * @param code character code in a PDF. Not to be confused with unicode.
+     * @param code character code
      * @throws java.io.IOException if the font could not be read
      */
-    GeneralPath getPath(int code) throws IOException;
+    Path getPath(int code) throws IOException;
 
     /**
-     * Returns true if this font contains a glyph for the given character code in a PDF.
+     * Returns true if this font contains a glyph for the given character code.
      *
-     * @param code character code in a PDF. Not to be confused with unicode.
+     * @param code character code
      */
     boolean hasGlyph(int code) throws IOException;
 }

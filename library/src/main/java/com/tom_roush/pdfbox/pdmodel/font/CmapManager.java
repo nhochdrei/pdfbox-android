@@ -16,14 +16,14 @@
  */
 package com.tom_roush.pdfbox.pdmodel.font;
 
-import com.tom_roush.fontbox.cmap.CMap;
-import com.tom_roush.fontbox.cmap.CMapParser;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.tom_roush.fontbox.cmap.CMap;
+import com.tom_roush.fontbox.cmap.CMapParser;
 
 /**
  * CMap resource loader and cache.
@@ -41,8 +41,6 @@ final class CMapManager
      * Fetches the predefined CMap from disk (or cache).
      *
      * @param cMapName CMap name
-     * @return The predefined CMap, never null.
-     * @throws IOException 
      */
     public static CMap getPredefinedCMap(String cMapName) throws IOException
     {
