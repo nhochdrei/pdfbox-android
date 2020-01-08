@@ -481,12 +481,12 @@ public class PDFMergerUtility
             {
                 if (destination != null)
                 {
-                    IOUtils.closeAndLogException(destination, LOG, "PDDocument", null);
+                    IOUtils.closeAndLogException(destination, "PDDocument", null);
                 }
 
                 for (PDDocument doc : tobeclosed)
                 {
-                    IOUtils.closeAndLogException(doc, LOG, "PDDocument", null);
+                    IOUtils.closeAndLogException(doc, "PDDocument", null);
                 }
             }
         }
@@ -545,7 +545,6 @@ public class PDFMergerUtility
             catch (IOException ex)
             {
                 // PDFBOX-4223
-                LOG.error("Invalid OpenAction ignored", ex);
             }
             PDDestination openActionDestination = null;
             if (openAction instanceof PDActionGoTo)
@@ -603,7 +602,6 @@ public class PDFMergerUtility
         {
             // found in 054080.pdf from PDFBOX-4417 and doesn't belong there
             destNames.getCOSObject().removeItem(COSName.ID_TREE);
-            LOG.warn("Removed /IDTree from /Names dictionary, doesn't belong there");
         }
 
         PDDocumentNameDestinationDictionary destDests = destCatalog.getDests();
@@ -684,7 +682,6 @@ public class PDFMergerUtility
                     COSBase base = srcNums.getObject(i);
                     if (!(base instanceof COSNumber))
                     {
-                        LOG.error("page labels ignored, index " + i + " should be a number, but is " + base);
                         // remove what we added
                         while (destNums.size() > startSize)
                         {
@@ -714,7 +711,6 @@ public class PDFMergerUtility
             catch (IOException ex)
             {
                 // PDFBOX-4227 cleartext XMP stream with /Flate 
-                LOG.error("Metadata skipped because it could not be read", ex);
             }
         }
 
@@ -1010,7 +1006,6 @@ public class PDFMergerUtility
         {
             if (destNames.containsKey(entry.getKey()))
             {
-                LOG.warn("key " + entry.getKey() + " already exists in destination IDTree");
             }
             else
             {
@@ -1102,7 +1097,6 @@ public class PDFMergerUtility
             }
             if (destDict.containsKey(entry.getKey()))
             {
-                LOG.warn("key " + entry.getKey() + " already exists in destination RoleMap");
             }
             else
             {
@@ -1148,8 +1142,6 @@ public class PDFMergerUtility
      * destination file.
      *
      * @param cloner the object cloner for the destination document
-     * @param destAcroForm the destination form
-     * @param srcAcroForm the source form
      * @throws IOException If an error occurs while adding the field.
      */
     private void mergeAcroForm(PDFCloneUtility cloner, PDDocumentCatalog destCatalog,
@@ -1244,7 +1236,6 @@ public class PDFMergerUtility
     {
         if (destField instanceof PDNonTerminalField && srcField instanceof PDNonTerminalField)
         {
-            LOG.info("Skipping non terminal field " + srcField.getFullyQualifiedName());
             return;
         }
 
@@ -1262,7 +1253,6 @@ public class PDFMergerUtility
                     }
                     catch (IOException ioe)
                     {
-                        LOG.warn("Unable to clone widget for source field " + srcField.getFullyQualifiedName());
                     }
                     
                 }
@@ -1287,7 +1277,6 @@ public class PDFMergerUtility
                         }
                         catch (IOException ioe)
                         {
-                            LOG.warn("Unable to clone widget for source field " + srcField.getFullyQualifiedName());
                         }
                         
                     }
@@ -1296,14 +1285,11 @@ public class PDFMergerUtility
                 }
                 catch (IOException ioe)
                 {
-                    LOG.warn("Unable to clone widget for destination field " + destField.getFullyQualifiedName());
                 }
             }
         }
         else
         {
-            LOG.info("Only merging two text fields is currently supported");
-            LOG.info("Skipping merging of " + srcField.getFullyQualifiedName() + " into " + destField.getFullyQualifiedName());
         }
     }
 
@@ -1473,18 +1459,11 @@ public class PDFMergerUtility
                 COSBase item = parentTreeEntry.getItem(COSName.OBJ);
                 if (item instanceof COSObject)
                 {
-                    LOG.debug("clone potential orphan object in structure tree: " + item +
-                            ", Type: " + objDict.getNameAsString(COSName.TYPE) +
-                            ", Subtype: " + objDict.getNameAsString(COSName.SUBTYPE) +
-                            ", T: " + objDict.getNameAsString(COSName.T));
+
                 }
                 else
                 {
                     // don't display in full because of stack overflow
-                    LOG.debug("clone potential orphan object in structure tree" +
-                            ", Type: " + objDict.getNameAsString(COSName.TYPE) +
-                            ", Subtype: " + objDict.getNameAsString(COSName.SUBTYPE) +
-                            ", T: " + objDict.getNameAsString(COSName.T));
                 }
                 parentTreeEntry.setItem(COSName.OBJ, cloner.cloneForNewDocument(obj));
             }

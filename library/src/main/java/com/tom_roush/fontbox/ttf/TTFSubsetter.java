@@ -49,8 +49,7 @@ import java.util.TreeSet;
  */
 public final class TTFSubsetter
 {
-    private static final Log LOG = LogFactory.getLog(TTFSubsetter.class);
-    
+
     private static final byte[] PAD_BUF = new byte[] { 0, 0, 0 };
 
     private final TrueTypeFont ttf;
@@ -953,11 +952,6 @@ public final class TTFSubsetter
      */
     public void writeToStream(OutputStream os) throws IOException
     {
-        if (glyphIds.isEmpty() || uniToGID.isEmpty())
-        {
-            LOG.info("font subset is empty");
-        }
-        
         addCompoundReferences();
 
         DataOutputStream out = new DataOutputStream(os);

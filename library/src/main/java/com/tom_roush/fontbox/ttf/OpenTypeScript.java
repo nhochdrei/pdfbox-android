@@ -42,7 +42,6 @@ import java.util.TreeMap;
  */
 public final class OpenTypeScript
 {
-    private static final Log LOG = LogFactory.getLog(OpenTypeScript.class);
 
     public static final String INHERITED = "Inherited";
     public static final String UNKNOWN = "Unknown";
@@ -229,13 +228,10 @@ public final class OpenTypeScript
             }
             else
             {
-                LOG.warn("Could not find '" + path + "', mirroring char map will be empty: ");
             }
         }
         catch (IOException e)
         {
-            LOG.warn("Could not parse Scripts.txt, mirroring char map will be empty: "
-                    + e.getMessage());
         }
         finally
         {
@@ -247,7 +243,6 @@ public final class OpenTypeScript
                 }
                 catch (IOException ex)
                 {
-                    LOG.warn("Could not close Scripts.txt");
                 }
             }
         }

@@ -31,7 +31,6 @@ import java.util.Locale;
  */
 public class FontFileFinder
 {
-    private static final Log LOG = LogFactory.getLog(FontFileFinder.class);
 
     private FontDirFinder fontDirFinder = null;
 
@@ -128,21 +127,6 @@ public class FontFileFinder
                     continue;
                 }
                 walk(file, results);
-            }
-            else
-            {
-                if (LOG.isDebugEnabled())
-                {
-                    LOG.debug("checkFontfile check " + file);
-                }
-                if (checkFontfile(file))
-                {
-                    if (LOG.isDebugEnabled())
-                    {
-                        LOG.debug("checkFontfile found " + file);
-                    }
-                    results.add(file.toURI());
-                }
             }
         }
     }

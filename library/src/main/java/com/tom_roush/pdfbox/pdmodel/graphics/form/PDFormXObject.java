@@ -219,7 +219,16 @@ public class PDFormXObject extends PDXObject implements PDContentStream
     @Override
     public Matrix getMatrix()
     {
-        return Matrix.createMatrix(getCOSObject().getDictionaryObject(COSName.MATRIX));
+        COSArray array = (COSArray) getCOSObject().getDictionaryObject(COSName.MATRIX);
+        if (array != null)
+        {
+            return new Matrix(array);
+        }
+        else
+        {
+            // default value is the identity matrix
+            return new Matrix();
+        }
     }
 
     /**

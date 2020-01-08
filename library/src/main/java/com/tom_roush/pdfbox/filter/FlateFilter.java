@@ -115,9 +115,7 @@ final class FlateFilter extends Filter
     protected void encode(InputStream input, OutputStream encoded, COSDictionary parameters)
             throws IOException
     {
-        int compressionLevel = getCompressionLevel();
-        Deflater deflater = new Deflater(compressionLevel);
-        DeflaterOutputStream out = new DeflaterOutputStream(encoded, deflater);
+        DeflaterOutputStream out = new DeflaterOutputStream(encoded);
         int amountRead;
         int mayRead = input.available();
         if (mayRead > 0)
@@ -130,6 +128,5 @@ final class FlateFilter extends Filter
         }
         out.close();
         encoded.flush();
-        deflater.end();
     }
 }

@@ -79,7 +79,6 @@ public class PDFMarkedContentExtractor extends LegacyPDFStreamEngine
         return second > first - variance && second < first + variance;
     }
 
-    @Override
     public void beginMarkedContentSequence(COSName tag, COSDictionary properties)
     {
         PDMarkedContent markedContent = PDMarkedContent.create(tag, properties);
@@ -99,7 +98,6 @@ public class PDFMarkedContentExtractor extends LegacyPDFStreamEngine
         this.currentMarkedContents.push(markedContent);
     }
 
-    @Override
     public void endMarkedContentSequence()
     {
         if (!this.currentMarkedContents.isEmpty())

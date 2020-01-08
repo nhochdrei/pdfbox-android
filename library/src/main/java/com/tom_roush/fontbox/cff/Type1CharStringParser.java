@@ -34,7 +34,6 @@ import java.util.Stack;
  */
 public class Type1CharStringParser
 {
-    private static final Log LOG = LogFactory.getLog(Type1CharStringParser.class);
 
     // 1-byte commands
     static final int RETURN = 11;
@@ -84,8 +83,6 @@ public class Type1CharStringParser
                 Object obj = sequence.remove(sequence.size() - 1);
                 if (!(obj instanceof Integer))
                 {
-                    LOG.warn("Parameter " + obj + " for CALLSUBR is ignored, integer expected in glyph '"
-                            + glyphName + "' of font " + fontName);
                     continue;
                 }
                 Integer operand = (Integer) obj;
@@ -103,9 +100,6 @@ public class Type1CharStringParser
                 }
                 else
                 {
-                    LOG.warn("CALLSUBR is ignored, operand: " + operand
-                            + ", subrs.size(): " + subrs.size() + " in glyph '"
-                            + glyphName + "' of font " + fontName);
                     // remove all parameters (there can be more than one)
                     while (sequence.get(sequence.size() - 1) instanceof Integer)
                     {
@@ -161,7 +155,6 @@ public class Type1CharStringParser
 
                 if (results.size() > 0)
                 {
-                    LOG.warn("Value left on the PostScript stack in glyph " + glyphName + " of font " + fontName);
                 }
             }
             else if (b0 >= 0 && b0 <= 31)

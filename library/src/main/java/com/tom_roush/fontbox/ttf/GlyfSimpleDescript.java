@@ -32,7 +32,6 @@ public class GlyfSimpleDescript extends GlyfDescript
     /**
      * Log instance.
      */
-    private static final Log LOG = LogFactory.getLog(GlyfSimpleDescript.class);
 
     private int[] endPtsOfContours;
     private byte[] flags;

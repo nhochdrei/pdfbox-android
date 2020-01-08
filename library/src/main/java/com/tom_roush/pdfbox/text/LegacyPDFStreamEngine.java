@@ -74,8 +74,6 @@ import com.tom_roush.pdfbox.pdmodel.font.PDFontDescriptor;
  */
 class LegacyPDFStreamEngine extends PDFStreamEngine
 {
-    private static final Log LOG = LogFactory.getLog(LegacyPDFStreamEngine.class);
-
     private int pageRotation;
     private PDRectangle pageSize;
     private Matrix translateMatrix;
@@ -276,7 +274,7 @@ class LegacyPDFStreamEngine extends PDFStreamEngine
         }
         catch (Throwable exception)
         {
-            LOG.warn(exception, exception);
+
         }
 
         if (spaceWidthText == 0)

@@ -40,7 +40,6 @@ public class GlyfCompositeDescript extends GlyfDescript
     /**
      * Log instance.
      */
-    private static final Log LOG = LogFactory.getLog(GlyfCompositeDescript.class);
 
     private final List<GlyfCompositeComp> components = new ArrayList<GlyfCompositeComp>();
     private final Map<Integer,GlyphDescription> descriptions = new HashMap<Integer,GlyphDescription>();
@@ -92,7 +91,6 @@ public class GlyfCompositeDescript extends GlyfDescript
         }
         if (beingResolved)
         {
-            LOG.error("Circular reference in GlyfCompositeDesc");
             return;
         }
         beingResolved = true;
@@ -204,7 +202,6 @@ public class GlyfCompositeDescript extends GlyfDescript
     {
         if (!resolved)
         {
-            LOG.error("getPointCount called on unresolved GlyfCompositeDescript");
         }
         if (pointCount < 0)
         {
@@ -212,7 +209,6 @@ public class GlyfCompositeDescript extends GlyfDescript
             GlyphDescription gd = descriptions.get(c.getGlyphIndex());
             if (gd == null)
             {
-                LOG.error("GlyphDescription for index " + c.getGlyphIndex() + " is null, returning 0");
                 pointCount = 0;
             }
             else
@@ -231,7 +227,6 @@ public class GlyfCompositeDescript extends GlyfDescript
     {
         if (!resolved)
         {
-            LOG.error("getContourCount called on unresolved GlyfCompositeDescript");
         }
         if (contourCount < 0)
         {
@@ -292,8 +287,7 @@ public class GlyfCompositeDescript extends GlyfDescript
             }
             catch (IOException e)
             {
-                LOG.error(e);
-            }            
+            }
         }
     }
 }

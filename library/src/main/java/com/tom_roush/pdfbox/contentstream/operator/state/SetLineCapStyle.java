@@ -16,6 +16,8 @@
  */
 package com.tom_roush.pdfbox.contentstream.operator.state;
 
+import android.graphics.Paint;
+
 import java.io.IOException;
 import java.util.List;
 
@@ -39,7 +41,22 @@ public class SetLineCapStyle extends OperatorProcessor
         {
             throw new MissingOperandException(operator, arguments);
         }
-        int lineCapStyle = ((COSNumber)arguments.get( 0 )).intValue();
+
+        Paint.Cap lineCapStyle;
+        switch(((COSNumber)arguments.get( 0 )).intValue())  {
+            case 0:
+                lineCapStyle = Paint.Cap.BUTT;
+                break;
+            case 1:
+                lineCapStyle = Paint.Cap.ROUND;
+                break;
+            case 2:
+                lineCapStyle = Paint.Cap.SQUARE;
+                break;
+            default:
+                lineCapStyle = null;
+        }
+
         context.getGraphicsState().setLineCap( lineCapStyle );
     }
 

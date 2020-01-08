@@ -47,8 +47,7 @@ class Type1Lexer
     /**
      * Log instance.
      */
-    private static final Log LOG = LogFactory.getLog(Type1Lexer.class);
-    
+
     private final ByteBuffer buffer;
     private Token aheadToken;
     private int openParens = 0;
@@ -176,7 +175,6 @@ class Type1Lexer
                 }
                 else if (c == 0)
                 {
-                    LOG.warn("NULL byte in font, skipped");
                     skip = true;
                 }
                 else

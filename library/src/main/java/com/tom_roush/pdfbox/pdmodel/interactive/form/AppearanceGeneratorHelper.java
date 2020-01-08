@@ -17,7 +17,6 @@
 package com.tom_roush.pdfbox.pdmodel.interactive.form;
 
 import com.tom_roush.harmony.awt.geom.AffineTransform;
-import java.awt.geom.Point2D;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -27,7 +26,6 @@ import java.util.List;
 
 import com.tom_roush.pdfbox.contentstream.operator.Operator;
 import com.tom_roush.pdfbox.cos.COSName;
-import com.tom_roush.pdfbox.cos.COSString;
 import com.tom_roush.pdfbox.pdfparser.PDFStreamParser;
 import com.tom_roush.pdfbox.pdfwriter.ContentStreamWriter;
 import com.tom_roush.pdfbox.pdmodel.PDResources;
@@ -68,8 +66,8 @@ class AppearanceGeneratorHelper
      *
      * Regardless of other settings in an existing appearance stream Adobe will always use this value.
      */
-    private static final float[] HIGHLIGHT_COLOR = {153/255f, 193/255f, 215/255f};
- 
+    private static final int[] HIGHLIGHT_COLOR = {153, 193, 215};
+
     /**
      * The scaling factor for font units to PDF units
      */
@@ -155,40 +153,12 @@ class AppearanceGeneratorHelper
     public void setAppearanceValue(String apValue) throws IOException
     {
         value = apValue;
-        
-        // Treat multiline field values in single lines as single lime values.
-        // This is in line with how Adobe Reader behaves when enetring text
-        // interactively but NOT how it behaves when the field value has been
-        // set programmatically and Reader is forced to generate the appearance
-        // using PDAcroForm.setNeedAppearances
-        // see PDFBOX-3911
-        if (field instanceof PDTextField && !((PDTextField) field).isMultiline())
-        {
-            value = apValue.replaceAll("\\u000D\\u000A|[\\u000A\\u000B\\u000C\\u000D\\u0085\\u2028\\u2029]", " ");
-        }
-
         for (PDAnnotationWidget widget : field.getWidgets())
         {
-            // some fields have the /Da at the widget level if the 
-            // widgets differ in layout.
-            PDDefaultAppearanceString acroFormAppearance = defaultAppearance;
-            
-            if (widget.getCOSObject().getDictionaryObject(COSName.DA) != null)
-            {
-                defaultAppearance = getWidgetDefaultAppearanceString(widget);
-            }
-
-            PDRectangle rect = widget.getRectangle();
-            if (rect == null)
-            {
-                widget.getCOSObject().removeItem(COSName.AP);
-                continue;
-            }
-
             PDFormFieldAdditionalActions actions = field.getActions();
 
             // in case all tests fail the field will be formatted by acrobat
-            // when it is opened. See FreedomExpressions.pdf for an example of this.  
+            // when it is opened. See FreedomExpressions.pdf for an example of this.
             if (actions == null || actions.getF() == null ||
                 widget.getCOSObject().getDictionaryObject(COSName.AP) != null)
             {
@@ -201,36 +171,34 @@ class AppearanceGeneratorHelper
 
                 PDAppearanceEntry appearance = appearanceDict.getNormalAppearance();
                 // TODO support appearances other than "normal"
-                
+
                 PDAppearanceStream appearanceStream;
-                if (isValidAppearanceStream(appearance))
+                if (appearance.isStream())
                 {
                     appearanceStream = appearance.getAppearanceStream();
                 }
                 else
                 {
-                    appearanceStream = prepareNormalAppearanceStream(widget);
-
+                    appearanceStream = new PDAppearanceStream(field.getAcroForm().getDocument());
+                    appearanceStream.setBBox(widget.getRectangle().createRetranslatedRectangle());
                     appearanceDict.setNormalAppearance(appearanceStream);
                     // TODO support appearances other than "normal"
                 }
-                
+
                 /*
                  * Adobe Acrobat always recreates the complete appearance stream if there is an appearance characteristics
-                 * entry (the widget dictionaries MK entry). In addition if there is no content yet also create the appearance
+                 * entry (the widget dictionaries MK entry). In addition if there is no content yet also create the apperance
                  * stream from the entries.
-                 * 
+                 *
                  */
-                if (widget.getAppearanceCharacteristics() != null || appearanceStream.getContentStream().getLength() == 0)
+                if (widget.getAppearanceCharacteristics() != null ||
+                    appearanceStream.getContentStream().getLength() == 0)
                 {
                     initializeAppearanceContent(widget, appearanceStream);
                 }
-                
+
                 setAppearanceContent(widget, appearanceStream);
             }
-            
-            // restore the field level appearance
-            defaultAppearance =  acroFormAppearance;
         }
     }
 
@@ -251,49 +219,6 @@ class AppearanceGeneratorHelper
         }
         return Math.abs(bbox.getWidth()) > 0 && Math.abs(bbox.getHeight()) > 0;
     }
-
-    private PDAppearanceStream prepareNormalAppearanceStream(PDAnnotationWidget widget)
-    {
-        PDAppearanceStream appearanceStream = new PDAppearanceStream(field.getAcroForm().getDocument());
-
-        // Calculate the entries for the bounding box and the transformation matrix
-        // settings for the appearance stream
-        int rotation = resolveRotation(widget);
-        PDRectangle rect = widget.getRectangle();
-        Matrix matrix = Matrix.getRotateInstance(Math.toRadians(rotation), 0, 0);
-        Point2D.Float point2D = matrix.transformPoint(rect.getWidth(), rect.getHeight());
-
-        PDRectangle bbox = new PDRectangle(Math.abs((float) point2D.getX()), Math.abs((float) point2D.getY()));
-        appearanceStream.setBBox(bbox);
-
-        AffineTransform at = calculateMatrix(bbox, rotation);
-        if (!at.isIdentity())
-        {
-            appearanceStream.setMatrix(at);
-        }
-        appearanceStream.setFormType(1);
-        appearanceStream.setResources(new PDResources());
-        return appearanceStream;
-    }
-
-    private PDDefaultAppearanceString getWidgetDefaultAppearanceString(PDAnnotationWidget widget) throws IOException
-    {
-        COSString da = (COSString) widget.getCOSObject().getDictionaryObject(COSName.DA);
-        PDResources dr = field.getAcroForm().getDefaultResources();
-        return new PDDefaultAppearanceString(da, dr);
-    }
-
-    private int resolveRotation(PDAnnotationWidget widget)
-    {
-        PDAppearanceCharacteristicsDictionary  characteristicsDictionary = widget.getAppearanceCharacteristics();
-        if (characteristicsDictionary != null)
-        {
-            // 0 is the default value if the R key doesn't exist
-            return characteristicsDictionary.getRotation();
-        }
-        return 0;
-    }
-
 
     /**
      * Initialize the content of the appearance stream.
