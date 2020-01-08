@@ -24,8 +24,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import org.apache.fontbox.afm.AFMParser;
-import org.apache.fontbox.afm.FontMetrics;
+import com.tom_roush.fontbox.afm.AFMParser;
+import com.tom_roush.fontbox.afm.FontMetrics;
 
 /**
  * The "Standard 14" PDF fonts, also known as the "base 14" fonts.

@@ -20,7 +20,7 @@ package com.tom_roush.pdfbox.pdmodel.font;
 import java.lang.ref.SoftReference;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.apache.fontbox.FontBoxFont;
+import com.tom_roush.fontbox.FontBoxFont;
 
 /**
  * An in-memory cache for system fonts. This allows PDFBox to manage caching for a {@link FontProvider}.

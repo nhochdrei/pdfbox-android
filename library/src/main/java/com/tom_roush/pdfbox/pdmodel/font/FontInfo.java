@@ -17,7 +17,7 @@
 
 package com.tom_roush.pdfbox.pdmodel.font;
 
-import org.apache.fontbox.FontBoxFont;
+import com.tom_roush.fontbox.FontBoxFont;
 
 /**
  * Information about a font on the system.

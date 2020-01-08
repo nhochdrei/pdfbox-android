@@ -20,9 +20,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.fontbox.afm.FontMetrics;
-import org.apache.fontbox.pfb.PfbParser;
-import org.apache.fontbox.type1.Type1Font;
+import com.tom_roush.fontbox.afm.FontMetrics;
+import com.tom_roush.fontbox.pfb.PfbParser;
+import com.tom_roush.fontbox.type1.Type1Font;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.io.IOUtils;
@@ -107,7 +107,7 @@ class PDType1FontEmbedder
     static PDFontDescriptor buildFontDescriptor(Type1Font type1)
     {
         boolean isSymbolic = type1.getEncoding()
-                instanceof org.apache.fontbox.encoding.BuiltInEncoding;
+                instanceof com.tom_roush.fontbox.encoding.BuiltInEncoding;
 
         PDFontDescriptor fd = new PDFontDescriptor();
         fd.setFontName(type1.getName());

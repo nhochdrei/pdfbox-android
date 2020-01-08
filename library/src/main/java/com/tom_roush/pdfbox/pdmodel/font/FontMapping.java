@@ -17,7 +17,7 @@
 
 package com.tom_roush.pdfbox.pdmodel.font;
 
-import org.apache.fontbox.FontBoxFont;
+import com.tom_roush.fontbox.FontBoxFont;
 
 /**
  * A font mapping from a PDF font to a FontBox font.

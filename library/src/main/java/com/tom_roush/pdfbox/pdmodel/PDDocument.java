@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.fontbox.ttf.TrueTypeFont;
+import com.tom_roush.fontbox.ttf.TrueTypeFont;
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;

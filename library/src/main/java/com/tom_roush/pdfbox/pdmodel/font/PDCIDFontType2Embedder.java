@@ -30,12 +30,12 @@ import java.util.TreeSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.fontbox.ttf.GlyphData;
-import org.apache.fontbox.ttf.GlyphTable;
-import org.apache.fontbox.ttf.HorizontalMetricsTable;
-import org.apache.fontbox.ttf.TrueTypeFont;
-import org.apache.fontbox.ttf.VerticalHeaderTable;
-import org.apache.fontbox.ttf.VerticalMetricsTable;
+import com.tom_roush.fontbox.ttf.GlyphData;
+import com.tom_roush.fontbox.ttf.GlyphTable;
+import com.tom_roush.fontbox.ttf.HorizontalMetricsTable;
+import com.tom_roush.fontbox.ttf.TrueTypeFont;
+import com.tom_roush.fontbox.ttf.VerticalHeaderTable;
+import com.tom_roush.fontbox.ttf.VerticalMetricsTable;
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSInteger;

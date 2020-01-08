@@ -16,8 +16,8 @@
  */
 package com.tom_roush.pdfbox.pdmodel.font;
 
-import org.apache.fontbox.FontBoxFont;
-import org.apache.fontbox.ttf.TrueTypeFont;
+import com.tom_roush.fontbox.FontBoxFont;
+import com.tom_roush.fontbox.ttf.TrueTypeFont;
 
 /**
  * Font mapper, locates non-embedded fonts. If you implement this then you're responsible for

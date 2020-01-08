@@ -34,8 +34,8 @@ import com.tom_roush.pdfbox.pdmodel.graphics.state.PDGraphicsState;
 
 import java.io.IOException;
 
-import org.apache.fontbox.ttf.TrueTypeFont;
-import org.apache.fontbox.util.BoundingBox;
+import com.tom_roush.fontbox.ttf.TrueTypeFont;
+import com.tom_roush.fontbox.util.BoundingBox;
 import com.tom_roush.pdfbox.util.Matrix;
 import com.tom_roush.pdfbox.util.Vector;
 import com.tom_roush.pdfbox.contentstream.operator.DrawObject;

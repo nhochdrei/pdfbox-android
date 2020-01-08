@@ -28,11 +28,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
-import org.apache.fontbox.FontBoxFont;
-import org.apache.fontbox.ttf.OpenTypeFont;
-import org.apache.fontbox.ttf.TTFParser;
-import org.apache.fontbox.ttf.TrueTypeFont;
-import org.apache.fontbox.type1.Type1Font;
+import com.tom_roush.fontbox.FontBoxFont;
+import com.tom_roush.fontbox.ttf.OpenTypeFont;
+import com.tom_roush.fontbox.ttf.TTFParser;
+import com.tom_roush.fontbox.ttf.TrueTypeFont;
+import com.tom_roush.fontbox.type1.Type1Font;
 
 /**
  * Font mapper, locates non-embedded fonts via a pluggable FontProvider.

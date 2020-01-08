@@ -24,7 +24,7 @@ import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSFloat;
 import com.tom_roush.pdfbox.cos.COSNumber;
 
-import org.apache.fontbox.util.BoundingBox;
+import com.tom_roush.fontbox.util.BoundingBox;
 
 import com.tom_roush.pdfbox.util.Matrix;
 
