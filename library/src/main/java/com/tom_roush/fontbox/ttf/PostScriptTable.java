@@ -27,7 +27,6 @@ import java.io.IOException;
  */
 public class PostScriptTable extends TTFTable
 {
-    private static final Log LOG = LogFactory.getLog(PostScriptTable.class);
     private float formatType;
     private float italicAngle;
     private short underlinePosition;
@@ -145,15 +144,12 @@ public class PostScriptTable extends TTFTable
                 }
                 else
                 {
-                    LOG.debug("incorrect glyph name index " + index +
-                              ", valid numbers 0.." + WGL4Names.NUMBER_OF_MAC_GLYPHS);
                 }
             }
         }
         else if (formatType == 3.0f)
         {
             // no postscript information is provided.
-            LOG.debug("No PostScript name information is provided for the font " + font.getName());
         }
         initialized = true;
     }

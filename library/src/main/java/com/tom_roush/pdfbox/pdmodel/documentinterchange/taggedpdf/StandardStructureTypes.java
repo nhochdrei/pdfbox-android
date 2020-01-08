@@ -35,8 +35,7 @@ public class StandardStructureTypes
     /**
      * Log instance.
      */
-    private static final Log LOG = LogFactory.getLog(StandardStructureTypes.class);
-    
+
     // Grouping Elements
     /**
      * Document
@@ -307,11 +306,9 @@ public class StandardStructureTypes
                 }
                 catch (IllegalArgumentException e)
                 {
-                    LOG.error(e,e);
                 }
                 catch (IllegalAccessException e)
                 {
-                    LOG.error(e,e);
                 }
             }
         }

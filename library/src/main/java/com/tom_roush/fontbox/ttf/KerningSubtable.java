@@ -30,7 +30,6 @@ import java.util.Comparator;
  */
 public class KerningSubtable
 {
-    private static final Log LOG = LogFactory.getLog(KerningSubtable.class);
 
     // coverage field bit masks and values
     private static final int COVERAGE_HORIZONTAL = 0x0001;
@@ -155,7 +154,6 @@ public class KerningSubtable
         }
         else
         {
-            LOG.warn("No kerning subtable data available due to an unsupported kerning subtable version");
         }
         return kerning;
     }
@@ -171,7 +169,6 @@ public class KerningSubtable
     {
         if (pairs == null)
         {
-            LOG.warn("No kerning subtable data available due to an unsupported kerning subtable version");
             return 0;
         }
         return pairs.getKerning(l, r);
@@ -182,7 +179,6 @@ public class KerningSubtable
         int version = data.readUnsignedShort();
         if (version != 0)
         {
-            LOG.info("Unsupported kerning sub-table version: " + version);
             return;
         }
         int length = data.readUnsignedShort();
@@ -215,7 +211,6 @@ public class KerningSubtable
         }
         else
         {
-            LOG.debug("Skipped kerning subtable due to an unsupported kerning subtable version: " + format);
         }
     }
 
@@ -227,12 +222,10 @@ public class KerningSubtable
 
     private void readSubtable0Format2(TTFDataStream data)
     {
-        LOG.info("Kerning subtable format 2 not yet supported.");
     }
 
     private void readSubtable1(TTFDataStream data)
     {
-        LOG.info("Kerning subtable format 1 not yet supported.");
     }
 
     private static boolean isBitsSet(int bits, int mask, int shift)

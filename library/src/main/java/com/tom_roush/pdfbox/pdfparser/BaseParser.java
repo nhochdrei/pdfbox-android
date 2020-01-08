@@ -59,7 +59,6 @@ public abstract class BaseParser
     /**
      * Log instance.
      */
-    private static final Log LOG = LogFactory.getLog(BaseParser.class);
 
     protected static final int E = 'e';
     protected static final int N = 'n';
@@ -165,12 +164,10 @@ public abstract class BaseParser
         readExpectedChar('R');
         if (!(value instanceof COSInteger))
         {
-            LOG.error("expected number, actual=" + value + " at offset " + numOffset);
             return COSNull.NULL;
         }
         if (!(generationNumber instanceof COSInteger))
         {
-            LOG.error("expected number, actual=" + value + " at offset " + genOffset);
             return COSNull.NULL;
         }
         COSObjectKey key = new COSObjectKey(((COSInteger) value).longValue(),
@@ -218,7 +215,6 @@ public abstract class BaseParser
             else
             {
                 // invalid dictionary, we were expecting a /Name, read until the end or until we can recover
-                LOG.warn("Invalid dictionary, found: '" + c + "' but expected: '/' at offset " + seqSource.getPosition());
                 if (readUntilEndOfCOSDictionary())
                 {
                     // we couldn't recover
@@ -299,7 +295,6 @@ public abstract class BaseParser
 
         if (value == null)
         {
-            LOG.warn("Bad dictionary declaration at offset " + seqSource.getPosition());
         }
         else
         {
@@ -664,8 +659,6 @@ public abstract class BaseParser
             else
             {
                 //it could be a bad object in the array which is just skipped
-                LOG.warn("Corrupt object reference at offset " +
-                        seqSource.getPosition() + ", start offset: " + startPosition);
 
                 // This could also be an "endobj" or "endstream" which means we can assume that
                 // the array has ended.
@@ -739,7 +732,6 @@ public abstract class BaseParser
                     // check for premature EOF
                     if (ch2 == -1 || ch1 == -1)
                     {
-                        LOG.error("Premature EOF in BaseParser#parseCOSName");
                         c = -1;
                         break;
                     }

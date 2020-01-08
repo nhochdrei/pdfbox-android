@@ -29,7 +29,6 @@ import java.io.IOException;
 public class KerningTable extends TTFTable
 {
 
-    private static final Log LOG = LogFactory.getLog(KerningTable.class);
 
     /**
      * Tag to identify this table.
@@ -69,7 +68,6 @@ public class KerningTable extends TTFTable
         }
         else
         {
-            LOG.debug("Skipped kerning table due to an unsupported kerning table version: " + version);
         }
         if (numSubtables > 0)
         {

@@ -52,7 +52,6 @@ import com.tom_roush.pdfbox.util.Matrix;
  */
 class AppearanceGeneratorHelper
 {
-    private static final Log LOG = LogFactory.getLog(AppearanceGeneratorHelper.class);
 
     private static final Operator BMC = Operator.getOperator("BMC");
     private static final Operator EMC = Operator.getOperator("EMC");
@@ -136,13 +135,11 @@ class AppearanceGeneratorHelper
                     {
                         if (acroFormResources.getFont(fontResourceName) == null)
                         {
-                            LOG.debug("Adding font resource " + fontResourceName + " from widget to AcroForm");
                             acroFormResources.put(fontResourceName, widgetResources.getFont(fontResourceName));
                         }
                     }
                     catch (IOException e)
                     {
-                        LOG.warn("Unable to match field level font with AcroForm font");
                     }
                 }
             }
@@ -185,7 +182,6 @@ class AppearanceGeneratorHelper
             if (rect == null)
             {
                 widget.getCOSObject().removeItem(COSName.AP);
-                LOG.warn("widget of field " + field.getFullyQualifiedName() + " has no rectangle, no appearance stream created");
                 continue;
             }
 
@@ -453,18 +449,7 @@ class AppearanceGeneratorHelper
         {
             throw new IllegalArgumentException("font is null, check whether /DA entry is incomplete or incorrect");
         }
-        if (font.getName().contains("+"))
-        {
-            LOG.warn("Font '" + defaultAppearance.getFontName().getName() +
-                     "' of field '" + field.getFullyQualifiedName() + 
-                     "' contains subsetted font '" + font.getName() + "'");
-            LOG.warn("This may bring trouble with PDField.setValue(), PDAcroForm.flatten() or " +
-                     "PDAcroForm.refreshAppearances()");
-            LOG.warn("You should replace this font with a non-subsetted font:");
-            LOG.warn("PDFont font = PDType0Font.load(doc, new FileInputStream(fontfile), false);");
-            LOG.warn("acroForm.getDefaultResources().put(COSName.getPDFName(\"" +
-                     defaultAppearance.getFontName().getName() + "\", font);");
-        }
+
         
         // calculate the fontSize (because 0 = autosize)
         float fontSize = defaultAppearance.getFontSize();

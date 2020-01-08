@@ -64,7 +64,6 @@ public class PDFTextStripper extends LegacyPDFStreamEngine
     private static float defaultDropThreshold = 2.5f;
     private static final boolean useCustomQuickSort;
 
-    private static final Log LOG = LogFactory.getLog(PDFTextStripper.class);
 
     // enable the ability to set the default indent/drop thresholds
     // with -D system properties:
@@ -1849,13 +1848,10 @@ public class PDFTextStripper extends LegacyPDFStreamEngine
             }
             else
             {
-                LOG.warn("Could not find '" + path + "', mirroring char map will be empty: ");
             }
         }
         catch (IOException e)
         {
-            LOG.warn("Could not parse BidiMirroring.txt, mirroring char map will be empty: "
-                    + e.getMessage());
         }
         finally
         {
@@ -1865,7 +1861,6 @@ public class PDFTextStripper extends LegacyPDFStreamEngine
             }
             catch (IOException e)
             {
-                LOG.error("Could not close BidiMirroring.txt ", e);
             }
         }
     }

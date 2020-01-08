@@ -32,14 +32,12 @@ import com.tom_roush.pdfbox.contentstream.operator.OperatorName;
  */
 public final class ClosePath extends GraphicsOperatorProcessor
 {
-    private static final Log LOG = LogFactory.getLog(ClosePath.class);
-    
+
     @Override
     public void process(Operator operator, List<COSBase> operands) throws IOException
     {
         if (context.getCurrentPoint() == null)
         {
-            LOG.warn("ClosePath without initial MoveTo");
             return;
         }
         context.closePath();

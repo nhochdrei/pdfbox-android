@@ -36,7 +36,6 @@ import com.tom_roush.pdfbox.cos.COSDictionary;
  */
 final class FlateFilter extends Filter
 {
-    private static final Log LOG = LogFactory.getLog(FlateFilter.class);
     private static final int BUFFER_SIZE = 0x4000;
 
     @Override
@@ -52,7 +51,6 @@ final class FlateFilter extends Filter
         catch (DataFormatException e)
         {
             // if the stream is corrupt a DataFormatException may occur
-            LOG.error("FlateFilter: stop reading corrupt stream due to a DataFormatException");
 
             // re-throw the exception
             throw new IOException(e);
@@ -87,7 +85,6 @@ final class FlateFilter extends Filter
                     if (dataWritten)
                     {
                         // some data could be read -> don't throw an exception
-                        LOG.warn("FlateFilter: premature end of stream due to a DataFormatException");
                         break;
                     }
                     else

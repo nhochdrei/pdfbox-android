@@ -38,7 +38,6 @@ public class PDFObjectStreamParser extends BaseParser
     /**
      * Log instance.
      */
-    private static final Log LOG = LogFactory.getLog(PDFObjectStreamParser.class);
 
     private List<COSObject> streamObjects = null;
     private final COSStream stream;
@@ -91,16 +90,11 @@ public class PDFObjectStreamParser extends BaseParser
                 object.setGenerationNumber(0);
                 if (objectCounter >= objectNumbers.size())
                 {
-                    LOG.error("/ObjStm (object stream) has more objects than /N " + numberOfObjects);
                     break;
                 }
                 object.setObjectNumber( objectNumbers.get( objectCounter) );
                 streamObjects.add( object );
-                if(LOG.isDebugEnabled())
-                {
-                    LOG.debug( "parsed=" + object );
-                }
-                // According to the spec objects within an object stream shall not be enclosed 
+                // According to the spec objects within an object stream shall not be enclosed
                 // by obj/endobj tags, but there are some pdfs in the wild using those tags 
                 // skip endobject marker if present
                 if (!seqSource.isEOF() && seqSource.peek() == 'e')

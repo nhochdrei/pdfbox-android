@@ -35,7 +35,6 @@ import java.util.Map.Entry;
  */
 public class CmapSubtable implements CmapLookup
 {
-    private static final Log LOG = LogFactory.getLog(CmapSubtable.class);
 
     private static final long LEAD_OFFSET = 0xD800 - (0x10000 >> 10);
     private static final long SURROGATE_OFFSET = 0x10000 - (0xD800 << 10) - 0xDC00;
@@ -144,7 +143,6 @@ public class CmapSubtable implements CmapLookup
         characterCodeToGlyphId = new HashMap<Integer, Integer>(numGlyphs);
         if (numGlyphs == 0)
         {
-            LOG.warn("subtable has no glyphs");
             return;
         }
         // -- Read all sub header
@@ -242,7 +240,6 @@ public class CmapSubtable implements CmapLookup
         characterCodeToGlyphId = new HashMap<Integer, Integer>(numGlyphs);
         if (numGlyphs == 0)
         {
-            LOG.warn("subtable has no glyphs");
             return;
         }
         for (long i = 0; i < nbGroups; ++i)
@@ -269,13 +266,11 @@ public class CmapSubtable implements CmapLookup
                 long glyphIndex = startGlyph + j;
                 if (glyphIndex >= numGlyphs)
                 {
-                    LOG.warn("Format 12 cmap contains an invalid glyph index");
                     break;
                 }
 
                 if (firstCode + j > 0x10FFFF)
                 {
-                    LOG.warn("Format 12 cmap contains character beyond UCS-4");
                 }
 
                 glyphIdToCharacterCode[(int) glyphIndex] = (int) (firstCode + j);
@@ -298,7 +293,6 @@ public class CmapSubtable implements CmapLookup
         characterCodeToGlyphId = new HashMap<Integer, Integer>(numGlyphs);
         if (numGlyphs == 0)
         {
-            LOG.warn("subtable has no glyphs");
             return;
         }
         for (long i = 0; i < nbGroups; ++i)
@@ -309,7 +303,6 @@ public class CmapSubtable implements CmapLookup
 
             if (glyphId > numGlyphs)
             {
-                LOG.warn("Format 13 cmap contains an invalid glyph index");
                 break;
             }
 
@@ -333,7 +326,6 @@ public class CmapSubtable implements CmapLookup
 
                 if (firstCode + j > 0x10FFFF)
                 {
-                    LOG.warn("Format 13 cmap contains character beyond UCS-4");
                 }
 
                 glyphIdToCharacterCode[(int) glyphId] = (int) (firstCode + j);
@@ -353,7 +345,6 @@ public class CmapSubtable implements CmapLookup
     {
         // Unicode Variation Sequences (UVS)
         // see http://blogs.adobe.com/CCJKType/2013/05/opentype-cmap-table-ramblings.html
-        LOG.warn("Format 14 cmap table is not supported and will be ignored");
     }
 
     /**
@@ -446,7 +437,6 @@ public class CmapSubtable implements CmapLookup
          */
         if (characterCodeToGlyphId.isEmpty())
         {
-            LOG.warn("cmap format 4 subtable is empty");
             return;
         }
         buildGlyphIdToCharacterCodeLookup(maxGlyphId);
@@ -512,7 +502,6 @@ public class CmapSubtable implements CmapLookup
         characterCodeToGlyphId = new HashMap<Integer, Integer>(numGlyphs);
         if (numGlyphs == 0)
         {
-            LOG.warn("subtable has no glyphs");
             return;
         }
         for (int i = 0; i <= maxSubHeaderIndex; ++i)
@@ -546,7 +535,6 @@ public class CmapSubtable implements CmapLookup
                 
                 if (p >= numGlyphs)
                 {
-                    LOG.warn("glyphId " + p + " for charcode " + charCode + " ignored, numGlyphs is " + numGlyphs);
                     continue;
                 }
                 

@@ -36,8 +36,7 @@ import org.w3c.dom.Element;
  */
 public class FDFAnnotationFreeText extends FDFAnnotation
 {
-    private static final Log LOG = LogFactory.getLog(FDFAnnotationFreeText.class);
- 
+
     /**
      * COS Model value for SubType entry.
      */
@@ -83,7 +82,6 @@ public class FDFAnnotationFreeText extends FDFAnnotation
         }
         catch (XPathExpressionException ex)
         {
-            LOG.debug("Error while evaluating XPath expression");
         }
         initCallout(element);
         String rotation = element.getAttribute("rotation");

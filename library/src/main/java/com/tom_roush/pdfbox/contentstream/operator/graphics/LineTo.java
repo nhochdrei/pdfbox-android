@@ -35,8 +35,7 @@ import com.tom_roush.pdfbox.contentstream.operator.OperatorName;
  */
 public class LineTo extends GraphicsOperatorProcessor
 {
-    private static final Log LOG = LogFactory.getLog(LineTo.class);
-    
+
     @Override
     public void process(Operator operator, List<COSBase> operands) throws IOException
     {

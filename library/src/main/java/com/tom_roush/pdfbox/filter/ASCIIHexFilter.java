@@ -32,7 +32,6 @@ import com.tom_roush.pdfbox.util.Hex;
  */
 final class ASCIIHexFilter extends Filter
 {
-    private static final Log LOG = LogFactory.getLog(ASCIIHexFilter.class);
 
     private static final int[] REVERSE_HEX = {
       /*   0 */  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -82,7 +81,6 @@ final class ASCIIHexFilter extends Filter
        
             if (REVERSE_HEX[firstByte] == -1)
             {
-                LOG.error("Invalid hex, int: " + firstByte + " char: " + (char)firstByte);
             }
             value = REVERSE_HEX[firstByte] * 16;
             secondByte = encoded.read();
@@ -97,7 +95,6 @@ final class ASCIIHexFilter extends Filter
             {
                 if (REVERSE_HEX[secondByte] == -1)
                 {
-                    LOG.error("Invalid hex, int: " + secondByte + " char: " + (char)secondByte);
                 }
                 value += REVERSE_HEX[secondByte];
             }
