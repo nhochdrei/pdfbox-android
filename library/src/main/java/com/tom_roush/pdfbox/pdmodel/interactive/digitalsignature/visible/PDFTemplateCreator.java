@@ -106,12 +106,12 @@ public class PDFTemplateCreator
         pdfBuilder.createAcroFormDictionary(acroForm, pdSignatureField);
         
         // create AffineTransform
-        pdfBuilder.createAffineTransform(properties.getTransform());
+        pdfBuilder.createAffineTransform(properties.getAffineTransformParams());
         AffineTransform transform = pdfStructure.getAffineTransform();
        
         // rectangle, formatter, image. /AcroForm/DR/XObject contains that form
         pdfBuilder.createSignatureRectangle(pdSignatureField, properties);
-        pdfBuilder.createFormatterRectangle(properties.getFormatterRectangleParameters());
+        pdfBuilder.createFormatterRectangle(properties.getFormatterRectangleParams());
         PDRectangle bbox = pdfStructure.getFormatterRectangle();
         pdfBuilder.createSignatureImage(template, properties.getImage());
 
@@ -142,9 +142,7 @@ public class PDFTemplateCreator
         PDResources imageFormResources = pdfStructure.getImageFormResources();
         pdfBuilder.createImageForm(imageFormResources, innerFormResource, imageFormStream, bbox,
                 transform, pdfStructure.getImage());
-        
-        pdfBuilder.createBackgroundLayerForm(innerFormResource, bbox);
-       
+
         // now inject procSetArray
         pdfBuilder.injectProcSetArray(innerForm, page, innerFormResource, imageFormResources,
                 holderFormResources, pdfStructure.getProcSet());
