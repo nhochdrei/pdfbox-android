@@ -17,7 +17,7 @@
 
 package com.tom_roush.pdfbox.pdmodel.font;
 
-import com.tom_roush.awt.geom.AffineTransform;
+import com.tom_roush.harmony.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Point2D;
 import java.io.IOException;

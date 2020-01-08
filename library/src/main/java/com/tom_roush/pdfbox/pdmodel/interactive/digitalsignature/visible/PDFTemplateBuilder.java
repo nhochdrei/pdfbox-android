@@ -16,7 +16,7 @@
  */
 package com.tom_roush.pdfbox.pdmodel.interactive.digitalsignature.visible;
 
-import com.tom_roush.awt.geom.AffineTransform;
+import com.tom_roush.harmony.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
@@ -42,7 +42,7 @@ public interface PDFTemplateBuilder
      * In order to create Affine Transform, using parameters.
      * 
      * @param params parameter values
-     * @deprecated use {@link #createAffineTransform(com.tom_roush.awt.geom.AffineTransform) }
+     * @deprecated use {@link #createAffineTransform(com.tom_roush.harmony.awt.geom.AffineTransform) }
      */
     @Deprecated
     void createAffineTransform(byte[] params);

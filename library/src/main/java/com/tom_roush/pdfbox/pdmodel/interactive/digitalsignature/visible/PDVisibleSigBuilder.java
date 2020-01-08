@@ -16,7 +16,7 @@
  */
 package com.tom_roush.pdfbox.pdmodel.interactive.digitalsignature.visible;
 
-import com.tom_roush.awt.geom.AffineTransform;
+import com.tom_roush.harmony.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -163,7 +163,7 @@ public class PDVisibleSigBuilder implements PDFTemplateBuilder
     /**
      * {@inheritDoc }
      *
-     * @deprecated use {@link #createAffineTransform(com.tom_roush.awt.geom.AffineTransform) }
+     * @deprecated use {@link #createAffineTransform(com.tom_roush.harmony.awt.geom.AffineTransform) }
      */
     @Override
     @Deprecated

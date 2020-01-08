@@ -16,7 +16,7 @@
  */
 package com.tom_roush.pdfbox.multipdf;
 
-import com.tom_roush.awt.geom.AffineTransform;
+import com.tom_roush.harmony.awt.geom.AffineTransform;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;

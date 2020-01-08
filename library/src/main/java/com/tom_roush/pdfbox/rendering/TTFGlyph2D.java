@@ -18,7 +18,7 @@
  */
 package com.tom_roush.pdfbox.rendering;
 
-import com.tom_roush.awt.geom.AffineTransform;
+import com.tom_roush.harmony.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.io.IOException;
 import java.util.HashMap;

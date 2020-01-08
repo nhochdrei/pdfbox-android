@@ -16,7 +16,7 @@
  */
 package com.tom_roush.pdfbox.pdmodel.graphics.form;
 
-import com.tom_roush.awt.geom.AffineTransform;
+import com.tom_roush.harmony.awt.geom.AffineTransform;
 import java.io.IOException;
 import java.io.InputStream;
 import com.tom_roush.pdfbox.contentstream.PDContentStream;

@@ -17,7 +17,7 @@
 package com.tom_roush.pdfbox.pdmodel;
 
 import java.awt.Color;
-import com.tom_roush.awt.geom.AffineTransform;
+import com.tom_roush.harmony.awt.geom.AffineTransform;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;

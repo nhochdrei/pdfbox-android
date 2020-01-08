@@ -17,7 +17,7 @@
 
 package com.tom_roush.pdfbox.pdmodel.interactive.annotation.handlers;
 
-import com.tom_roush.awt.geom.AffineTransform;
+import com.tom_roush.harmony.awt.geom.AffineTransform;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;

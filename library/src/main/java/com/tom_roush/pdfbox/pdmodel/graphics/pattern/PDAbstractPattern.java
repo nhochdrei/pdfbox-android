@@ -16,7 +16,7 @@
  */
 package com.tom_roush.pdfbox.pdmodel.graphics.pattern;
 
-import com.tom_roush.awt.geom.AffineTransform;
+import com.tom_roush.harmony.awt.geom.AffineTransform;
 import java.io.IOException;
 
 import com.tom_roush.pdfbox.cos.COSArray;

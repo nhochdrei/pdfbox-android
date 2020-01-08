@@ -18,7 +18,7 @@ package com.tom_roush.pdfbox.pdmodel.graphics.shading;
 import java.awt.PaintContext;
 import java.awt.Point;
 import java.awt.Rectangle;
-import com.tom_roush.awt.geom.AffineTransform;
+import com.tom_roush.harmony.awt.geom.AffineTransform;
 import java.awt.image.ColorModel;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;

@@ -16,7 +16,7 @@
 package com.tom_roush.pdfbox.rendering;
 
 import java.awt.Paint;
-import com.tom_roush.awt.geom.AffineTransform;
+import com.tom_roush.harmony.awt.geom.AffineTransform;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.Map;

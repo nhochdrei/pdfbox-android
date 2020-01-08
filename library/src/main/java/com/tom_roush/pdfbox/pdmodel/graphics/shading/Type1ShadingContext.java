@@ -16,7 +16,7 @@
 package com.tom_roush.pdfbox.pdmodel.graphics.shading;
 
 import java.awt.PaintContext;
-import com.tom_roush.awt.geom.AffineTransform;
+import com.tom_roush.harmony.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.image.ColorModel;
 import java.awt.image.Raster;

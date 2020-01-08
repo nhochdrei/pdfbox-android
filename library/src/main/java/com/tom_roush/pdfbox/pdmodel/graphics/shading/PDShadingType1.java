@@ -17,7 +17,7 @@
 package com.tom_roush.pdfbox.pdmodel.graphics.shading;
 
 import java.awt.Paint;
-import com.tom_roush.awt.geom.AffineTransform;
+import com.tom_roush.harmony.awt.geom.AffineTransform;
 
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSDictionary;
