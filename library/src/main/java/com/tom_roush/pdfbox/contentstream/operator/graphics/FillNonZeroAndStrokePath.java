@@ -16,14 +16,13 @@
  */
 package com.tom_roush.pdfbox.contentstream.operator.graphics;
 
+import android.graphics.Path;
+
+import java.io.IOException;
 import java.util.List;
 
-import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.contentstream.operator.Operator;
-import com.tom_roush.pdfbox.contentstream.operator.OperatorName;
-
-import java.awt.geom.Path2D;
-import java.io.IOException;
+import com.tom_roush.pdfbox.cos.COSBase;
 
 /**
  * B Fill and then stroke the path, using the nonzero winding number rule to determine the region
@@ -36,12 +35,12 @@ public class FillNonZeroAndStrokePath extends GraphicsOperatorProcessor
     @Override
     public void process(Operator operator, List<COSBase> operands) throws IOException
     {
-        context.fillAndStrokePath(Path2D.WIND_NON_ZERO);
+        context.fillAndStrokePath(Path.FillType.WINDING);
     }
 
     @Override
     public String getName()
     {
-        return OperatorName.FILL_NON_ZERO_AND_STROKE;
+        return "B";
     }
 }

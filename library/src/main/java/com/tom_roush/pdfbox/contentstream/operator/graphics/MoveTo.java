@@ -16,15 +16,15 @@
  */
 package com.tom_roush.pdfbox.contentstream.operator.graphics;
 
-import java.awt.geom.Point2D;
+import android.graphics.PointF;
+
 import java.io.IOException;
 import java.util.List;
-import com.tom_roush.pdfbox.contentstream.operator.MissingOperandException;
 
+import com.tom_roush.pdfbox.contentstream.operator.MissingOperandException;
+import com.tom_roush.pdfbox.contentstream.operator.Operator;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSNumber;
-import com.tom_roush.pdfbox.contentstream.operator.Operator;
-import com.tom_roush.pdfbox.contentstream.operator.OperatorName;
 
 /**
  * m Begins a new subpath.
@@ -50,15 +50,15 @@ public final class MoveTo extends GraphicsOperatorProcessor
         {
             return;
         }
-        COSNumber x = (COSNumber) base0;
-        COSNumber y = (COSNumber) base1;
-        Point2D.Float pos = context.transformedPoint(x.floatValue(), y.floatValue());
+        COSNumber x = (COSNumber)base0;
+        COSNumber y = (COSNumber)base1;
+        PointF pos = context.transformedPoint(x.floatValue(), y.floatValue());
         context.moveTo(pos.x, pos.y);
     }
 
     @Override
     public String getName()
     {
-        return OperatorName.MOVE_TO;
+        return "m";
     }
 }

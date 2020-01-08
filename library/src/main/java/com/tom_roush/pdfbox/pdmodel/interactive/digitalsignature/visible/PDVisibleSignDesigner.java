@@ -16,25 +16,20 @@
  */
 package com.tom_roush.pdfbox.pdmodel.interactive.digitalsignature.visible;
 
-import com.tom_roush.harmony.awt.geom.AffineTransform;
-import java.awt.image.BufferedImage;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 
-import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import javax.imageio.ImageIO;
-
-import com.tom_roush.pdfbox.io.IOUtils;
 import com.tom_roush.pdfbox.pdmodel.PDDocument;
 import com.tom_roush.pdfbox.pdmodel.PDPage;
 import com.tom_roush.pdfbox.pdmodel.common.PDRectangle;
 
 /**
- * Class for visible signature design properties. Setters use param() instead of setParam() to allow
- * chaining.
+ * Builder for visible signature design.
+ * Uses use param() instead of setParam()
  *
  * @author Vakhtang Koroghlishvili
  */
@@ -46,13 +41,11 @@ public class PDVisibleSignDesigner
     private float yAxis;
     private float pageHeight;
     private float pageWidth;
-    private BufferedImage image;
+    private Bitmap image;
     private String signatureFieldName = "sig";
     private byte[] formatterRectangleParams = { 0, 0, 100, 50 };
-    private int[] formatterRectangleParameters = { 0, 0, 100, 50 };
-    private AffineTransform affineTransform = new AffineTransform();
+    private byte[] AffineTransformParams = { 1, 0, 0, 1, 0, 0 };
     private float imageSizeInPercents;
-    private int rotation = 0;
 
     /**
      * Constructor.
@@ -60,16 +53,13 @@ public class PDVisibleSignDesigner
      * @param filename Path of the PDF file
      * @param imageStream image as a stream
      * @param page The 1-based page number for which the page size should be calculated.
+     *
      * @throws IOException
      */
     public PDVisibleSignDesigner(String filename, InputStream imageStream, int page)
-            throws IOException
+        throws IOException
     {
-        // set visible signature image Input stream
-        readImageStream(imageStream);
-
-        // calculate height and width of document page
-        calculatePageSizeFromFile(filename, page);
+        this(new FileInputStream(filename), imageStream, page);
     }
 
     /**
@@ -78,16 +68,22 @@ public class PDVisibleSignDesigner
      * @param documentStream Original PDF document as stream
      * @param imageStream Image as a stream
      * @param page The 1-based page number for which the page size should be calculated.
+     *
      * @throws IOException
      */
     public PDVisibleSignDesigner(InputStream documentStream, InputStream imageStream, int page)
-            throws IOException
+        throws IOException
     {
         // set visible signature image Input stream
         readImageStream(imageStream);
 
+        // create PD document
+        PDDocument document = PDDocument.load(documentStream);
+
         // calculate height and width of document page
-        calculatePageSizeFromStream(documentStream, page);
+        calculatePageSize(document, page);
+
+        document.close();
     }
 
     /**
@@ -96,9 +92,11 @@ public class PDVisibleSignDesigner
      * @param document Already created PDDocument of your PDF document.
      * @param imageStream Image as a stream.
      * @param page The 1-based page number for which the page size should be calculated.
+     *
      * @throws IOException If we can't read, flush, or can't close stream.
      */
-    public PDVisibleSignDesigner(PDDocument document, InputStream imageStream, int page) throws IOException
+    public PDVisibleSignDesigner(PDDocument document, InputStream imageStream, int page)
+        throws IOException
     {
         readImageStream(imageStream);
         calculatePageSize(document, page);
@@ -110,16 +108,12 @@ public class PDVisibleSignDesigner
      * @param filename Path of the PDF file
      * @param image
      * @param page The 1-based page number for which the page size should be calculated.
+     *
      * @throws IOException
      */
-    public PDVisibleSignDesigner(String filename, BufferedImage image, int page)
-            throws IOException
+    public PDVisibleSignDesigner(String filename, Bitmap image, int page) throws IOException
     {
-        // set visible signature image
-        setImage(image);
-
-        // calculate height and width of document page
-        calculatePageSizeFromFile(filename, page);
+        this(new FileInputStream(filename), image, page);
     }
 
     /**
@@ -130,14 +124,19 @@ public class PDVisibleSignDesigner
      * @param page The 1-based page number for which the page size should be calculated.
      * @throws IOException
      */
-    public PDVisibleSignDesigner(InputStream documentStream, BufferedImage image, int page)
-            throws IOException
+    public PDVisibleSignDesigner(InputStream documentStream, Bitmap image, int page)
+        throws IOException
     {
         // set visible signature image
         setImage(image);
 
+        // create PD document
+        PDDocument document = PDDocument.load(documentStream);
+
         // calculate height and width of document page
-        calculatePageSizeFromStream(documentStream, page);
+        calculatePageSize(document, page);
+
+        document.close();
     }
 
     /**
@@ -147,44 +146,10 @@ public class PDVisibleSignDesigner
      * @param image
      * @param page The 1-based page number for which the page size should be calculated.
      */
-    public PDVisibleSignDesigner(PDDocument document, BufferedImage image, int page)
+    public PDVisibleSignDesigner(PDDocument document, Bitmap image, int page)
     {
         setImage(image);
         calculatePageSize(document, page);
-    }
-
-    /**
-     * Constructor usable for signing existing signature fields.
-     *
-     * @param imageStream image as a stream
-     * @throws IOException
-     */
-    public PDVisibleSignDesigner(InputStream imageStream) throws IOException
-    {
-        // set visible signature image Input stream
-        readImageStream(imageStream);
-    }
-
-    private void calculatePageSizeFromFile(String filename, int page) throws IOException
-    {
-        // create PD document
-        PDDocument document = PDDocument.load(new File(filename));
-
-        // calculate height and width of document page
-        calculatePageSize(document, page);
-
-        document.close();
-    }
-
-    private void calculatePageSizeFromStream(InputStream documentStream, int page) throws IOException
-    {
-        // create PD document
-        PDDocument document = PDDocument.load(documentStream);
-
-        // calculate height and width of document page
-        calculatePageSize(document, page);
-
-        document.close();
     }
 
     /**
@@ -206,97 +171,38 @@ public class PDVisibleSignDesigner
         PDRectangle mediaBox = firstPage.getMediaBox();
         pageHeight(mediaBox.getHeight());
         pageWidth = mediaBox.getWidth();
-        imageSizeInPercents = 100;
-        rotation = firstPage.getRotation() % 360;
-    }
 
-    /**
-     * Adjust signature for page rotation. This is optional, call this after all x and y coordinates
-     * have been set if you want the signature to be positioned regardless of page orientation.
-     *
-     * @return Visible Signature Configuration Object
-     */
-    public PDVisibleSignDesigner adjustForRotation()
-    {
-        switch (rotation)
-        {
-            case 90:
-                // https://stackoverflow.com/a/34359956/535646
-                float temp = yAxis;
-                yAxis = pageHeight - xAxis - imageWidth;
-                xAxis = temp;
-
-                affineTransform = new AffineTransform(
-                        0, imageHeight / imageWidth, -imageWidth / imageHeight, 0, imageWidth, 0);
-
-                temp = imageHeight;
-                imageHeight = imageWidth;
-                imageWidth = temp;
-                break;
-
-            case 180:
-                float newX = pageWidth - xAxis - imageWidth;
-                float newY = pageHeight - yAxis - imageHeight;
-                xAxis = newX;
-                yAxis = newY;
-
-                affineTransform = new AffineTransform(-1, 0, 0, -1, imageWidth, imageHeight);
-                break;
-
-            case 270:
-                temp = xAxis;
-                xAxis = pageWidth - yAxis - imageHeight;
-                yAxis = temp;
-
-                affineTransform = new AffineTransform(
-                        0, -imageHeight / imageWidth, imageWidth / imageHeight, 0, 0, imageHeight);
-
-                temp = imageHeight;
-                imageHeight = imageWidth;
-                imageWidth = temp;
-                break;
-
-            case 0:
-            default:
-                break;
-        }
-        return this;
+        float x = pageWidth;
+        float y = 0;
+        pageWidth += y;
+        float tPercent = (100 * y / (x + y));
+        imageSizeInPercents = 100 - tPercent;
     }
 
     /**
      * Set the image for the signature.
      *
-     * @param path Path of the image file.
-     * @return Visible Signature Configuration Object
+     * @param path of image location
+     * @return image Stream
      * @throws IOException
      */
     public PDVisibleSignDesigner signatureImage(String path) throws IOException
     {
-        InputStream in = null;
-        try
-        {
-            in = new BufferedInputStream(new FileInputStream(path));
-            readImageStream(in);
-        }
-        finally
-        {
-            IOUtils.closeQuietly(in);
-        }
+        InputStream fin = new FileInputStream(path);
+        readImageStream(fin);
         return this;
     }
 
     /**
      * Zoom signature image with some percent.
      * 
-     * @param percent increase (positive value) or decrease (negative value) image with x percent.
+     * @param percent increase image with x percent.
      * @return Visible Signature Configuration Object
      */
     public PDVisibleSignDesigner zoom(float percent)
     {
         imageHeight += (imageHeight * percent) / 100;
         imageWidth += (imageWidth * percent) / 100;
-        formatterRectangleParameters[2] = (int) imageWidth.floatValue();
-        formatterRectangleParameters[3] = (int) imageHeight.floatValue();
         return this;
     }
 
@@ -370,7 +276,6 @@ public class PDVisibleSignDesigner
     public PDVisibleSignDesigner width(float width)
     {
         this.imageWidth = width;
-        this.formatterRectangleParameters[2] = (int) width;
         return this;
     }
 
@@ -384,14 +289,13 @@ public class PDVisibleSignDesigner
     }
 
     /**
-     * 
+     *
      * @param height signature image height
      * @return Visible Signature Configuration Object
      */
     public PDVisibleSignDesigner height(float height)
     {
         this.imageHeight = height;
-        this.formatterRectangleParameters[3] = (int) height;
         return this;
     }
 
@@ -439,7 +343,7 @@ public class PDVisibleSignDesigner
      * 
      * @return image Image
      */
-    public BufferedImage getImage()
+    public Bitmap getImage()
     {
         return image;
     }
@@ -452,8 +356,7 @@ public class PDVisibleSignDesigner
      */
     private void readImageStream(InputStream stream) throws IOException
     {
-        ImageIO.setUseCache(false);
-        setImage(ImageIO.read(stream));
+        setImage(BitmapFactory.decodeStream(stream));
     }
 
     /**
@@ -461,110 +364,51 @@ public class PDVisibleSignDesigner
      *
      * @param image
      */
-    private void setImage(BufferedImage image)
+    private void setImage(Bitmap image)
     {
         this.image = image;
-        imageHeight = (float) image.getHeight();
-        imageWidth = (float) image.getWidth();
-        formatterRectangleParameters[2] = image.getWidth();
-        formatterRectangleParameters[3] = image.getHeight();
+        imageHeight = (float)image.getHeight();
+        imageWidth = (float)image.getWidth();
     }
 
     /**
-     * @return Affine Transform parameters for PDF Matrix
      * 
-     * @deprecated use {@link #getTransform() }.
+     * @return Affine Transform parameters of for PDF Matrix
      */
-    @Deprecated
     public byte[] getAffineTransformParams()
     {
-        return new byte[] 
-        {
-            (byte) affineTransform.getScaleX(), 
-            (byte) affineTransform.getShearY(), 
-            (byte) affineTransform.getShearX(), 
-            (byte) affineTransform.getScaleY(), 
-            (byte) affineTransform.getTranslateX(), 
-            (byte) affineTransform.getTranslateY()
-        };
-    }
-
-    /**
-     * @return Affine Transform parameters for PDF Matrix
-     */
-    public AffineTransform getTransform()
-    {
-        return affineTransform;
+        return AffineTransformParams;
     }
 
     /**
      * 
      * @param affineTransformParams
      * @return Visible Signature Configuration Object
-     * @deprecated use {@link #transform}.
      */
-    @Deprecated
     public PDVisibleSignDesigner affineTransformParams(byte[] affineTransformParams)
     {
-        affineTransform = new AffineTransform(affineTransformParams[0], affineTransformParams[1],
-                affineTransformParams[2], affineTransformParams[3],
-                affineTransformParams[4], affineTransformParams[5]);
+        AffineTransformParams = affineTransformParams;
         return this;
     }
 
     /**
      * 
-     * @param affineTransform
-     * @return Visible Signature Configuration Object
+     * @return formatter PDRectanle parameters
      */
-    public PDVisibleSignDesigner transform(AffineTransform affineTransform)
-    {
-        this.affineTransform = new AffineTransform(affineTransform);
-        return this;
-    }
-    
-    /**
-     * @return formatter PDRectangle parameters
-     * @deprecated use {@link #getFormatterRectangleParameters() getFormatterRectangleParameters()}
-     */
-    @Deprecated
     public byte[] getFormatterRectangleParams()
     {
         return formatterRectangleParams;
     }
 
     /**
-     * 
-     * @return formatter PDRectangle parameters
-     */
-    public int[] getFormatterRectangleParameters()
-    {
-        return formatterRectangleParameters;
-    }
-
-    /**
      * Sets formatter PDRectangle
-     * 
+     *
      * @param formatterRectangleParams
      * @return Visible Signature Configuration Object
-     * @deprecated use {@link #formatterRectangleParameters(int[]) formatterRectangleParameters(int[])}
      */
-    @Deprecated
     public PDVisibleSignDesigner formatterRectangleParams(byte[] formatterRectangleParams)
     {
         this.formatterRectangleParams = formatterRectangleParams;
-        return this;
-    }
-
-    /**
-     * Sets formatter PDRectangle
-     * 
-     * @param formatterRectangleParameters
-     * @return Visible Signature Configuration Object
-     */
-    public PDVisibleSignDesigner formatterRectangleParameters(int[] formatterRectangleParameters)
-    {
-        this.formatterRectangleParameters = formatterRectangleParameters;
         return this;
     }
 

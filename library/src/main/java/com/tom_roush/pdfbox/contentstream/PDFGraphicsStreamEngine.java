@@ -42,7 +42,6 @@ import com.tom_roush.pdfbox.contentstream.operator.graphics.CloseFillEvenOddAndS
 import com.tom_roush.pdfbox.contentstream.operator.graphics.CloseFillNonZeroAndStrokePath;
 import com.tom_roush.pdfbox.contentstream.operator.graphics.ClosePath;
 import com.tom_roush.pdfbox.contentstream.operator.graphics.CurveTo;
-import com.tom_roush.pdfbox.contentstream.operator.graphics.CurveToReplicateFinalPoint;
 import com.tom_roush.pdfbox.contentstream.operator.graphics.CurveToReplicateInitialPoint;
 import com.tom_roush.pdfbox.contentstream.operator.graphics.DrawObject;
 import com.tom_roush.pdfbox.contentstream.operator.graphics.EndPath;
@@ -164,7 +163,6 @@ public abstract class PDFGraphicsStreamEngine extends PDFStreamEngine
         addOperator(new SetLineWidth());
         addOperator(new ClipNonZeroRule());
         addOperator(new ClipEvenOddRule());
-        addOperator(new CurveToReplicateFinalPoint());
         addOperator(new ShowTextLine());
         addOperator(new ShowTextLineAndSpace());
     }
