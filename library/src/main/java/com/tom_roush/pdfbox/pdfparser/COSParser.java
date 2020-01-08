@@ -33,8 +33,8 @@ import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 import java.util.TreeMap;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
+
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;

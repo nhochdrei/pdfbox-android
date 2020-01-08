@@ -21,8 +21,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
+
 import com.tom_roush.pdfbox.contentstream.PDContentStream;
 import com.tom_roush.pdfbox.contentstream.operator.Operator;
 import com.tom_roush.pdfbox.contentstream.operator.OperatorName;

@@ -19,8 +19,8 @@ package com.tom_roush.pdfbox.contentstream.operator.state;
 import java.io.IOException;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
+
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;

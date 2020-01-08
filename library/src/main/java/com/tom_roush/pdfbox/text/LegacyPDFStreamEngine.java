@@ -17,8 +17,8 @@
 package com.tom_roush.pdfbox.text;
 
 import java.io.InputStream;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
+
 import com.tom_roush.pdfbox.contentstream.PDFStreamEngine;
 import com.tom_roush.pdfbox.pdmodel.PDPage;
 import com.tom_roush.pdfbox.pdmodel.font.encoding.GlyphList;

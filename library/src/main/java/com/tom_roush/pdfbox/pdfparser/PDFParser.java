@@ -19,8 +19,8 @@ package com.tom_roush.pdfbox.pdfparser;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
+
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSDocument;

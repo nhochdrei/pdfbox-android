@@ -20,8 +20,8 @@ import java.io.IOException;
 import java.util.List;
 import java.awt.geom.Point2D;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
+
 import com.tom_roush.pdfbox.contentstream.operator.MissingOperandException;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSNumber;

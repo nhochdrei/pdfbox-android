@@ -22,8 +22,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
+
 import com.tom_roush.pdfbox.cos.COSDocument;
 import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.pdfwriter.COSWriter;

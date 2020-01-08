@@ -30,8 +30,8 @@ import java.util.Arrays;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
+
 
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSName;

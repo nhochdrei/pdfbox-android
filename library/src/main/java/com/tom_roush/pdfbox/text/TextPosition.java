@@ -20,8 +20,8 @@ import java.text.Normalizer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
+
 import com.tom_roush.pdfbox.pdmodel.font.PDFont;
 import com.tom_roush.pdfbox.util.Matrix;
 

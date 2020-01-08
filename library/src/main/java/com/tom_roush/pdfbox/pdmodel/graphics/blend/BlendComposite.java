@@ -24,8 +24,8 @@ import java.awt.color.ColorSpace;
 import java.awt.image.ColorModel;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
+
 
 /**
  * AWT composite for blend modes.

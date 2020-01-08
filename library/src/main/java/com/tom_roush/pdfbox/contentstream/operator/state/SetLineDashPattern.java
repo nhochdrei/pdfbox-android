@@ -18,8 +18,8 @@ package com.tom_roush.pdfbox.contentstream.operator.state;
 
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
+
 
 import com.tom_roush.pdfbox.contentstream.operator.MissingOperandException;
 import com.tom_roush.pdfbox.contentstream.operator.Operator;

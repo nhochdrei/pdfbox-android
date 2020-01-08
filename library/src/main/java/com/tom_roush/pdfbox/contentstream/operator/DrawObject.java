@@ -18,8 +18,6 @@ package com.tom_roush.pdfbox.contentstream.operator;
 
 import java.io.IOException;
 import java.util.List;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSName;
@@ -35,12 +33,10 @@ import com.tom_roush.pdfbox.pdmodel.graphics.form.PDTransparencyGroup;
  */
 public class DrawObject extends OperatorProcessor
 {
-    private static final Log LOG = LogFactory.getLog(DrawObject.class);
-
     @Override
     public void process(Operator operator, List<COSBase> arguments) throws IOException
     {
-        if (arguments.isEmpty())
+        if (arguments.size() < 1)
         {
             throw new MissingOperandException(operator, arguments);
         }
@@ -49,46 +45,30 @@ public class DrawObject extends OperatorProcessor
         {
             return;
         }
-        COSName name = (COSName) base0;
+        COSName name = (COSName)base0;
 
         if (context.getResources().isImageXObject(name))
         {
             // we're done here, don't decode images when doing text extraction
             return;
         }
-        
+
         PDXObject xobject = context.getResources().getXObject(name);
 
-        if (xobject instanceof PDFormXObject)
+        if (xobject instanceof PDTransparencyGroup)
         {
-            try
-            {
-                context.increaseLevel();
-                if (context.getLevel() > 25)
-                {
-                    LOG.error("recursion is too deep, skipping form XObject");
-                    return;
-                }
-                PDFormXObject form = (PDFormXObject) xobject;
-                if (form instanceof PDTransparencyGroup)
-                {
-                    context.showTransparencyGroup((PDTransparencyGroup) form);
-                }
-                else
-                {
-                    context.showForm(form);
-                }
-            }
-            finally
-            {
-                context.decreaseLevel();
-            }
+            context.showTransparencyGroup((PDTransparencyGroup)xobject);
+        }
+        else if (xobject instanceof PDFormXObject)
+        {
+            PDFormXObject form = (PDFormXObject)xobject;
+            context.showForm(form);
         }
     }
 
     @Override
     public String getName()
     {
-        return OperatorName.DRAW_OBJECT;
+        return "Do";
     }
 }

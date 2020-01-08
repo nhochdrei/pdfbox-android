@@ -21,8 +21,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
+
 
 /**
  * This class represents a converter for a mapping into a Type 1 sequence.

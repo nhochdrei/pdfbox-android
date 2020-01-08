@@ -22,8 +22,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 /**
  * Utility functions for hex encoding.
@@ -32,7 +30,6 @@ import org.apache.commons.logging.LogFactory;
  */
 public final class Hex
 {
-    private static final Log LOG = LogFactory.getLog(Hex.class);
 
     /**
      * for hex conversion.
@@ -204,27 +201,21 @@ public final class Hex
         }
         catch (ClassNotFoundException ex)
         {
-            LOG.debug(ex);
         }
         catch (IllegalAccessException ex)
         {
-            LOG.debug(ex);
         }
         catch (IllegalArgumentException ex)
         {
-            LOG.debug(ex);
         }
         catch (NoSuchMethodException ex)
         {
-            LOG.debug(ex);
         }
         catch (SecurityException ex)
         {
-            LOG.debug(ex);
         }
         catch (InvocationTargetException ex)
         {
-            LOG.debug(ex);
         }
         try
         {
@@ -235,29 +226,22 @@ public final class Hex
         }
         catch (ClassNotFoundException ex)
         {
-            LOG.debug(ex);
         }
         catch (IllegalAccessException ex)
         {
-            LOG.debug(ex);
         }
         catch (IllegalArgumentException ex)
         {
-            LOG.debug(ex);
         }
         catch (NoSuchMethodException ex)
         {
-            LOG.debug(ex);
         }
         catch (SecurityException ex)
         {
-            LOG.debug(ex);
         }
         catch (InvocationTargetException ex)
         {
-            LOG.debug(ex);
         }
-        LOG.error("Can't decode base64 value, try adding javax.xml.bind:jaxb-api to your build");
         return new byte[0];
     }
 
@@ -287,7 +271,6 @@ public final class Hex
                 }
                 catch (NumberFormatException ex)
                 {
-                    LOG.error("Can't parse " + hexByte + ", aborting decode", ex);
                     break;
                 }
                 i += 2;

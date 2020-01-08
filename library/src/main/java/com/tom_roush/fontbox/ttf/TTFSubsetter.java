@@ -36,8 +36,8 @@ import java.util.SortedSet;
 import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
+
 
 /**
  * Subsetter for TrueType (TTF) fonts.

@@ -22,8 +22,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.BitSet;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
+
 
 /**
  * Implements a memory page handling mechanism as base for creating (multiple)

@@ -19,8 +19,8 @@ package com.tom_roush.pdfbox.io;
 import java.io.EOFException;
 import java.io.IOException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
+
 import com.tom_roush.pdfbox.cos.COSStream;
 
 /**

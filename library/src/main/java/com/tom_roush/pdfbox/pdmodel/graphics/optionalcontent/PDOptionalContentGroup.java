@@ -19,7 +19,6 @@ package com.tom_roush.pdfbox.pdmodel.graphics.optionalcontent;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.pdmodel.documentinterchange.markedcontent.PDPropertyList;
-import com.tom_roush.pdfbox.rendering.RenderDestination;
 
 /**
  * An optional content group (OCG).
@@ -111,37 +110,6 @@ public class PDOptionalContentGroup extends PDPropertyList
     public void setName(String name)
     {
         dict.setString(COSName.NAME, name);
-    }
-
-    //TODO Add support for "Intent"
-    /**
-     * @param destination to be rendered
-     * @return state or null if undefined
-     */
-    public RenderState getRenderState(RenderDestination destination)
-    {
-        COSName state = null;
-        COSDictionary usage = (COSDictionary) dict.getDictionaryObject("Usage");
-        if (usage != null)
-        {
-            if (RenderDestination.PRINT.equals(destination))
-            {
-                COSDictionary print = (COSDictionary) usage.getDictionaryObject("Print");
-                state = print == null ? null : (COSName) print.getDictionaryObject("PrintState");
-            }
-            else if (RenderDestination.VIEW.equals(destination))
-            {
-                COSDictionary view = (COSDictionary) usage.getDictionaryObject("View");
-                state = view == null ? null : (COSName) view.getDictionaryObject("ViewState");
-            }
-            // Fallback to export
-            if (state == null)
-            {
-                COSDictionary export = (COSDictionary) usage.getDictionaryObject("Export");
-                state = export == null ? null : (COSName) export.getDictionaryObject("ExportState");
-            }
-        }
-        return state == null ? null : RenderState.valueOf(state);
     }
 
     @Override

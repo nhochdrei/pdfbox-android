@@ -20,8 +20,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import java.util.Arrays;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
+
 import com.tom_roush.pdfbox.util.Charsets;
 import com.tom_roush.pdfbox.util.Hex;
 
@@ -45,7 +45,6 @@ import com.tom_roush.pdfbox.util.Hex;
  */
 public final class COSString extends COSBase
 {
-    private static final Log LOG = LogFactory.getLog(COSString.class);
 
     private byte[] bytes;
     private boolean forceHexForm;
@@ -128,7 +127,6 @@ public final class COSString extends COSBase
             {
                 if (FORCE_PARSING)
                 {
-                    LOG.warn("Encountered a malformed hex string");
                     bytes.write('?'); // todo: what does Acrobat do? Any example PDFs?
                 }
                 else

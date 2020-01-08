@@ -18,8 +18,8 @@ package com.tom_roush.fontbox.ttf;
 
 import java.io.IOException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
+
 
 /**
  * A 'kern' table in a true type font.
