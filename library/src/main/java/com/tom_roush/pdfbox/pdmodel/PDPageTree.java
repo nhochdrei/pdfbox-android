@@ -30,8 +30,6 @@ import com.tom_roush.pdfbox.pdmodel.common.COSObjectable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 /**
  * The page tree, which defines the ordering of pages in the document in an efficient manner.
@@ -40,7 +38,6 @@ import org.apache.commons.logging.LogFactory;
  */
 public class PDPageTree implements COSObjectable, Iterable<PDPage>
 {
-    private static final Log LOG = LogFactory.getLog(PDPageTree.class);
     private final COSDictionary root;
     private final PDDocument document; // optional
 
@@ -156,8 +153,7 @@ public class PDPageTree implements COSObjectable, Iterable<PDPage>
             }
             else
             {
-                LOG.warn("COSDictionary expected, but got " +
-                        (base == null ? "null" : base.getClass().getSimpleName()));
+
             }
         }
 
