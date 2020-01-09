@@ -29,7 +29,7 @@ An example app is located in the `sample` directory and includes examples of com
 Important notes
 ==============
 
--Currently based on PdfBox v1.8.10
+-Currently based on PdfBox v2.0.18
 
 -Requires API 19 or greater for full functionality
 

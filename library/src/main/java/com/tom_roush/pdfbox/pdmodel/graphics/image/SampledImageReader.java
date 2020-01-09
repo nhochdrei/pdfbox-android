@@ -39,10 +39,10 @@ import com.tom_roush.pdfbox.pdmodel.graphics.color.PDColorSpace;
  */
 final class SampledImageReader
 {
-	private SampledImageReader()
-	{
-	}
-	
+    private SampledImageReader()
+    {
+    }
+
     /**
      * Returns an ARGB image filled with the given paint and using the given image as a mask.
      * @param paint the paint to fill the visible portions of the image with
@@ -82,7 +82,7 @@ final class SampledImageReader
         return masked;
     }
 
-	/**
+    /**
      * Returns the content of the given image as an AWT buffered image with an RGB color space.
      * If a color key mask is provided then an ARGB image is returned instead.
      * This method never returns null.
@@ -118,7 +118,7 @@ final class SampledImageReader
         final float[] defaultDecode = pdImage.getColorSpace().getDefaultDecode(8);
         if (pdImage.getSuffix() != null && pdImage.getSuffix().equals("jpg"))
         {
-        	return BitmapFactory.decodeStream(pdImage.getStream().createInputStream());
+            return BitmapFactory.decodeStream(pdImage.createInputStream());
         }
         else if (bitsPerComponent == 8 && Arrays.equals(decode, defaultDecode) && colorKey == null)
         {
@@ -130,7 +130,7 @@ final class SampledImageReader
         }
         else
         {
-        	Log.e("PdfBox-Android", "Trying to create other-bit image not supported");
+            Log.e("PdfBox-Android", "Trying to create other-bit image not supported");
 //            return fromAny(pdImage, raster, colorKey);
             return from8bit(pdImage);
         }
@@ -220,7 +220,7 @@ final class SampledImageReader
 
     // faster, 8-bit non-decoded, non-colormasked image conversion
     private static Bitmap from8bit(PDImage pdImage)
-            throws IOException
+        throws IOException
     {
         InputStream input = pdImage.createInputStream();
         try
@@ -258,7 +258,7 @@ final class SampledImageReader
             IOUtils.closeQuietly(input);
         }
     }
-    
+
     // slower, general-purpose image conversion from any image format
 //    private static BufferedImage fromAny(PDImage pdImage, WritableRaster raster, COSArray colorKey)
 //            throws IOException
@@ -421,23 +421,23 @@ final class SampledImageReader
             if (cosDecode.size() != numberOfComponents * 2)
             {
                 if (pdImage.isStencil() && cosDecode.size() >= 2
-                        && cosDecode.get(0) instanceof COSNumber
-                        && cosDecode.get(1) instanceof COSNumber)
+                    && cosDecode.get(0) instanceof COSNumber
+                    && cosDecode.get(1) instanceof COSNumber)
                 {
                     float decode0 = ((COSNumber) cosDecode.get(0)).floatValue();
                     float decode1 = ((COSNumber) cosDecode.get(1)).floatValue();
                     if (decode0 >= 0 && decode0 <= 1 && decode1 >= 0 && decode1 <= 1)
                     {
-                    	Log.w("PdfBox-Android", "decode array " + cosDecode
-                                + " not compatible with color space, using the first two entries");
+                        Log.w("PdfBox-Android", "decode array " + cosDecode
+                            + " not compatible with color space, using the first two entries");
                         return new float[]
-                        {
-                            decode0, decode1
-                        };
+                            {
+                                decode0, decode1
+                            };
                     }
                 }
                 Log.e("PdfBox-Android", "decode array " + cosDecode
-                        + " not compatible with color space, using default");
+                    + " not compatible with color space, using default");
             }
             else
             {

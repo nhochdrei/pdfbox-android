@@ -25,7 +25,6 @@ import com.tom_roush.pdfbox.pdmodel.documentinterchange.markedcontent.PDProperty
  */
 public class PDOptionalContentGroup extends PDPropertyList
 {
-
     /**
      * Creates a new optional content group (OCG).
      * @param name the name of the content group
@@ -42,11 +41,56 @@ public class PDOptionalContentGroup extends PDPropertyList
      */
     public PDOptionalContentGroup(COSDictionary dict)
     {
-    	super(dict);
+        super(dict);
         if (!dict.getItem(COSName.TYPE).equals(COSName.OCG))
         {
             throw new IllegalArgumentException(
                     "Provided dictionary is not of type '" + COSName.OCG + "'");
+        }
+    }
+    
+    /**
+     * Enumeration for the renderState dictionary entry on the "Export", "View"
+     * and "Print" dictionary.
+     */
+    public enum RenderState 
+    {
+        /** The "ON" value. */
+       ON(COSName.ON),
+       /** The "OFF" value. */
+       OFF(COSName.OFF);
+
+       private final COSName name;
+
+       private RenderState(COSName value) 
+       {
+           this.name = value;
+       }
+
+        /**
+         * Returns the base state represented by the given {@link COSName}.
+         *
+         * @param state the state name
+         * @return the state enum value
+         */
+        public static RenderState valueOf(COSName state)
+        {
+            if (state == null)
+            {
+                return null;
+            }
+
+            return RenderState.valueOf(state.getName().toUpperCase());
+        }
+
+        /**
+         * Returns the PDF name for the state.
+         *
+         * @return the name of the state
+         */
+        public COSName getName()
+        {
+            return this.name;
         }
     }
 
@@ -68,12 +112,9 @@ public class PDOptionalContentGroup extends PDPropertyList
         dict.setString(COSName.NAME, name);
     }
 
-    //TODO Add support for "Intent" and "Usage"
-
     @Override
     public String toString()
     {
         return super.toString() + " (" + getName() + ")";
     }
-
 }

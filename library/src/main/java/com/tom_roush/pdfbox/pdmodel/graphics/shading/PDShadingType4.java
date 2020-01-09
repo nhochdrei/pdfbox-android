@@ -16,8 +16,10 @@
  */
 package com.tom_roush.pdfbox.pdmodel.graphics.shading;
 
+
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
+import com.tom_roush.pdfbox.util.Matrix;
 
 /**
  * Resources for a shading type 4 (Free-Form Gouraud-Shaded Triangle Mesh).
@@ -65,5 +67,5 @@ public class PDShadingType4 extends PDTriangleBasedShadingType
 //    public Paint toPaint(Matrix matrix)
 //    {
 //        return new Type4ShadingPaint(this, matrix);
-//    }TODO: PdfBox-Android
+//    }
 }

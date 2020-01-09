@@ -16,11 +16,10 @@
  */
 package com.tom_roush.pdfbox.pdmodel.documentinterchange.logicalstructure;
 
-import android.util.Log;
-
 import java.io.IOException;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Map;
+
 
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
@@ -36,9 +35,15 @@ import com.tom_roush.pdfbox.pdmodel.common.PDNumberTreeNode;
  * 
  * @author Ben Litchfield
  * @author Johannes Koch
+ * 
  */
 public class PDStructureTreeRoot extends PDStructureNode
 {
+
+    /**
+     * Log instance.
+     */
+
     private static final String TYPE = "StructTreeRoot";
 
     /**
@@ -64,33 +69,37 @@ public class PDStructureTreeRoot extends PDStructureNode
      * Returns the K array entry.
      * 
      * @return the K array entry
+     *
+     * @deprecated use {@link #getK()} only. /K can be a dictionary or an array, and the next level
+     * can also be a dictionary. See file 054080.pdf in PDFBOX-4417 and read "Entries in the
+     * structure tree root" in the PDF specification.
      */
+    @Deprecated
     public COSArray getKArray()
     {
         COSBase k = this.getCOSObject().getDictionaryObject(COSName.K);
-        if (k != null)
+        if (k instanceof COSDictionary)
         {
-            if (k instanceof COSDictionary)
-            {
-                COSDictionary kdict = (COSDictionary) k;
-                k = kdict.getDictionaryObject(COSName.K);
-                if (k instanceof COSArray)
-                {
-                    return (COSArray) k;
-                }
-            }
-            else
+            COSDictionary kdict = (COSDictionary) k;
+            k = kdict.getDictionaryObject(COSName.K);
+            if (k instanceof COSArray)
             {
                 return (COSArray) k;
             }
         }
+        else if (k instanceof COSArray)
+        {
+            return (COSArray) k;
+        }
+
         return null;
     }
 
     /**
-     * Returns the K entry.
-     * 
-     * @return the K entry
+     * Returns the K entry. This can be a dictionary representing a structure element, or an array
+     * of them.
+     *
+     * @return the K entry.
      */
     public COSBase getK()
     {
@@ -112,12 +121,12 @@ public class PDStructureTreeRoot extends PDStructureNode
      * 
      * @return the ID tree
      */
-    public PDNameTreeNode getIDTree()
+    public PDNameTreeNode<PDStructureElement> getIDTree()
     {
-        COSDictionary idTreeDic = (COSDictionary) this.getCOSObject().getDictionaryObject(COSName.ID_TREE);
-        if (idTreeDic != null)
+        COSBase base = this.getCOSObject().getDictionaryObject(COSName.ID_TREE);
+        if (base instanceof COSDictionary)
         {
-            return new PDStructureElementNameTreeNode(idTreeDic);
+            return new PDStructureElementNameTreeNode((COSDictionary) base);
         }
         return null;
     }
@@ -127,7 +136,7 @@ public class PDStructureTreeRoot extends PDStructureNode
      * 
      * @param idTree the ID tree
      */
-    public void setIDTree(PDNameTreeNode idTree)
+    public void setIDTree(PDNameTreeNode<PDStructureElement> idTree)
     {
         this.getCOSObject().setItem(COSName.ID_TREE, idTree);
     }
@@ -139,10 +148,10 @@ public class PDStructureTreeRoot extends PDStructureNode
      */
     public PDNumberTreeNode getParentTree()
     {
-        COSDictionary parentTreeDic = (COSDictionary) this.getCOSObject().getDictionaryObject(COSName.PARENT_TREE);
-        if (parentTreeDic != null)
+        COSBase base = getCOSObject().getDictionaryObject(COSName.PARENT_TREE);
+        if (base instanceof COSDictionary)
         {
-            return new PDNumberTreeNode(parentTreeDic, COSBase.class);
+            return new PDNumberTreeNode((COSDictionary) base, PDParentTreeValue.class);
         }
         return null;
     }
@@ -193,10 +202,9 @@ public class PDStructureTreeRoot extends PDStructureNode
             }
             catch (IOException e)
             {
-            	Log.e("PdfBox-Android", e.getMessage(),e);
             }
         }
-        return new Hashtable<String, Object>();
+        return new HashMap<String, Object>();
     }
 
     /**
@@ -209,7 +217,7 @@ public class PDStructureTreeRoot extends PDStructureNode
         COSDictionary rmDic = new COSDictionary();
         for (Map.Entry<String, String> entry : roleMap.entrySet())
         {
-        	rmDic.setName(entry.getKey(), entry.getValue());
+            rmDic.setName(entry.getKey(), entry.getValue());
         }
         this.getCOSObject().setItem(COSName.ROLE_MAP, rmDic);
     }

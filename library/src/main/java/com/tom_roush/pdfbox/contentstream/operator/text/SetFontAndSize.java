@@ -14,18 +14,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.tom_roush.pdfbox.contentstream.operator.text;
+
+import java.io.IOException;
+
+import java.util.List;
+
+
+
 
 import com.tom_roush.pdfbox.contentstream.operator.MissingOperandException;
 import com.tom_roush.pdfbox.contentstream.operator.Operator;
+import com.tom_roush.pdfbox.contentstream.operator.OperatorName;
 import com.tom_roush.pdfbox.contentstream.operator.OperatorProcessor;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.cos.COSNumber;
 import com.tom_roush.pdfbox.pdmodel.font.PDFont;
-
-import java.io.IOException;
-import java.util.List;
 
 /**
  * Tf: Set text font and size.
@@ -34,6 +40,7 @@ import java.util.List;
  */
 public class SetFontAndSize extends OperatorProcessor
 {
+
     @Override
     public void process(Operator operator, List<COSBase> arguments) throws IOException
     {
@@ -41,17 +48,30 @@ public class SetFontAndSize extends OperatorProcessor
         {
             throw new MissingOperandException(operator, arguments);
         }
-        // set font and size
-        COSName fontName = (COSName)arguments.get(0);
-        float fontSize = ((COSNumber)arguments.get(1)).floatValue();
+
+        COSBase base0 = arguments.get(0);
+        COSBase base1 = arguments.get(1);
+        if (!(base0 instanceof COSName))
+        {
+            return;
+        }
+        if (!(base1 instanceof COSNumber))
+        {
+            return;
+        }
+        COSName fontName = (COSName) base0;
+        float fontSize = ((COSNumber) base1).floatValue();
         context.getGraphicsState().getTextState().setFontSize(fontSize);
         PDFont font = context.getResources().getFont(fontName);
+        if (font == null)
+        {
+        }
         context.getGraphicsState().getTextState().setFont(font);
     }
 
     @Override
     public String getName()
     {
-        return "Tf";
+        return OperatorName.SET_FONT_AND_SIZE;
     }
 }

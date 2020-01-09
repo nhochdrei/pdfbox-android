@@ -16,24 +16,25 @@
  */
 package com.tom_roush.pdfbox.pdmodel.documentinterchange.taggedpdf;
 
-import android.util.Log;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+
+
 /**
  * The standard structure types.
  * 
  * @author Johannes Koch
  */
 public class StandardStructureTypes
-{   
-    private StandardStructureTypes()
-    {
-    }
+{
 
+    /**
+     * Log instance.
+     */
 
     // Grouping Elements
     /**
@@ -305,15 +306,16 @@ public class StandardStructureTypes
                 }
                 catch (IllegalArgumentException e)
                 {
-                	Log.e("PdfBox-Android", e.getMessage(),e);
                 }
                 catch (IllegalAccessException e)
                 {
-                	Log.e("PdfBox-Android", e.getMessage(),e);
                 }
             }
         }
         Collections.sort(types);
     }
 
+    private StandardStructureTypes()
+    {
+    }
 }

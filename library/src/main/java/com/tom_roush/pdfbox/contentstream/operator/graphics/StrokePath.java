@@ -16,11 +16,13 @@
  */
 package com.tom_roush.pdfbox.contentstream.operator.graphics;
 
-import java.io.IOException;
 import java.util.List;
 
-import com.tom_roush.pdfbox.contentstream.operator.Operator;
 import com.tom_roush.pdfbox.cos.COSBase;
+import com.tom_roush.pdfbox.contentstream.operator.Operator;
+import com.tom_roush.pdfbox.contentstream.operator.OperatorName;
+
+import java.io.IOException;
 
 /**
  * S Stroke the path.
@@ -38,6 +40,6 @@ public final class StrokePath extends GraphicsOperatorProcessor
     @Override
     public String getName()
     {
-        return "S";
+        return OperatorName.STROKE_PATH;
     }
 }

@@ -43,7 +43,6 @@ public class PDActionGoTo extends PDAction
      */
     public PDActionGoTo()
     {
-        super();
         setSubType( SUB_TYPE );
     }
 
@@ -73,7 +72,7 @@ public class PDActionGoTo extends PDAction
      * This will set the destination to jump to.
      *
      * @param d The destination.
-     *
+     * 
      * @throws IllegalArgumentException if the destination is not a page dictionary object.
      */
     public void setDestination( PDDestination d )
@@ -87,8 +86,8 @@ public class PDActionGoTo extends PDAction
                 COSBase page = destArray.getObject(0);
                 if (!(page instanceof COSDictionary))
                 {
-                    throw new IllegalArgumentException("Destination of a GoTo action must be " +
-                        "a page dictionary object");
+                    throw new IllegalArgumentException("Destination of a GoTo action must be "
+                            + "a page dictionary object");
                 }
             }
         }

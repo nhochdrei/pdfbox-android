@@ -14,19 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.tom_roush.pdfbox.pdmodel.encryption;
 
-import java.io.IOException;
+package com.tom_roush.pdfbox.pdmodel.encryption;
 
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
+import com.tom_roush.pdfbox.pdmodel.common.COSObjectable;
 
 /**
  * This class is a specialized view of the crypt filter dictionary of a PDF document.
  * It contains a low level dictionary (COSDictionary) and provides the methods to
  * manage its fields.
+ *
  */
-public class PDCryptFilterDictionary
+public class PDCryptFilterDictionary implements COSObjectable
 {
 
     /**
@@ -55,8 +56,21 @@ public class PDCryptFilterDictionary
      * This will get the dictionary associated with this crypt filter dictionary.
      *
      * @return The COS dictionary that this object wraps.
+     * @deprecated use {@link #getCOSObject()}
      */
+    @Deprecated
     public COSDictionary getCOSDictionary()
+    {
+        return cryptFilterDictionary;
+    }
+
+    /**
+     * This will get the dictionary associated with this crypt filter dictionary.
+     *
+     * @return The COS dictionary that this object wraps.
+     */
+    @Override
+    public COSDictionary getCOSObject()
     {
         return cryptFilterDictionary;
     }
@@ -72,7 +86,7 @@ public class PDCryptFilterDictionary
     }
 
     /**
-     * This will return the Length entry of the crypt filter dictionary.<br /><br />
+     * This will return the Length entry of the crypt filter dictionary.<br><br>
      * The length in <b>bits</b> for the crypt filter algorithm. This will return a multiple of 8.
      *
      * @return The length in bits for the encryption algorithm
@@ -88,9 +102,8 @@ public class PDCryptFilterDictionary
      *
      * @param cfm name of the crypt filter method.
      *
-     * @throws IOException If there is an error setting the data.
      */
-    public void setCryptFilterMethod(COSName cfm) throws IOException
+    public void setCryptFilterMethod(COSName cfm)
     {
         cryptFilterDictionary.setItem( COSName.CFM, cfm );
     }
@@ -100,10 +113,8 @@ public class PDCryptFilterDictionary
      * Allowed values are: NONE, V2, AESV2, AESV3
      *
      * @return the name of the crypt filter method.
-     *
-     * @throws IOException If there is an error accessing the data.
      */
-    public COSName getCryptFilterMethod() throws IOException
+    public COSName getCryptFilterMethod()
     {
         return (COSName)cryptFilterDictionary.getDictionaryObject( COSName.CFM );
     }

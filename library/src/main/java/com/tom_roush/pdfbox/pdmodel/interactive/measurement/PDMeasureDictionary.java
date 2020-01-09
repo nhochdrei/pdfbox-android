@@ -22,6 +22,7 @@ import com.tom_roush.pdfbox.pdmodel.common.COSObjectable;
 
 /**
  * This class represents a measure dictionary.
+ * 
  */
 public class PDMeasureDictionary implements COSObjectable
 {

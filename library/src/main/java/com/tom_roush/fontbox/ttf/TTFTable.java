@@ -42,14 +42,14 @@ public class TTFTable
 
     /**
      * Constructor.
-     *
+     * 
      * @param font The font which contains this table.
      */
     TTFTable(TrueTypeFont font)
     {
         this.font = font;
     }
-
+    
     /**
      * @return Returns the checkSum.
      */
@@ -57,15 +57,15 @@ public class TTFTable
     {
         return checkSum;
     }
-
+    
     /**
      * @param checkSumValue The checkSum to set.
      */
-    void setCheckSum(long checkSumValue)
+    void setCheckSum(long checkSumValue) 
     {
         this.checkSum = checkSumValue;
     }
-
+    
     /**
      * @return Returns the length.
      */
@@ -73,15 +73,15 @@ public class TTFTable
     {
         return length;
     }
-
+    
     /**
      * @param lengthValue The length to set.
      */
-    void setLength(long lengthValue)
+    void setLength(long lengthValue) 
     {
         this.length = lengthValue;
     }
-
+    
     /**
      * @return Returns the offset.
      */
@@ -89,15 +89,15 @@ public class TTFTable
     {
         return offset;
     }
-
+    
     /**
      * @param offsetValue The offset to set.
      */
-    void setOffset(long offsetValue)
+    void setOffset(long offsetValue) 
     {
         this.offset = offsetValue;
     }
-
+    
     /**
      * @return Returns the tag.
      */
@@ -105,11 +105,11 @@ public class TTFTable
     {
         return tag;
     }
-
+    
     /**
      * @param tagValue The tag to set.
      */
-    void setTag(String tagValue)
+    void setTag(String tagValue) 
     {
         this.tag = tagValue;
     }
@@ -123,7 +123,7 @@ public class TTFTable
     {
         return initialized;
     }
-
+    
     /**
      * This will read the required data from the stream.
      * 

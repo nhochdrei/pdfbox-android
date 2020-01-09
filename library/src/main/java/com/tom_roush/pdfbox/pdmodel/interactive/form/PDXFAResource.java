@@ -21,15 +21,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSStream;
 import com.tom_roush.pdfbox.pdmodel.common.COSObjectable;
-
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
@@ -40,6 +37,12 @@ import org.xml.sax.SAXException;
  */
 public final class PDXFAResource implements COSObjectable
 {
+    
+    /**
+     * The default buffer size
+     */
+    private static final int BUFFER_SIZE = 1024;
+    
     private final COSBase xfa;
 
     /**
@@ -60,6 +63,7 @@ public final class PDXFAResource implements COSObjectable
     {
         return xfa;
     }
+    
     
     /**
      * Get the XFA content as byte array.
@@ -89,14 +93,14 @@ public final class PDXFAResource implements COSObjectable
             // handle the case if the XFA is split into individual parts
             if (this.getCOSObject() instanceof COSArray) 
             {
-                xfaBytes = new byte[1024];
+                xfaBytes = new byte[BUFFER_SIZE];
                 COSArray cosArray = (COSArray) this.getCOSObject();
                 for (int i = 1; i < cosArray.size(); i += 2) 
                 {
                     COSBase cosObj = cosArray.getObject(i);
                     if (cosObj instanceof COSStream) 
                     {
-                        is = ((COSStream) cosObj).getUnfilteredStream();
+                        is = ((COSStream) cosObj).createInputStream();
                         int nRead;
                         while ((nRead = is.read(xfaBytes, 0, xfaBytes.length)) != -1) 
                         {
@@ -109,8 +113,8 @@ public final class PDXFAResource implements COSObjectable
             } 
             else if (xfa.getCOSObject() instanceof COSStream) 
             {
-                xfaBytes = new byte[1024];
-                is = ((COSStream) xfa.getCOSObject()).getUnfilteredStream();
+                xfaBytes = new byte[BUFFER_SIZE];
+                is = ((COSStream) xfa.getCOSObject()).createInputStream();
                 int nRead;
                 while ((nRead = is.read(xfaBytes, 0, xfaBytes.length)) != -1) 
                 {
@@ -143,10 +147,7 @@ public final class PDXFAResource implements COSObjectable
      */        
     public Document getDocument() throws ParserConfigurationException, SAXException, IOException 
     {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setNamespaceAware(true);
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        Document xfaDocument = builder.parse(new ByteArrayInputStream(this.getBytes())); 
-        return xfaDocument;
+        return com.tom_roush.pdfbox.util.XMLUtil //
+                .parse(new ByteArrayInputStream(this.getBytes()), true);
     }
 }

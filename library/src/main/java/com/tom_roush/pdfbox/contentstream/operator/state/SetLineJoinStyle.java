@@ -18,22 +18,30 @@ package com.tom_roush.pdfbox.contentstream.operator.state;
 
 import android.graphics.Paint;
 
-import java.io.IOException;
 import java.util.List;
 
-import com.tom_roush.pdfbox.contentstream.operator.Operator;
-import com.tom_roush.pdfbox.contentstream.operator.OperatorProcessor;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSNumber;
+import com.tom_roush.pdfbox.contentstream.operator.Operator;
+import com.tom_roush.pdfbox.contentstream.operator.OperatorName;
+import com.tom_roush.pdfbox.contentstream.operator.OperatorProcessor;
+
+import java.io.IOException;
+import com.tom_roush.pdfbox.contentstream.operator.MissingOperandException;
 
 /**
  * j: Set the line join style.
+ *
  */
 public class SetLineJoinStyle extends OperatorProcessor
 {
     @Override
     public void process(Operator operator, List<COSBase> arguments) throws IOException
     {
+        if (arguments.isEmpty())
+        {
+            throw new MissingOperandException(operator, arguments);
+        }
         Paint.Join lineJoinStyle;
         switch(((COSNumber)arguments.get( 0 )).intValue())  {
             case 0:
@@ -48,13 +56,12 @@ public class SetLineJoinStyle extends OperatorProcessor
             default:
                 lineJoinStyle = null;
         }
-
         context.getGraphicsState().setLineJoin( lineJoinStyle );
     }
 
     @Override
     public String getName()
     {
-        return "j";
+        return OperatorName.SET_LINE_JOINSTYLE;
     }
 }

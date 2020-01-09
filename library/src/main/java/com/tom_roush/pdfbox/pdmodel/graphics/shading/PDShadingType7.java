@@ -16,6 +16,7 @@
  */
 package com.tom_roush.pdfbox.pdmodel.graphics.shading;
 
+
 import com.tom_roush.pdfbox.cos.COSDictionary;
 
 /**
@@ -43,5 +44,5 @@ public class PDShadingType7 extends PDShadingType6
 //    public Paint toPaint(Matrix matrix)
 //    {
 //        return new Type7ShadingPaint(this, matrix);
-//    }TODO: PdfBox-Android
+//    }
 }

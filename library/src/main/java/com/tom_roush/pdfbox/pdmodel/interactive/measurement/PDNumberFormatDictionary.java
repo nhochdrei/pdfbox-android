@@ -22,6 +22,7 @@ import com.tom_roush.pdfbox.pdmodel.common.COSObjectable;
 
 /**
  * This class represents a number format dictionary.
+ * 
  */
 public class PDNumberFormatDictionary implements COSObjectable
 {

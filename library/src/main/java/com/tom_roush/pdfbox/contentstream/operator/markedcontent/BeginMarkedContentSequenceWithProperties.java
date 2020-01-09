@@ -19,11 +19,12 @@ package com.tom_roush.pdfbox.contentstream.operator.markedcontent;
 import java.io.IOException;
 import java.util.List;
 
-import com.tom_roush.pdfbox.contentstream.operator.Operator;
-import com.tom_roush.pdfbox.contentstream.operator.OperatorProcessor;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
+import com.tom_roush.pdfbox.contentstream.operator.Operator;
+import com.tom_roush.pdfbox.contentstream.operator.OperatorName;
+import com.tom_roush.pdfbox.contentstream.operator.OperatorProcessor;
 import com.tom_roush.pdfbox.text.PDFMarkedContentExtractor;
 
 /**
@@ -58,6 +59,6 @@ public class BeginMarkedContentSequenceWithProperties extends OperatorProcessor
     @Override
     public String getName()
     {
-        return "BDC";
+        return OperatorName.BEGIN_MARKED_CONTENT_SEQ;
     }
 }

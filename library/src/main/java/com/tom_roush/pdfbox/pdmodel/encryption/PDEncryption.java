@@ -17,14 +17,15 @@
 
 package com.tom_roush.pdfbox.pdmodel.encryption;
 
+import java.io.IOException;
+
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSBoolean;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.cos.COSString;
-
-import java.io.IOException;
+import com.tom_roush.pdfbox.pdmodel.common.COSObjectable;
 
 /**
  * This class is a specialized view of the encryption dictionary of a PDF document.
@@ -37,7 +38,7 @@ import java.io.IOException;
  * @author Ben Litchfield
  * @author Benoit Guillon
  */
-public class PDEncryption
+public class PDEncryption implements COSObjectable
 {
     /**
      * See PDF Reference 1.4 Table 3.13.
@@ -133,8 +134,21 @@ public class PDEncryption
      * This will get the dictionary associated with this encryption dictionary.
      *
      * @return The COS dictionary that this object wraps.
+     * @deprecated use {@link #getCOSObject() }
      */
+    @Deprecated
     public COSDictionary getCOSDictionary()
+    {
+        return dictionary;
+    }
+
+    /**
+     * This will get the dictionary associated with this encryption dictionary.
+     *
+     * @return The COS dictionary that this object wraps.
+     */
+    @Override
+    public COSDictionary getCOSObject()
     {
         return dictionary;
     }
@@ -180,8 +194,8 @@ public class PDEncryption
     }
 
     /**
-     * This will set the V entry of the encryption dictionary.<br /><br />
-     * See PDF Reference 1.4 Table 3.13.  <br /><br/>
+     * This will set the V entry of the encryption dictionary.<br><br>
+     * See PDF Reference 1.4 Table 3.13.  <br><br>
      * <b>Note: This value is used to decrypt the pdf document.  If you change this when
      * the document is encrypted then decryption will fail!.</b>
      *
@@ -193,7 +207,7 @@ public class PDEncryption
     }
 
     /**
-     * This will return the V entry of the encryption dictionary.<br /><br />
+     * This will return the V entry of the encryption dictionary.<br><br>
      * See PDF Reference 1.4 Table 3.13.
      *
      * @return The encryption version to use.
@@ -214,7 +228,7 @@ public class PDEncryption
     }
 
     /**
-     * This will return the Length entry of the encryption dictionary.<br /><br />
+     * This will return the Length entry of the encryption dictionary.<br><br>
      * The length in <b>bits</b> for the encryption algorithm.  This will return a multiple of 8.
      *
      * @return The length in bits for the encryption algorithm
@@ -225,11 +239,13 @@ public class PDEncryption
     }
 
     /**
-     * This will set the R entry of the encryption dictionary.<br /><br />
-     * See PDF Reference 1.4 Table 3.14.  <br /><br/>
+     * This will set the R entry of the encryption dictionary.<br>
+     * <br>
+     * See PDF Reference 1.4 Table 3.14. <br>
+     * <br>
      *
-     * <b>Note: This value is used to decrypt the pdf document.  If you change this when
-     * the document is encrypted then decryption will fail!.</b>
+     * <b>Note: This value is used to decrypt the pdf document. If you change this when the document is encrypted then
+     * decryption will fail!.</b>
      *
      * @param revision The new encryption version.
      */
@@ -239,7 +255,7 @@ public class PDEncryption
     }
 
     /**
-     * This will return the R entry of the encryption dictionary.<br /><br />
+     * This will return the R entry of the encryption dictionary.<br><br>
      * See PDF Reference 1.4 Table 3.14.
      *
      * @return The encryption revision to use.
@@ -258,7 +274,7 @@ public class PDEncryption
      */
     public void setOwnerKey(byte[] o) throws IOException
     {
-    	dictionary.setItem(COSName.O, new COSString(o));
+        dictionary.setItem(COSName.O, new COSString(o));
     }
 
     /**
@@ -288,7 +304,7 @@ public class PDEncryption
      */
     public void setUserKey(byte[] u) throws IOException
     {
-    	dictionary.setItem(COSName.U, new COSString(u));
+        dictionary.setItem(COSName.U, new COSString(u));
     }
 
     /**
@@ -318,7 +334,7 @@ public class PDEncryption
      */
     public void setOwnerEncryptionKey(byte[] oe) throws IOException
     {
-    	dictionary.setItem( COSName.OE, new COSString(oe) );
+        dictionary.setItem( COSName.OE, new COSString(oe) );
     }
 
     /**
@@ -348,7 +364,7 @@ public class PDEncryption
      */
     public void setUserEncryptionKey(byte[] ue) throws IOException
     {
-    	dictionary.setItem( COSName.UE, new COSString(ue) );
+        dictionary.setItem( COSName.UE, new COSString(ue) );
     }
 
     /**
@@ -420,10 +436,11 @@ public class PDEncryption
         COSArray array = new COSArray();
         for (byte[] recipient : recipients)
         {
-        	COSString recip = new COSString(recipient);
+            COSString recip = new COSString(recipient);
             array.add(recip);
         }
         dictionary.setItem(COSName.RECIPIENTS, array);
+        array.setDirect(true);
     }
 
     /**
@@ -461,21 +478,32 @@ public class PDEncryption
     }
 
     /**
+     * Returns the default crypt filter (for public-key security handler).
+     * 
+     * @return the default crypt filter if available.
+     */
+    public PDCryptFilterDictionary getDefaultCryptFilterDictionary() 
+    {
+        return getCryptFilterDictionary(COSName.DEFAULT_CRYPT_FILTER);
+    }
+
+    /**
      * Returns the crypt filter with the given name.
      * 
      * @param cryptFilterName the name of the crypt filter
      * 
      * @return the crypt filter with the given name if available
      */
-    public PDCryptFilterDictionary getCryptFilterDictionary(COSName cryptFilterName) 
+    public PDCryptFilterDictionary getCryptFilterDictionary(COSName cryptFilterName)
     {
-        COSDictionary cryptFilterDictionary = (COSDictionary) dictionary.getDictionaryObject( COSName.CF );
-        if (cryptFilterDictionary != null)
+        // See CF in "Table 20 – Entries common to all encryption dictionaries"
+        COSBase base = dictionary.getDictionaryObject(COSName.CF);
+        if (base instanceof COSDictionary)
         {
-            COSDictionary stdCryptFilterDictionary = (COSDictionary)cryptFilterDictionary.getDictionaryObject(cryptFilterName);
-            if (stdCryptFilterDictionary != null)
+            COSBase base2 = ((COSDictionary) base).getDictionaryObject(cryptFilterName);
+            if (base2 instanceof COSDictionary)
             {
-                return new PDCryptFilterDictionary(stdCryptFilterDictionary);
+                return new PDCryptFilterDictionary((COSDictionary) base2);
             }
         }
         return null;
@@ -489,14 +517,14 @@ public class PDEncryption
      */
     public void setCryptFilterDictionary(COSName cryptFilterName, PDCryptFilterDictionary cryptFilterDictionary)
     {
-        COSDictionary cfDictionary = (COSDictionary)dictionary.getDictionaryObject( COSName.CF );
+        COSDictionary cfDictionary = dictionary.getCOSDictionary(COSName.CF);
         if (cfDictionary == null)
         {
             cfDictionary = new COSDictionary();
             dictionary.setItem(COSName.CF, cfDictionary);
         }
-        
-        cfDictionary.setItem(cryptFilterName, cryptFilterDictionary.getCOSDictionary());
+        cfDictionary.setDirect(true); // PDFBOX-4436 direct obj needed for Adobe Reader on Android
+        cfDictionary.setItem(cryptFilterName, cryptFilterDictionary.getCOSObject());
     }
     
     /**
@@ -506,9 +534,21 @@ public class PDEncryption
      */
     public void setStdCryptFilterDictionary(PDCryptFilterDictionary cryptFilterDictionary)
     {
+        cryptFilterDictionary.getCOSObject().setDirect(true); // PDFBOX-4436
         setCryptFilterDictionary(COSName.STD_CF, cryptFilterDictionary);
     }
-    
+
+    /**
+     * Sets the default crypt filter (for public-key security handler).
+     *
+     * @param defaultFilterDictionary the standard crypt filter to set
+     */
+    public void setDefaultCryptFilterDictionary(PDCryptFilterDictionary defaultFilterDictionary)
+    {
+        defaultFilterDictionary.getCOSObject().setDirect(true); // PDFBOX-4436
+        setCryptFilterDictionary(COSName.DEFAULT_CRYPT_FILTER, defaultFilterDictionary);
+    }
+
     /**
      * Returns the name of the filter which is used for de/encrypting streams.
      * Default value is "Identity".
@@ -570,7 +610,7 @@ public class PDEncryption
      */
     public void setPerms(byte[] perms) throws IOException
     {
-    	dictionary.setItem( COSName.PERMS, new COSString(perms) );
+        dictionary.setItem( COSName.PERMS, new COSString(perms) );
     }
 
     /**
@@ -592,7 +632,7 @@ public class PDEncryption
     }
 
     /**
-     * Remove CF, StmF, and StrF entries. This is to be called if V is not 4 or 5.
+     * remove CF, StmF, and StrF entries. This is to be called if V is not 4 or 5.
      */
     public void removeV45filters()
     {

@@ -1,10 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * Copyright 2014 The Apache Software Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -17,13 +16,12 @@
 package com.tom_roush.pdfbox.pdmodel.graphics.shading;
 
 import com.tom_roush.pdfbox.cos.COSArray;
+import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.pdmodel.common.PDRange;
-import com.tom_roush.pdfbox.cos.COSDictionary;
 
 /**
- * Intermediate class extended by the shading types 4,5,6 and 7 that contains the common methods
- * used by those classes
+ * Common resources for shading types 4,5,6 and 7
  */
 abstract class PDTriangleBasedShadingType extends PDShading
 {

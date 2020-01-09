@@ -17,7 +17,6 @@
 package com.tom_roush.pdfbox.pdmodel.documentinterchange.logicalstructure;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import com.tom_roush.pdfbox.cos.COSArray;
@@ -36,39 +35,6 @@ import com.tom_roush.pdfbox.pdmodel.common.COSObjectable;
  */
 public abstract class PDStructureNode implements COSObjectable
 {
-
-    /**
-     * Creates a node in the structure tree. Can be either a structure tree root,
-     *  or a structure element.
-     * 
-     * @param node the node dictionary
-     * @return the structure node
-     */
-    public static PDStructureNode create(COSDictionary node)
-    {
-        String type = node.getNameAsString(COSName.TYPE);
-        if ("StructTreeRoot".equals(type))
-        {
-            return new PDStructureTreeRoot(node);
-        }
-        if ((type == null) || "StructElem".equals(type))
-        {
-            return new PDStructureElement(node);
-        }
-        throw new IllegalArgumentException("Dictionary must not include a Type entry with a value that is neither StructTreeRoot nor StructElem.");
-    }
-
-
-    private final COSDictionary dictionary;
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public COSDictionary getCOSObject()
-    {
-        return dictionary;
-    }
 
     /**
      * Constructor.
@@ -92,6 +58,38 @@ public abstract class PDStructureNode implements COSObjectable
     }
 
     /**
+     * Creates a node in the structure tree. Can be either a structure tree root,
+     *  or a structure element.
+     * 
+     * @param node the node dictionary
+     * @return the structure node
+     */
+    public static PDStructureNode create(COSDictionary node)
+    {
+        String type = node.getNameAsString(COSName.TYPE);
+        if ("StructTreeRoot".equals(type))
+        {
+            return new PDStructureTreeRoot(node);
+        }
+        if (type == null || "StructElem".equals(type))
+        {
+            return new PDStructureElement(node);
+        }
+        throw new IllegalArgumentException("Dictionary must not include a Type entry with a value that is neither StructTreeRoot nor StructElem.");
+    }
+
+
+    private final COSDictionary dictionary;
+
+    /**
+     * {@inheritDoc}
+     */
+    public COSDictionary getCOSObject()
+    {
+        return dictionary;
+    }
+
+    /**
      * Returns the type.
      * 
      * @return the type
@@ -104,7 +102,7 @@ public abstract class PDStructureNode implements COSObjectable
     /**
      * Returns a list of objects for the kids (K).
      * 
-     * @return a list of objects for the kids
+     * @return a list of objects for the kids, never null.
      */
     public List<Object> getKids()
     {
@@ -112,10 +110,8 @@ public abstract class PDStructureNode implements COSObjectable
         COSBase k = this.getCOSObject().getDictionaryObject(COSName.K);
         if (k instanceof COSArray)
         {
-            Iterator<COSBase> kids = ((COSArray) k).iterator();
-            while (kids.hasNext())
+            for (COSBase kid : (COSArray) k)
             {
-                COSBase kid = kids.next();
                 Object kidObject = this.createObject(kid);
                 if (kidObject != null)
                 {
@@ -363,10 +359,9 @@ public abstract class PDStructureNode implements COSObjectable
      * The type of object depends on the type of the kid. It can be
      * <ul>
      * <li>a {@link PDStructureElement},</li>
-     * <li>a {@link com.tom_roush.pdfbox.pdmodel.interactive.annotation.PDAnnotation PDAnnotation},</li>
-     * <li>a {@link com.tom_roush.pdfbox.pdmodel.graphics.PDXObject PDXObject},</li>
-     * <li>a {@link PDMarkedContentReference}</li>
-     * <li>a {@link Integer}</li>
+     * <li>a {@link PDObjectReference},</li>
+     * <li>a {@link PDMarkedContentReference},</li>
+     * <li>an {@link Integer}</li>
      * </ul>
      * 
      * @param kid the kid
@@ -389,33 +384,35 @@ public abstract class PDStructureNode implements COSObjectable
         }
         if (kidDic != null)
         {
-            String type = kidDic.getNameAsString(COSName.TYPE);
-            if ((type == null) || PDStructureElement.TYPE.equals(type))
-            {
-                // A structure element dictionary denoting another structure
-                // element
-                return new PDStructureElement(kidDic);
-            }
-            else if (PDObjectReference.TYPE.equals(type))
-            {
-                // An object reference dictionary denoting a PDF object
-                return new PDObjectReference(kidDic);
-            }
-            else if (PDMarkedContentReference.TYPE.equals(type))
-            {
-                // A marked-content reference dictionary denoting a
-                // marked-content sequence
-                return new PDMarkedContentReference(kidDic);
-            }
+            return createObjectFromDic(kidDic);
         }
         else if (kid instanceof COSInteger)
         {
-            // An integer marked-content identifier denoting a
-            // marked-content sequence
+            // An integer marked-content identifier denoting a marked-content sequence
             COSInteger mcid = (COSInteger) kid;
             return mcid.intValue();
         }
         return null;
     }
 
+    private COSObjectable createObjectFromDic(COSDictionary kidDic)
+    {
+        String type = kidDic.getNameAsString(COSName.TYPE);
+        if ((type == null) || PDStructureElement.TYPE.equals(type))
+        {
+            // A structure element dictionary denoting another structure element
+            return new PDStructureElement(kidDic);
+        }
+        else if (PDObjectReference.TYPE.equals(type))
+        {
+            // An object reference dictionary denoting a PDF object
+            return new PDObjectReference(kidDic);
+        }
+        else if (PDMarkedContentReference.TYPE.equals(type))
+        {
+            // A marked-content reference dictionary denoting a marked-content sequence
+            return new PDMarkedContentReference(kidDic);
+        }
+        return null;
+    }
 }

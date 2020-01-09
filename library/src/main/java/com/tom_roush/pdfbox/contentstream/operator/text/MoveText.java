@@ -16,12 +16,13 @@
  */
 package com.tom_roush.pdfbox.contentstream.operator.text;
 
-import android.util.Log;
-
 import java.util.List;
+
+
 
 import com.tom_roush.pdfbox.contentstream.operator.MissingOperandException;
 import com.tom_roush.pdfbox.contentstream.operator.Operator;
+import com.tom_roush.pdfbox.contentstream.operator.OperatorName;
 import com.tom_roush.pdfbox.contentstream.operator.OperatorProcessor;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSNumber;
@@ -34,6 +35,7 @@ import com.tom_roush.pdfbox.util.Matrix;
  */
 public class MoveText extends OperatorProcessor
 {
+
     @Override
     public void process(Operator operator, List<COSBase> arguments) throws MissingOperandException
     {
@@ -44,12 +46,22 @@ public class MoveText extends OperatorProcessor
         Matrix textLineMatrix = context.getTextLineMatrix();
         if (textLineMatrix == null)
         {
-            Log.w("PdfBox-Android", "TextLineMatrix is null, " + getName() + " operator will be ignored");
+            return;
+        }        
+        
+        COSBase base0 = arguments.get(0);
+        COSBase base1 = arguments.get(1);
+        if (!(base0 instanceof COSNumber))
+        {
             return;
         }
+        if (!(base1 instanceof COSNumber))
+        {
+            return;
+        }
+        COSNumber x = (COSNumber) base0;
+        COSNumber y = (COSNumber) base1;
 
-        COSNumber x = (COSNumber) arguments.get(0);
-        COSNumber y = (COSNumber) arguments.get(1);
         Matrix matrix = new Matrix(1, 0, 0, 1, x.floatValue(), y.floatValue());
         textLineMatrix.concatenate(matrix);
         context.setTextMatrix(textLineMatrix.clone());
@@ -58,6 +70,6 @@ public class MoveText extends OperatorProcessor
     @Override
     public String getName()
     {
-        return "Td";
+        return OperatorName.MOVE_TEXT;
     }
 }

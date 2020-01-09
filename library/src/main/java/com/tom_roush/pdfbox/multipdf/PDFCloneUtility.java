@@ -16,6 +16,14 @@
  */
 package com.tom_roush.pdfbox.multipdf;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;
@@ -26,25 +34,24 @@ import com.tom_roush.pdfbox.io.IOUtils;
 import com.tom_roush.pdfbox.pdmodel.PDDocument;
 import com.tom_roush.pdfbox.pdmodel.common.COSObjectable;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 /**
  * Utility class used to clone PDF objects. It keeps track of objects it has already cloned.
+ * Although this class is public, it is for PDFBox internal use and should not be used outside,
+ * except by very experienced users. The "public" modifier will be removed in 3.0. The class should
+ * not be used on documents that are being generated because these can contain unfinished parts,
+ * e.g. font subsetting information.
  */
-class PDFCloneUtility
+public class PDFCloneUtility
 {
     private final PDDocument destination;
     private final Map<Object,COSBase> clonedVersion = new HashMap<Object,COSBase>();
+    private final Set<COSBase> clonedValues = new HashSet<COSBase>();
 
     /**
      * Creates a new instance for the given target document.
      * @param dest the destination PDF document that will receive the clones
      */
-    PDFCloneUtility(PDDocument dest)
+    public PDFCloneUtility(PDDocument dest)
     {
         this.destination = dest;
     }
@@ -75,11 +82,17 @@ class PDFCloneUtility
           if( retval != null )
           {
               //we are done, it has already been converted.
+              return retval;
           }
-          else if( base instanceof List )
+          if (base instanceof COSBase && clonedValues.contains(base))
+          {
+              // Don't clone a clone
+              return (COSBase) base;
+          }
+          if (base instanceof List)
           {
               COSArray array = new COSArray();
-              List<?> list = (List<?>)base;
+              List<?> list = (List<?>) base;
               for (Object obj : list)
               {
                   array.add(cloneForNewDocument(obj));
@@ -89,13 +102,11 @@ class PDFCloneUtility
           else if( base instanceof COSObjectable && !(base instanceof COSBase) )
           {
               retval = cloneForNewDocument( ((COSObjectable)base).getCOSObject() );
-              clonedVersion.put( base, retval );
           }
           else if( base instanceof COSObject )
           {
               COSObject object = (COSObject)base;
               retval = cloneForNewDocument( object.getObject() );
-              clonedVersion.put( base, retval );
           }
           else if( base instanceof COSArray )
           {
@@ -106,16 +117,17 @@ class PDFCloneUtility
                   newArray.add( cloneForNewDocument( array.get( i ) ) );
               }
               retval = newArray;
-              clonedVersion.put( base, retval );
           }
           else if( base instanceof COSStream )
           {
               COSStream originalStream = (COSStream)base;
               COSStream stream = destination.getDocument().createCOSStream();
-              OutputStream output = stream.createOutputStream(originalStream.getFilters());
-              IOUtils.copy(originalStream.createInputStream(), output);
+              OutputStream output = stream.createRawOutputStream();
+              InputStream input = originalStream.createRawInputStream();
+              IOUtils.copy(input, output );
+              input.close();
               output.close();
-              clonedVersion.put(base, stream);
+              clonedVersion.put( base, stream );
               for( Map.Entry<COSName, COSBase> entry :  originalStream.entrySet() )
               {
                   stream.setItem(entry.getKey(), cloneForNewDocument(entry.getValue()));
@@ -139,13 +151,13 @@ class PDFCloneUtility
               retval = (COSBase)base;
           }
           clonedVersion.put( base, retval );
+          clonedValues.add(retval);
           return retval;
       }
 
-
       /**
        * Merges two objects of the same type by deep-cloning its members.
-       * <br/>
+       * <br>
        * Base and target must be instances of the same class.
        * @param base the base object to be cloned
        * @param target the merge target
@@ -163,10 +175,10 @@ class PDFCloneUtility
               return;
               //we are done, it has already been converted. // ### Is that correct for cloneMerge???
           }
-          else if (!(base instanceof COSBase))
+          //TODO what when clone-merging a clone? Does it ever happen?
+          if (!(base instanceof COSBase))
           {
-              cloneMerge(base.getCOSObject(), target.getCOSObject() );
-              clonedVersion.put( base, retval );
+              cloneMerge(base.getCOSObject(), target.getCOSObject());
           }
           else if( base instanceof COSObject )
           {
@@ -174,11 +186,10 @@ class PDFCloneUtility
               {
                   cloneMerge(((COSObject) base).getObject(),((COSObject) target).getObject() );
               }
-              else if(target instanceof COSDictionary)
+              else if (target instanceof COSDictionary || target instanceof COSArray)
               {
                   cloneMerge(((COSObject) base).getObject(), target);
               }
-              clonedVersion.put( base, retval );
           }
           else if( base instanceof COSArray )
           {
@@ -187,7 +198,6 @@ class PDFCloneUtility
               {
                   ((COSArray)target).add( cloneForNewDocument( array.get( i ) ) );
               }
-              clonedVersion.put( base, retval );
           }
           else if( base instanceof COSStream )
           {
@@ -195,12 +205,14 @@ class PDFCloneUtility
               COSStream originalStream = (COSStream)base;
               COSStream stream = destination.getDocument().createCOSStream();
               OutputStream output = stream.createOutputStream(originalStream.getFilters());
-              IOUtils.copy(originalStream.createInputStream(), output);
+              IOUtils.copy( originalStream.createInputStream(), output );
               output.close();
-              clonedVersion.put(base, stream);
+              clonedVersion.put( base, stream );
               for( Map.Entry<COSName, COSBase> entry : originalStream.entrySet() )
               {
-                  stream.setItem(entry.getKey(), cloneForNewDocument(entry.getValue()));
+                  stream.setItem(
+                          entry.getKey(),
+                          cloneForNewDocument(entry.getValue()));
               }
               retval = stream;
           }
@@ -227,5 +239,6 @@ class PDFCloneUtility
               retval = (COSBase)base;
           }
           clonedVersion.put( base, retval );
+          clonedValues.add(retval);
       }
 }

@@ -108,7 +108,7 @@ public class PDNamedDestination extends PDDestination
      */
     public void setNamedDestination( String dest ) throws IOException
     {
-        if( dest == null )
+        if (dest == null)
         {
             namedDestination = null;
         }
@@ -117,5 +117,4 @@ public class PDNamedDestination extends PDDestination
             namedDestination = new COSString( dest );
         }
     }
-
 }

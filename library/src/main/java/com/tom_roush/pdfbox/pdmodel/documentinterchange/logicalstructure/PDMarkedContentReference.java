@@ -24,23 +24,14 @@ import com.tom_roush.pdfbox.pdmodel.common.COSObjectable;
 /**
  * A marked-content reference.
  * 
- * @author Ben Litchfield
+ * @author Johannes Koch
  */
 public class PDMarkedContentReference implements COSObjectable
 {
     public static final String TYPE = "MCR";
 
     private final COSDictionary dictionary;
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public COSDictionary getCOSObject()
-    {
-        return this.dictionary;
-    }
-
+    
     /**
      * Default constructor
      */
@@ -58,6 +49,15 @@ public class PDMarkedContentReference implements COSObjectable
     public PDMarkedContentReference(COSDictionary dictionary)
     {
         this.dictionary = dictionary;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public COSDictionary getCOSObject()
+    {
+        return this.dictionary;
     }
 
     /**
@@ -109,6 +109,7 @@ public class PDMarkedContentReference implements COSObjectable
     @Override
     public String toString()
     {
-        return new StringBuilder().append("mcid=").append(this.getMCID()).toString();
+        return "mcid=" + this.getMCID();
     }
+
 }

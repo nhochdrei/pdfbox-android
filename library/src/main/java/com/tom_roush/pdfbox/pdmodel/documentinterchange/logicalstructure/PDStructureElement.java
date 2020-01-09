@@ -24,6 +24,7 @@ import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSInteger;
 import com.tom_roush.pdfbox.cos.COSName;
+import com.tom_roush.pdfbox.cos.COSNumber;
 import com.tom_roush.pdfbox.cos.COSObject;
 import com.tom_roush.pdfbox.pdmodel.PDPage;
 import com.tom_roush.pdfbox.pdmodel.documentinterchange.markedcontent.PDMarkedContent;
@@ -90,13 +91,12 @@ public class PDStructureElement extends PDStructureNode
      */
     public PDStructureNode getParent()
     {
-        COSDictionary p = (COSDictionary) this.getCOSObject()
-            .getDictionaryObject(COSName.P);
-        if (p == null)
+        COSBase base = this.getCOSObject().getDictionaryObject(COSName.P);
+        if (base instanceof COSDictionary)
         {
-            return null;
+            return PDStructureNode.create((COSDictionary) base);
         }
-        return PDStructureNode.create(p);
+        return null;
     }
 
     /**
@@ -138,12 +138,12 @@ public class PDStructureElement extends PDStructureNode
      */
     public PDPage getPage()
     {
-        COSDictionary pageDic = (COSDictionary) this.getCOSObject().getDictionaryObject(COSName.PG);
-        if (pageDic == null)
+        COSBase base = this.getCOSObject().getDictionaryObject(COSName.PG);
+        if (base instanceof COSDictionary)
         {
-            return null;
+            return new PDPage((COSDictionary) base);
         }
-        return new PDPage(pageDic);
+        return null;
     }
 
     /**
@@ -160,12 +160,11 @@ public class PDStructureElement extends PDStructureNode
     /**
      * Returns the attributes together with their revision numbers (A).
      * 
-     * @return the attributes
+     * @return the attributes as a list, never null.
      */
     public Revisions<PDAttributeObject> getAttributes()
     {
-        Revisions<PDAttributeObject> attributes =
-            new Revisions<PDAttributeObject>();
+        Revisions<PDAttributeObject> attributes = new Revisions<PDAttributeObject>();
         COSBase a = this.getCOSObject().getDictionaryObject(COSName.A);
         if (a instanceof COSArray)
         {
@@ -175,6 +174,10 @@ public class PDStructureElement extends PDStructureNode
             while (it.hasNext())
             {
                 COSBase item = it.next();
+                if (item instanceof COSObject)
+                {
+                    item = ((COSObject) item).getObject();
+                }
                 if (item instanceof COSDictionary)
                 {
                     ao = PDAttributeObject.create((COSDictionary) item);
@@ -183,8 +186,7 @@ public class PDStructureElement extends PDStructureNode
                 }
                 else if (item instanceof COSInteger)
                 {
-                    attributes.setRevisionNumber(ao,
-                        ((COSInteger) item).intValue());
+                    attributes.setRevisionNumber(ao, ((COSNumber) item).intValue());
                 }
             }
         }
@@ -220,7 +222,7 @@ public class PDStructureElement extends PDStructureNode
             int revisionNumber = attributes.getRevisionNumber(i);
             if (revisionNumber < 0)
             {
-            	throw new IllegalArgumentException("The revision number shall be > -1");
+                throw new IllegalArgumentException("The revision number shall be > -1");
             }
             array.add(attributeObject);
             array.add(COSInteger.get(revisionNumber));
@@ -327,7 +329,7 @@ public class PDStructureElement extends PDStructureNode
     /**
      * Returns the class names together with their revision numbers (C).
      * 
-     * @return the class names
+     * @return the class names as a list, never null.
      */
     public Revisions<String> getClassNames()
     {
@@ -346,6 +348,10 @@ public class PDStructureElement extends PDStructureNode
             while (it.hasNext())
             {
                 COSBase item = it.next();
+                if (item instanceof COSObject)
+                {
+                    item = ((COSObject) item).getObject();
+                }
                 if (item instanceof COSName)
                 {
                     className = ((COSName) item).getName();
@@ -353,8 +359,7 @@ public class PDStructureElement extends PDStructureNode
                 }
                 else if (item instanceof COSInteger)
                 {
-                    classNames.setRevisionNumber(className,
-                        ((COSInteger) item).intValue());
+                    classNames.setRevisionNumber(className, ((COSInteger) item).intValue());
                 }
             }
         }
@@ -386,7 +391,7 @@ public class PDStructureElement extends PDStructureNode
             int revisionNumber = classNames.getRevisionNumber(i);
             if (revisionNumber < 0)
             {
-            	throw new IllegalArgumentException("The revision number shall be > -1");
+                throw new IllegalArgumentException("The revision number shall be > -1");
             }
             array.add(COSName.getPDFName(className));
             array.add(COSInteger.get(revisionNumber));
@@ -482,7 +487,7 @@ public class PDStructureElement extends PDStructureNode
     {
         if (revisionNumber < 0)
         {
-        	throw new IllegalArgumentException("The revision number shall be > -1");
+            throw new IllegalArgumentException("The revision number shall be > -1");
         }
         this.getCOSObject().setInt(COSName.R, revisionNumber);
     }

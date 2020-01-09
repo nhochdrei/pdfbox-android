@@ -16,17 +16,16 @@
  */
 package com.tom_roush.pdfbox.pdmodel.fdf;
 
+import java.io.IOException;
+
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
-
 import org.w3c.dom.Element;
-
-import java.io.IOException;
 
 /**
  * This abstract class is used as a superclass for the different FDF annotations with text markup attributes.
- *
+ * 
  * @author Johanneke Lamberink
  */
 public abstract class FDFAnnotationTextMarkup extends FDFAnnotation
@@ -53,6 +52,7 @@ public abstract class FDFAnnotationTextMarkup extends FDFAnnotation
      * Constructor.
      *
      * @param element An XFDF element.
+     *
      * @throws IOException If there is an error extracting information from the element.
      */
     public FDFAnnotationTextMarkup(Element element) throws IOException
@@ -77,12 +77,11 @@ public abstract class FDFAnnotationTextMarkup extends FDFAnnotation
         setCoords(values);
     }
 
-
     /**
      * Set the coordinates of individual words or group of words.
-     *
-     * The quadliterals shall encompasses a word or group of contiguous words in the text underlying the annotation.
-     * The coordinates for each quadrilateral shall be given in the order x1 y1 x2 y2 x3 y3 x4 y4.
+     * 
+     * The quadliterals shall encompasses a word or group of contiguous words in the text underlying the annotation. The
+     * coordinates for each quadrilateral shall be given in the order x1 y1 x2 y2 x3 y3 x4 y4.
      *
      * @param coords an array of 8 􏰍 n numbers specifying the coordinates of n quadrilaterals.
      */
@@ -95,9 +94,9 @@ public abstract class FDFAnnotationTextMarkup extends FDFAnnotation
 
     /**
      * Get the coordinates of individual words or group of words.
-     *
-     * @return the array of 8 􏰍 n numbers specifying the coordinates of n quadrilaterals.
+     * 
      * @see #setCoords(float[])
+     * @return the array of 8 􏰍 n numbers specifying the coordinates of n quadrilaterals.
      */
     public float[] getCoords()
     {

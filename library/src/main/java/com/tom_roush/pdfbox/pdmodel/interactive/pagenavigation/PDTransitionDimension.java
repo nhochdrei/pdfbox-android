@@ -19,7 +19,7 @@ package com.tom_roush.pdfbox.pdmodel.interactive.pagenavigation;
 /**
  * The dimension in which the specified transition effect shall occur. Only for {@link PDTransitionStyle#Split} and
  * {@link PDTransitionStyle#Blinds}.
- *
+ * 
  * @author Andrea Vacondio
  *
  */

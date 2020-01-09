@@ -22,7 +22,7 @@ import java.util.List;
 
 /**
  * Native font finder base class. This class is based on a class provided by Apache FOP. see
- * com.tom_roush.fop.fonts.autodetect.NativeFontDirFinder
+ * org.apache.fop.fonts.autodetect.NativeFontDirFinder
  */
 public abstract class NativeFontDirFinder implements FontDirFinder
 {
@@ -42,9 +42,16 @@ public abstract class NativeFontDirFinder implements FontDirFinder
             for (String searchableDirectorie : searchableDirectories)
             {
                 File fontDir = new File(searchableDirectorie);
-                if (fontDir.exists() && fontDir.canRead())
+                try
                 {
-                    fontDirList.add(fontDir);
+                    if (fontDir.exists() && fontDir.canRead())
+                    {
+                        fontDirList.add(fontDir);
+                    }
+                }
+                catch (SecurityException e)
+                {
+                    // should continue if this fails
                 }
             }
         }

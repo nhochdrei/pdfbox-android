@@ -14,9 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.tom_roush.pdfbox.contentstream.operator.color;
 
+import com.tom_roush.pdfbox.contentstream.operator.OperatorName;
 import com.tom_roush.pdfbox.pdmodel.graphics.color.PDColor;
 import com.tom_roush.pdfbox.pdmodel.graphics.color.PDColorSpace;
 
@@ -29,7 +29,6 @@ public class SetStrokingColor extends SetColor
 {
     /**
      * Returns the stroking color.
-     *
      * @return The stroking color.
      */
     @Override
@@ -40,7 +39,6 @@ public class SetStrokingColor extends SetColor
 
     /**
      * Sets the stroking color.
-     *
      * @param color The new stroking color.
      */
     @Override
@@ -51,7 +49,6 @@ public class SetStrokingColor extends SetColor
 
     /**
      * Returns the stroking color space.
-     *
      * @return The stroking color space.
      */
     @Override
@@ -63,6 +60,6 @@ public class SetStrokingColor extends SetColor
     @Override
     public String getName()
     {
-        return "SC";
+        return OperatorName.STROKING_COLOR;
     }
 }

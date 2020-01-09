@@ -29,10 +29,11 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * This table is strongly recommended by the OpenType CJK Font Guidelines
  * for "CFF OpenType fonts that are used for vertical writing".
- *
+ * 
  * This table is specified only in the OpenType specification (1.3 and later).
- *
+ * 
  * @author Glenn Adams
+ * 
  */
 public class VerticalOriginTable extends TTFTable
 {
@@ -40,10 +41,10 @@ public class VerticalOriginTable extends TTFTable
      * A tag that identifies this table type.
      */
     public static final String TAG = "VORG";
-
+    
     private float version;
     private int defaultVertOriginY;
-    private Map<Integer, Integer> origins = new ConcurrentHashMap<Integer, Integer>();
+    private Map<Integer, Integer> origins;
 
     VerticalOriginTable(TrueTypeFont font)
     {
@@ -52,18 +53,19 @@ public class VerticalOriginTable extends TTFTable
 
     /**
      * This will read the required data from the stream.
-     *
+     * 
      * @param ttf The font that is being read.
      * @param data The stream to read the data from.
      * @throws IOException If there is an error reading the data.
      */
     @Override
-    public void read(TrueTypeFont ttf, TTFDataStream data) throws IOException
+    void read(TrueTypeFont ttf, TTFDataStream data) throws IOException
     {
         version = data.read32Fixed();
         defaultVertOriginY = data.readSignedShort();
         int numVertOriginYMetrics = data.readUnsignedShort();
-        for (int i = 0; i < numVertOriginYMetrics; ++i)
+        origins = new ConcurrentHashMap<Integer, Integer>(numVertOriginYMetrics);
+        for (int i = 0; i < numVertOriginYMetrics; ++i) 
         {
             int g = data.readUnsignedShort();
             int y = data.readSignedShort();
@@ -71,7 +73,7 @@ public class VerticalOriginTable extends TTFTable
         }
         initialized = true;
     }
-
+    
     /**
      * @return Returns the version.
      */

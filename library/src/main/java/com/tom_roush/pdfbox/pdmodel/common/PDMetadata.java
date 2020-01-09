@@ -19,9 +19,11 @@ package com.tom_roush.pdfbox.pdmodel.common;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
 import com.tom_roush.pdfbox.cos.COSName;
+
+
 import com.tom_roush.pdfbox.cos.COSStream;
+
 import com.tom_roush.pdfbox.pdmodel.PDDocument;
 
 /**
@@ -40,8 +42,8 @@ public class PDMetadata extends PDStream
     public PDMetadata( PDDocument document )
     {
         super( document );
-        getStream().setName( COSName.TYPE, "Metadata" );
-        getStream().setName( COSName.SUBTYPE, "XML" );
+        getCOSObject().setName( COSName.TYPE, "Metadata" );
+        getCOSObject().setName( COSName.SUBTYPE, "XML" );
     }
 
     /**
@@ -52,11 +54,11 @@ public class PDMetadata extends PDStream
      * @param str The stream parameter.
      * @throws IOException If there is an error creating the stream in the document.
      */
-    public PDMetadata(PDDocument doc, InputStream str) throws IOException
+    public PDMetadata( PDDocument doc, InputStream str) throws IOException
     {
-        super(doc, str);
-        getStream().setName( COSName.TYPE, "Metadata" );
-        getStream().setName( COSName.SUBTYPE, "XML" );
+        super( doc, str );
+        getCOSObject().setName( COSName.TYPE, "Metadata" );
+        getCOSObject().setName( COSName.SUBTYPE, "XML" );
     }
 
     /**
@@ -92,8 +94,8 @@ public class PDMetadata extends PDStream
     public void importXMPMetadata( byte[] xmp )
         throws IOException
     {
-    	OutputStream os = createOutputStream();
-    	os.write(xmp);
-    	os.close();
+        OutputStream os = createOutputStream();
+        os.write(xmp);
+        os.close();
     }
 }

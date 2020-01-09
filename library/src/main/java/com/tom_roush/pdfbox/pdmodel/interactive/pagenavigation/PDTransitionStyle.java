@@ -19,7 +19,7 @@ package com.tom_roush.pdfbox.pdmodel.interactive.pagenavigation;
 /**
  * The transition style that shall be used when moving to the page from another during a presentation. Ref. table 162
  * PDF32000-1:2008
- *
+ * 
  * @author Andrea Vacondio
  *
  */

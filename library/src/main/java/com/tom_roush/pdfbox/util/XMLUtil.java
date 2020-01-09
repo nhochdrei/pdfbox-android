@@ -16,25 +16,27 @@
  */
 package com.tom_roush.pdfbox.util;
 
-import java.io.IOException;
 import java.io.InputStream;
+import java.io.IOException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.FactoryConfigurationError;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
+import org.xml.sax.SAXException;
 
 /**
  * This class with handle some simple XML operations.
  *
- * @author <a href="mailto:ben@benlitchfield.com">Ben Litchfield</a>
- * @version $Revision: 1.3 $
+ * @author Ben Litchfield
  */
-public class XMLUtil
+public final class XMLUtil
 {
     /**
      * Utility class, should not be instantiated.
@@ -51,18 +53,49 @@ public class XMLUtil
      * @return The DOM document.
      * @throws IOException It there is an error creating the dom.
      */
-    public static Document parse( InputStream is ) throws IOException
+    public static Document parse(InputStream is) throws IOException
+    {
+        return parse(is, false);
+    }
+
+    /**
+     * This will parse an XML stream and create a DOM document.
+     *
+     * @param is The stream to get the XML from.
+     * @param nsAware activates namespace awareness of the parser
+     * @return The DOM document.
+     * @throws IOException It there is an error creating the dom.
+     */
+    public static Document parse(InputStream is, boolean nsAware) throws IOException
     {
         try
         {
             DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+            // Fix for CVE-2016-2175: disable external entities
+            builderFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            builderFactory.setFeature("http://xml.org/sax/features/external-general-entities",
+                    false);
+            builderFactory.setFeature("http://xml.org/sax/features/external-parameter-entities",
+                    false);
+            builderFactory.setFeature(
+                    "http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            builderFactory.setXIncludeAware(false);
+            builderFactory.setExpandEntityReferences(false);
+            builderFactory.setNamespaceAware(nsAware);
             DocumentBuilder builder = builderFactory.newDocumentBuilder();
-            return builder.parse( is );
+            return builder.parse(is);
         }
-        catch( Exception e )
+        catch (FactoryConfigurationError e)
         {
-            IOException thrown = new IOException( e.getMessage() );
-            throw thrown;
+            throw new IOException(e.getMessage(), e);
+        }
+        catch (ParserConfigurationException e)
+        {
+            throw new IOException(e.getMessage(), e);
+        }
+        catch (SAXException e)
+        {
+            throw new IOException(e.getMessage(), e);
         }
     }
 
@@ -72,18 +105,20 @@ public class XMLUtil
      * @param node The node to get the text value for.
      * @return The text of the node.
      */
-    public static String getNodeValue( Element node )
+    public static String getNodeValue(Element node)
     {
-        String retval = "";
+        StringBuilder sb = new StringBuilder();
         NodeList children = node.getChildNodes();
-        for( int i=0; i<children.getLength(); i++ )
+        int numNodes = children.getLength();
+        for (int i = 0; i < numNodes; i++)
         {
-            Node next = children.item( i );
-            if( next instanceof Text )
+            Node next = children.item(i);
+            if (next instanceof Text)
             {
-                retval = next.getNodeValue();
+                sb.append(next.getNodeValue());
             }
         }
-        return retval;
+        return sb.toString();
     }
+
 }

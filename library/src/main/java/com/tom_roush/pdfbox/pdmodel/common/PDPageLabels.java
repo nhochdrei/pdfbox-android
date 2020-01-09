@@ -21,9 +21,11 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.TreeMap;
+import java.util.Map.Entry;
+import java.util.NavigableSet;
+import java.util.TreeSet;
 
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
@@ -91,7 +93,7 @@ public class PDPageLabels implements COSObjectable
         {
             return;
         }
-        PDNumberTreeNode root = new PDNumberTreeNode(dict, COSDictionary.class);
+        PDNumberTreeNode root = new PDNumberTreeNode(dict, PDPageLabelRange.class);
         findLabels(root);
     }
     
@@ -112,7 +114,7 @@ public class PDPageLabels implements COSObjectable
             {
                 if(i.getKey() >= 0)
                 {
-                    labels.put(i.getKey(), new PDPageLabelRange((COSDictionary)i.getValue()));
+                    labels.put(i.getKey(), (PDPageLabelRange) i.getValue());
                 }
             }
         }
@@ -162,10 +164,10 @@ public class PDPageLabels implements COSObjectable
      */
     public void setLabelItem(int startPage, PDPageLabelRange item)
     {
-    	if (startPage < 0)
-    	{
-    		throw new IllegalArgumentException("startPage parameter of setLabelItem may not be < 0");
-    	}
+        if (startPage < 0)
+        {
+            throw new IllegalArgumentException("startPage parameter of setLabelItem may not be < 0");
+        }
         labels.put(startPage, item);
     }
     
@@ -206,7 +208,7 @@ public class PDPageLabels implements COSObjectable
             new HashMap<String, Integer>(doc.getNumberOfPages());
         computeLabels(new LabelHandler()
         {
-        	@Override
+            @Override
             public void newLabel(int pageIndex, String label)
             {
                 labelMap.put(label, pageIndex);
@@ -227,7 +229,7 @@ public class PDPageLabels implements COSObjectable
         final String[] map = new String[doc.getNumberOfPages()];
         computeLabels(new LabelHandler()
         {
-        	@Override
+            @Override
             public void newLabel(int pageIndex, String label)
             {
                 if(pageIndex < doc.getNumberOfPages())
@@ -237,6 +239,16 @@ public class PDPageLabels implements COSObjectable
             }
         });
         return map;
+    }
+
+    /**
+     * Get an ordered set of page indices having a page label range.
+     *
+     * @return set of page indices.
+     */
+    public NavigableSet<Integer> getPageIndices()
+    {
+        return new TreeSet<Integer>(labels.keySet());
     }
 
     /**
@@ -379,7 +391,7 @@ public class PDPageLabels implements COSObjectable
             while (power < 3 && pageIndex > 0)
             {
                 buf.insert(0, ROMANS[power][pageIndex % 10]);
-                pageIndex = pageIndex / 10;
+                pageIndex /= 10;
                 power++;
             }
             // Prepend as many m as there are thousands (which is
@@ -397,14 +409,14 @@ public class PDPageLabels implements COSObjectable
         }
 
         /**
-         * A..Z, AA..ZZ, AAA..ZZZ ... labeling as described in PDF32000-1:2008,
+         * a..z, aa..zz, aaa..zzz ... labeling as described in PDF32000-1:2008,
          * Table 159, Page 375.
          */
         private static String makeLetterLabel(int num)
         {
             StringBuilder buf = new StringBuilder();
             int numLetters = num / 26 + Integer.signum(num % 26);
-            int letter = num % 26 + 26 * (1 - Integer.signum(num % 26)) + 64;
+            int letter = num % 26 + 26 * (1 - Integer.signum(num % 26)) + 'a' - 1;
             for (int i = 0; i < numLetters; i++)
             {
                 buf.appendCodePoint(letter);

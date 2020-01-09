@@ -27,13 +27,13 @@ import java.io.InputStream;
  */
 class TTCDataStream extends TTFDataStream
 {
-    private final TTFDataStream stream;
-
+    private final TTFDataStream stream; 
+    
     TTCDataStream(TTFDataStream stream)
     {
         this.stream = stream;
     }
-
+    
     @Override
     public int read() throws IOException
     {
@@ -87,5 +87,11 @@ class TTCDataStream extends TTFDataStream
     public InputStream getOriginalData() throws IOException
     {
         return stream.getOriginalData();
+    }
+
+    @Override
+    public long getOriginalDataSize()
+    {
+        return stream.getOriginalDataSize();
     }
 }

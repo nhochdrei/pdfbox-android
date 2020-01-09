@@ -68,7 +68,7 @@ public class PDPageXYZDestination extends PDPageDestination
     }
 
     /**
-     * Set the left x-coordinate, values of 0 or -1 imply that the current x-coordinate
+     * Set the left x-coordinate, values 0 or -1 imply that the current x-coordinate
      * will be used.
      * @param x The left x coordinate.
      */
@@ -97,7 +97,7 @@ public class PDPageXYZDestination extends PDPageDestination
     }
 
     /**
-     * Set the top y-coordinate, values of 0 or -1 imply that the current y-coordinate
+     * Set the top y-coordinate, values 0 or -1 imply that the current y-coordinate
      * will be used.
      * @param y The top ycoordinate.
      */
@@ -131,7 +131,7 @@ public class PDPageXYZDestination extends PDPageDestination
     }
 
     /**
-     * Set the zoom value for the page, values of 0 or -1 imply that the current zoom
+     * Set the zoom value for the page, values 0 or -1 imply that the current zoom
      * will be used.
      * @param zoom The zoom value.
      */

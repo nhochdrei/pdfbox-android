@@ -34,9 +34,9 @@ import com.tom_roush.pdfbox.pdmodel.PDResources;
  */
 public abstract class PDVariableText extends PDTerminalField
 {
-    static final int QUADDING_LEFT = 0;
-    static final int QUADDING_CENTERED = 1;
-    static final int QUADDING_RIGHT = 2;
+    public static final int QUADDING_LEFT = 0;
+    public static final int QUADDING_CENTERED = 1;
+    public static final int QUADDING_RIGHT = 2;
 
     /**
      * @see PDTerminalField#PDTerminalField(PDAcroForm)
@@ -50,7 +50,7 @@ public abstract class PDVariableText extends PDTerminalField
 
     /**
      * Constructor.
-     *
+     * 
      * @param acroForm The form that this field is part of.
      * @param field the PDF object to represent as a field.
      * @param parent the parent node of the node
@@ -62,12 +62,12 @@ public abstract class PDVariableText extends PDTerminalField
 
     /**
      * Get the default appearance.
-     *
+     * 
      * This is an inheritable attribute.
-     *
+     * 
      * The default appearance contains a set of default graphics and text operators
-     * to define the field's text size and color.
-     *
+     * to define the field’s text size and color.
+     * 
      * @return the DA element of the dictionary object
      */
     public String getDefaultAppearance()
@@ -95,60 +95,70 @@ public abstract class PDVariableText extends PDTerminalField
 
     /**
      * Set the default appearance.
-     *
-     * This will set the local default appearance for the variable text field only not
+     * 
+     * This will set the local default appearance for the variable text field only, not 
      * affecting a default appearance in the parent hierarchy.
-     *
+     * 
      * Providing null as the value will remove the local default appearance.
+     * <p>
+     * This method can also be used to change the font of a field, by replacing the font name from
+     * this string with another font name found in the AcroForm default resources <u>before</u>
+     * calling {@link #setValue(java.lang.String) setValue(String)}, see also
+     * <a href="https://stackoverflow.com/questions/47995062/pdfbox-api-how-to-handle-cyrillic-values">this
+     * stackoverflow answer</a>. For example, "/Helv 10 Tf 0 g" can be replaced with "/F1 10 Tf 0
+     * g". Performance may go down (see
+     * <a href="https://issues.apache.org/jira/browse/PDFBOX-4508">PDFBOX-4508)</a> if this is done
+     * for many fields and with a very large font (e.g. ArialUni); to avoid this, save and reload
+     * the file after changing all fields.
      *
      * @param daValue a string describing the default appearance
      */
     public void setDefaultAppearance(String daValue)
     {
-        dictionary.setString(COSName.DA, daValue);
+        getCOSObject().setString(COSName.DA, daValue);
     }
 
     /**
      * Get the default style string.
-     *
+     * 
      * The default style string defines the default style for
      * rich text fields.
-     *
+     * 
      * @return the DS element of the dictionary object
      */
     public String getDefaultStyleString()
     {
-        COSString defaultStyleString = (COSString) dictionary.getDictionaryObject(COSName.DS);
+        COSString defaultStyleString = (COSString) getCOSObject().getDictionaryObject(COSName.DS);
         return defaultStyleString.getString();
     }
 
     /**
      * Set the default style string.
-     *
+     * 
      * Providing null as the value will remove the default style string.
-     *
+     * 
      * @param defaultStyleString a string describing the default style.
      */
     public void setDefaultStyleString(String defaultStyleString)
     {
         if (defaultStyleString != null)
         {
-            dictionary.setItem(COSName.DS, new COSString(defaultStyleString));
+            getCOSObject().setItem(COSName.DS, new COSString(defaultStyleString));
         }
         else
         {
-            dictionary.removeItem(COSName.DS);
+            getCOSObject().removeItem(COSName.DS);
         }
-    }
+    }    
 
     /**
      * This will get the 'quadding' or justification of the text to be displayed.
-     *
+     * 
      * This is an inheritable attribute.
-     *
-     * 0 - Left(default)<br/>
-     * 1 - Centered<br />
-     * 2 - Right<br />
+     * <br>
+     * 0 - Left (default)<br>
+     * 1 - Centered<br>
+     * 2 - Right<br>
      * Please see the QUADDING_CONSTANTS.
      *
      * @return The justification of the text strings.
@@ -157,9 +167,9 @@ public abstract class PDVariableText extends PDTerminalField
     {
         int retval = 0;
 
-        COSNumber number = (COSNumber)getInheritableAttribute(COSName.Q );
-
-        if( number != null )
+        COSNumber number = (COSNumber)getInheritableAttribute(COSName.Q);
+        
+        if (number != null)
         {
             retval = number.intValue();
         }
@@ -171,51 +181,48 @@ public abstract class PDVariableText extends PDTerminalField
      *
      * @param q The new text justification.
      */
-    public void setQ( int q )
+    public void setQ(int q)
     {
-        dictionary.setInt(COSName.Q, q);
+        getCOSObject().setInt(COSName.Q, q);
     }
-
+    
     /**
      * Get the fields rich text value.
-     *
+     * 
      * @return the rich text value string
+     * @throws IOException if the field dictionary entry is not a text type
      */
     public String getRichTextValue() throws IOException
     {
         return getStringOrStream(getInheritableAttribute(COSName.RV));
     }
-
+    
     /**
      * Set the fields rich text value.
-     *
+     * 
      * <p>
      * Setting the rich text value will not generate the appearance
      * for the field.
-     *
-     * <br/>
+     * <br>
      * You can set {@link PDAcroForm#setNeedAppearances(Boolean)} to
      * signal a conforming reader to generate the appearance stream.
-     *
      * </p>
-     *
+     * 
      * Providing null as the value will remove the default style string.
-     *
+     * 
      * @param richTextValue a rich text string
      */
     public void setRichTextValue(String richTextValue)
     {
-        // TODO stream instead of string
         if (richTextValue != null)
         {
-            dictionary.setItem(COSName.RV, new COSString(richTextValue));
+            getCOSObject().setItem(COSName.RV, new COSString(richTextValue));
         }
         else
         {
-            dictionary.removeItem(COSName.RV);
-        }
+            getCOSObject().removeItem(COSName.RV);
+        }        
     }
-
 
     /**
      * Get a text as text stream.
@@ -225,7 +232,7 @@ public abstract class PDVariableText extends PDTerminalField
      * @param base the potential text or text stream
      * @return the text stream
      */
-    protected String getStringOrStream(COSBase base)
+    protected final String getStringOrStream(COSBase base)
     {
         if (base == null)
         {
@@ -233,11 +240,11 @@ public abstract class PDVariableText extends PDTerminalField
         }
         else if (base instanceof COSString)
         {
-            return ((COSString) base).getString();
+            return ((COSString)base).getString();
         }
         else if (base instanceof COSStream)
         {
-            return ((COSStream) base).getString();
+            return ((COSStream)base).toTextString();
         }
         else
         {

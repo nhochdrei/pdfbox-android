@@ -16,13 +16,15 @@
  */
 package com.tom_roush.pdfbox.contentstream.operator.text;
 
-import com.tom_roush.pdfbox.contentstream.operator.Operator;
-import com.tom_roush.pdfbox.contentstream.operator.OperatorProcessor;
+import java.util.List;
+
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSNumber;
+import com.tom_roush.pdfbox.contentstream.operator.Operator;
+import com.tom_roush.pdfbox.contentstream.operator.OperatorName;
+import com.tom_roush.pdfbox.contentstream.operator.OperatorProcessor;
 
 import java.io.IOException;
-import java.util.List;
 
 /**
  * Ts: Set text rise.
@@ -34,13 +36,22 @@ public class SetTextRise extends OperatorProcessor
     @Override
     public void process(Operator operator, List<COSBase> arguments) throws IOException
     {
-        COSNumber rise = (COSNumber)arguments.get(0);
+        if (arguments.isEmpty())
+        {
+            return;
+        }
+        COSBase base = arguments.get(0);
+        if (!(base instanceof COSNumber))
+        {
+            return;
+        }
+        COSNumber rise = (COSNumber) base;
         context.getGraphicsState().getTextState().setRise( rise.floatValue() );
     }
 
     @Override
     public String getName()
     {
-        return "Ts";
+        return OperatorName.SET_TEXT_RISE;
     }
 }

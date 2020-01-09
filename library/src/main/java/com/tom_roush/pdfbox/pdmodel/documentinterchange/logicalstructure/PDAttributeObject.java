@@ -30,9 +30,27 @@ import com.tom_roush.pdfbox.pdmodel.documentinterchange.taggedpdf.PDTableAttribu
  * An attribute object.
  *
  * @author Johannes Koch
+ *
  */
 public abstract class PDAttributeObject extends PDDictionaryWrapper
 {
+
+    /**
+     * Default constructor.
+     */
+    public PDAttributeObject()
+    {
+    }
+
+    /**
+     * Creates a new attribute object with a given dictionary.
+     * 
+     * @param dictionary the dictionary
+     */
+    public PDAttributeObject(COSDictionary dictionary)
+    {
+        super(dictionary);
+    }
 
     /**
      * Creates an attribute object.
@@ -97,25 +115,6 @@ public abstract class PDAttributeObject extends PDDictionaryWrapper
     {
         this.structureElement = structureElement;
     }
-
-
-    /**
-     * Default constructor.
-     */
-    public PDAttributeObject()
-    {
-    }
-
-    /**
-     * Creates a new attribute object with a given dictionary.
-     * 
-     * @param dictionary the dictionary
-     */
-    public PDAttributeObject(COSDictionary dictionary)
-    {
-        super(dictionary);
-    }
-
 
     /**
      * Returns the owner of the attributes.
@@ -196,7 +195,7 @@ public abstract class PDAttributeObject extends PDDictionaryWrapper
     @Override
     public String toString()
     {
-        return new StringBuilder("O=").append(this.getOwner()).toString();
+        return "O=" + this.getOwner();
     }
 
     /**

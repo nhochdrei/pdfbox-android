@@ -16,6 +16,8 @@
  */
 package com.tom_roush.pdfbox.pdmodel.graphics.shading;
 
+import com.tom_roush.harmony.awt.geom.AffineTransform;
+
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSFloat;
@@ -54,14 +56,14 @@ public class PDShadingType1 extends PDShading
     {
         COSArray array = (COSArray) getCOSObject().getDictionaryObject(COSName.MATRIX);
         if (array != null)
-    	{
-    		return new Matrix(array);
-    	}
-    	else
-    	{
-    		// identity matrix is the default
-    		return new Matrix();
-    	}
+        {
+            return new Matrix(array);
+        }
+        else
+        {
+            // identity matrix is the default
+            return new Matrix();
+        }
     }
 
     /**
@@ -69,14 +71,14 @@ public class PDShadingType1 extends PDShading
      *
      * @param transform the transformation matrix
      */
-    public void setMatrix(android.graphics.Matrix transform)
+    public void setMatrix(AffineTransform transform)
     {
         COSArray matrix = new COSArray();
-        float[] values = new float[9];
-        transform.getValues(values);
-        for (float v : values)
+        double[] values = new double[6];
+        transform.getMatrix(values);
+        for (double v : values)
         {
-            matrix.add(new COSFloat(v));
+            matrix.add(new COSFloat((float) v));
         }
         getCOSObject().setItem(COSName.MATRIX, matrix);
     }
@@ -110,5 +112,5 @@ public class PDShadingType1 extends PDShading
 //    public Paint toPaint(Matrix matrix)
 //    {
 //        return new Type1ShadingPaint(this, matrix);
-//    }TODO: PdfBox-Android
+//    }
 }

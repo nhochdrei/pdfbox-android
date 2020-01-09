@@ -17,6 +17,8 @@
 
 package com.tom_roush.pdfbox.pdmodel.interactive.form;
 
+import com.tom_roush.pdfbox.cos.COSArray;
+import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
 
@@ -25,26 +27,48 @@ import com.tom_roush.pdfbox.cos.COSName;
  */
 final class PDFieldFactory
 {
-    private PDFieldFactory()
-    {
-    }
 
     private static final String FIELD_TYPE_TEXT = "Tx";
     private static final String FIELD_TYPE_BUTTON = "Btn";
     private static final String FIELD_TYPE_CHOICE = "Ch";
     private static final String FIELD_TYPE_SIGNATURE = "Sig";
-
+    
+    private PDFieldFactory()
+    {
+    }
+    
     /**
      * Creates a COSField subclass from the given field.
      *
      * @param form the form that the field is part of
      * @param field the dictionary representing a field element
-     * @param parent the parent node of the node to be created
+     * @param parent the parent node of the node to be created 
      * @return the corresponding PDField instance
      */
     static PDField createField(PDAcroForm form, COSDictionary field, PDNonTerminalField parent)
     {
         String fieldType = findFieldType(field);
+        
+        // Test if we have a non terminal field first as it might have
+        // properties which do apply to other fields
+        // A non terminal fields has Kids entries which do have
+        // a field name (other than annotations)
+        if (field.containsKey(COSName.KIDS))
+        {
+            COSArray kids = (COSArray) field.getDictionaryObject(COSName.KIDS);
+            if (kids != null && kids.size() > 0)
+            {
+                for (int i = 0; i < kids.size(); i++)
+                {
+                    COSBase kid = kids.getObject(i);
+                    if (kid instanceof COSDictionary && ((COSDictionary) kid).getString(COSName.T) != null)
+                    {
+                        return new PDNonTerminalField(form, field, parent);
+                    }
+                }
+            }
+        } 
+        
         if (FIELD_TYPE_CHOICE.equals(fieldType))
         {
             return createChoiceSubType(form, field, parent);
@@ -61,10 +85,6 @@ final class PDFieldFactory
         {
             return createButtonSubType(form, field, parent);
         }
-        else if (field.containsKey(COSName.KIDS))
-        {
-            return new PDNonTerminalField(form, field, parent);
-        }
         else
         {
             // an erroneous non-field object, see PDFBOX-2885
@@ -73,7 +93,7 @@ final class PDFieldFactory
     }
 
     private static PDField createChoiceSubType(PDAcroForm form, COSDictionary field,
-        PDNonTerminalField parent)
+                                               PDNonTerminalField parent)
     {
         int flags = field.getInt(COSName.FF, 0);
         if ((flags & PDChoice.FLAG_COMBO) != 0)
@@ -87,7 +107,7 @@ final class PDFieldFactory
     }
 
     private static PDField createButtonSubType(PDAcroForm form, COSDictionary field,
-        PDNonTerminalField parent)
+                                               PDNonTerminalField parent)
     {
         int flags = field.getInt(COSName.FF, 0);
         // BJL: I have found that the radio flag bit is not always set
@@ -103,7 +123,7 @@ final class PDFieldFactory
         }
         else
         {
-            return new PDCheckbox(form, field, parent);
+            return new PDCheckBox(form, field, parent);
         }
     }
 
@@ -112,11 +132,10 @@ final class PDFieldFactory
         String retval = dic.getNameAsString(COSName.FT);
         if (retval == null)
         {
-            COSDictionary parent = (COSDictionary) dic.getDictionaryObject(COSName.PARENT,
-                COSName.P);
-            if (parent != null)
+            COSBase base = dic.getDictionaryObject(COSName.PARENT, COSName.P);
+            if (base instanceof COSDictionary)
             {
-                retval = findFieldType(parent);
+                retval = findFieldType((COSDictionary) base);
             }
         }
         return retval;

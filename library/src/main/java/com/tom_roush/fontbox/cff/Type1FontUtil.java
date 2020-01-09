@@ -16,6 +16,8 @@
  */
 package com.tom_roush.fontbox.cff;
 
+import java.util.Locale;
+
 /**
  * This class contains some helper methods handling Type1-Fonts.
  *
@@ -36,14 +38,14 @@ public final class Type1FontUtil
     public static String hexEncode(byte[] bytes)
     {
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < bytes.length; i++)
+        for (byte aByte : bytes)
         {
-            String string = Integer.toHexString(bytes[i] & 0xff);
+            String string = Integer.toHexString(aByte & 0xff);
             if (string.length() == 1)
             {
                 sb.append("0");
             }
-            sb.append(string.toUpperCase());
+            sb.append(string.toUpperCase(Locale.US));
         }
         return sb.toString();
     }

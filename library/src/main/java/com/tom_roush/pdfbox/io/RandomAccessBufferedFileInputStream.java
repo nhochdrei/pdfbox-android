@@ -38,7 +38,7 @@ public class RandomAccessBufferedFileInputStream
 extends InputStream implements RandomAccessRead
 {
     /**
-     * The prefix for the temp file being used.
+     * The prefix for the temp file being used. 
      */
     private static final String TMP_FILE_PREFIX = "tmpPDFBox";
 
@@ -76,25 +76,25 @@ extends InputStream implements RandomAccessRead
     private final long fileLength;
     private long fileOffset = 0;
     private boolean isClosed;
-
+    
     /**
      * Create a random access input stream instance for the file with the given name.
      *
      * @param filename the filename of the file to be read.
      * @throws IOException if something went wrong while accessing the given file.
      */
-    public RandomAccessBufferedFileInputStream(String filename) throws IOException
+    public RandomAccessBufferedFileInputStream( String filename ) throws IOException 
     {
         this(new File(filename));
     }
 
-    /**
+    /** 
      * Create a random access input stream instance for the given file.
      *
      * @param file the file to be read.
      * @throws IOException if something went wrong while accessing the given file.
      */
-    public RandomAccessBufferedFileInputStream(File file) throws IOException
+    public RandomAccessBufferedFileInputStream( File file ) throws IOException 
     {
         raFile = new RandomAccessFile(file, "r");
         fileLength = file.length();
@@ -105,10 +105,10 @@ extends InputStream implements RandomAccessRead
      * Create a random access input stream for the given input stream by copying the data to a
      * temporary file.
      *
-     * @param input the input stream to be read.
+     * @param input the input stream to be read. It will be closed by this method.
      * @throws IOException if something went wrong while creating the temporary file.
      */
-    public RandomAccessBufferedFileInputStream(InputStream input) throws IOException
+    public RandomAccessBufferedFileInputStream( InputStream input ) throws IOException 
     {
         tempFile = createTmpFile(input);
         fileLength = tempFile.length();
@@ -150,7 +150,7 @@ extends InputStream implements RandomAccessRead
     {
         return fileOffset;
     }
-
+    
     /**
      * Seeks to new position. If new position is outside of current page the new page is either
      * taken from cache or read from file and added to cache.
@@ -178,7 +178,7 @@ extends InputStream implements RandomAccessRead
         offsetWithinPage = (int) ( newOffset - curPageOffset );
         fileOffset = newOffset;
     }
-
+    
     /**
      * Reads a page with data from current file position. If we have a
      * previously removed page from cache the buffer of this page is reused.
@@ -212,7 +212,7 @@ extends InputStream implements RandomAccessRead
 
         return page;
     }
-
+    
     @Override
     public int read() throws IOException
     {
@@ -229,13 +229,13 @@ extends InputStream implements RandomAccessRead
         fileOffset++;
         return curPage[offsetWithinPage++] & 0xff;
     }
-
+    
     @Override
     public int read(byte[] b) throws IOException
     {
         return read(b, 0, b.length);
     }
-
+    
     @Override
     public int read( byte[] b, int off, int len ) throws IOException
     {
@@ -262,13 +262,13 @@ extends InputStream implements RandomAccessRead
 
         return commonLen;
     }
-
+    
     @Override
     public int available() throws IOException
     {
         return (int) Math.min( fileLength - fileOffset, Integer.MAX_VALUE );
     }
-
+    
     @Override
     public long skip( long n ) throws IOException
     {
@@ -294,13 +294,13 @@ extends InputStream implements RandomAccessRead
 
         return toSkip;
     }
-
+    
     @Override
     public long length() throws IOException
     {
         return fileLength;
     }
-
+    
     @Override
     public void close() throws IOException
     {
@@ -313,7 +313,7 @@ extends InputStream implements RandomAccessRead
     @Override
     public boolean isClosed()
     {
-    	return isClosed;
+        return isClosed;
     }
 
     @Override
@@ -338,9 +338,9 @@ extends InputStream implements RandomAccessRead
     {
         byte[] b = new byte[length];
         int bytesRead = read(b);
-        while (bytesRead < length)
+        while(bytesRead < length)
         {
-            bytesRead += read(b, bytesRead, length - bytesRead);
+            bytesRead += read(b, bytesRead, length-bytesRead);
         }
         return b;
     }

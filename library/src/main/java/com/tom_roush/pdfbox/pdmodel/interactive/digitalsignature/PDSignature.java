@@ -29,7 +29,10 @@ import com.tom_roush.pdfbox.cos.COSString;
 import com.tom_roush.pdfbox.pdmodel.common.COSObjectable;
 
 /**
- * This represents a digital signature that can be attached to a document.
+ * This represents a digital signature that can be attached to a document. To learn more about
+ * digital signatures, read
+ * <a href="https://www.adobe.com/devnet-docs/acrobatetk/tools/DigSig/Acrobat_DigitalSignatures_in_PDF.pdf">Digital
+ * Signatures in a PDF</a> by Adobe.
  *
  * @author Ben Litchfield
  * @author Thomas Chojecki
@@ -102,6 +105,7 @@ public class PDSignature implements COSObjectable
      *
      * @return The COS dictionary that matches this Java object.
      */
+    @Override
     public COSDictionary getCOSObject()
     {
         return dictionary;
@@ -138,7 +142,10 @@ public class PDSignature implements COSObjectable
     }
 
     /**
-     * Sets the name.
+     * Sets the name of the person or authority signing the document. According to the PDF
+     * specification, this value should be used only when it is not possible to extract the name
+     * from the signature.
+     *
      * @param name the name to be used
      */
     public void setName(String name)
@@ -147,7 +154,8 @@ public class PDSignature implements COSObjectable
     }
 
     /**
-     * Sets the location.
+     * Sets the CPU host name or physical location of the signing.
+     *
      * @param location the location to be used
      */
     public void setLocation(String location)
@@ -156,7 +164,7 @@ public class PDSignature implements COSObjectable
     }
 
     /**
-     * Sets the reason.
+     * Sets the reason for the signing, such as (I agree...).
      *
      * @param reason the reason to be used
      */
@@ -166,7 +174,8 @@ public class PDSignature implements COSObjectable
     }
 
     /**
-     * Sets the contact info.
+     * Sets the contact info provided by the signer to enable a recipient to contact the signer to
+     * verify the signature, e.g. a phone number.
      *
      * @param contactInfo the contact info to be used
      */
@@ -205,7 +214,9 @@ public class PDSignature implements COSObjectable
     }
 
     /**
-     * Returns the name.
+     * Returns the name of the person or authority signing the document. According to the PDF
+     * specification, this value should be used only when it is not possible to extract the name
+     * from the signature.
      *
      * @return the name
      */
@@ -215,7 +226,7 @@ public class PDSignature implements COSObjectable
     }
 
     /**
-     * Returns the location.
+     * Returns the CPU host name or physical location of the signing.
      *
      * @return the location
      */
@@ -225,7 +236,7 @@ public class PDSignature implements COSObjectable
     }
 
     /**
-     * Returns the reason.
+     * Returns the reason for the signing, such as (I agree...).
      *
      * @return the reason
      */
@@ -235,9 +246,10 @@ public class PDSignature implements COSObjectable
     }
 
     /**
-     * Returns the contact info.
+     * Returns the contact info provided by the signer to enable a recipient to contact the signer
+     * to verify the signature, e.g. a phone number.
      *
-     * @return teh contact info
+     * @return the contact info
      */
     public String getContactInfo()
     {
@@ -272,6 +284,7 @@ public class PDSignature implements COSObjectable
         }
 
         dictionary.setItem(COSName.BYTERANGE, ary);
+        ary.setDirect(true);
     }
 
     /**
@@ -293,7 +306,7 @@ public class PDSignature implements COSObjectable
     /**
      * Will return the embedded signature between the byterange gap.
      *
-     * @param pdfFile The signed pdf file as InputStream
+     * @param pdfFile The signed pdf file as InputStream. It will be closed in this method.
      * @return a byte array containing the signature
      * @throws IOException if the pdfFile can't be read
      */
@@ -301,9 +314,9 @@ public class PDSignature implements COSObjectable
     {
         int[] byteRange = getByteRange();
         int begin = byteRange[0]+byteRange[1]+1;
-        int end = byteRange[2]-begin;
+        int len = byteRange[2]-begin;
 
-        return getContents(new COSFilterInputStream(pdfFile,new int[] {begin,end}));
+        return getConvertedContents(new COSFilterInputStream(pdfFile,new int[] {begin,len}));
     }
 
     /**
@@ -317,17 +330,17 @@ public class PDSignature implements COSObjectable
     {
         int[] byteRange = getByteRange();
         int begin = byteRange[0]+byteRange[1]+1;
-        int end = byteRange[2]-begin;
+        int len = byteRange[2]-begin;
 
-        return getContents(new COSFilterInputStream(pdfFile,new int[] {begin,end}));
+        return getConvertedContents(new COSFilterInputStream(pdfFile,new int[] {begin,len}));
     }
 
-    private byte[] getContents(COSFilterInputStream fis) throws IOException
+    private byte[] getConvertedContents(InputStream is) throws IOException
     {
         ByteArrayOutputStream byteOS = new ByteArrayOutputStream(1024);
         byte[] buffer = new byte[1024];
         int c;
-        while ((c = fis.read(buffer)) != -1)
+        while ((c = is.read(buffer)) != -1)
         {
             // Filter < and (
             if(buffer[0]==0x3C || buffer[0]==0x28)
@@ -344,7 +357,7 @@ public class PDSignature implements COSObjectable
                 byteOS.write(buffer, 0, c);
             }
         }
-        fis.close();
+        is.close();
 
         return COSString.parseHex(byteOS.toString("ISO-8859-1")).getBytes();
     }
@@ -362,9 +375,13 @@ public class PDSignature implements COSObjectable
     }
 
     /**
-     * Will return the signed content of the document.
+     * Return the signed content of the document. This is not a PDF file, nor is it the PDF file
+     * before signing, it is the byte sequence made of the input minus the area where the signature
+     * bytes will be. See "The ByteRange and signature value" in the document
+     * <a href="https://www.adobe.com/content/dam/acom/en/devnet/acrobat/pdfs/DigitalSignaturesInPDF.pdf#page=5">Digital
+     * Signatures in a PDF</a>.
      *
-     * @param pdfFile The signed pdf file as InputStream
+     * @param pdfFile The signed pdf file as InputStream. It will be closed in this method.
      * @return a byte array containing only the signed part of the content
      * @throws IOException if the pdfFile can't be read
      */
@@ -387,7 +404,11 @@ public class PDSignature implements COSObjectable
     }
 
     /**
-     * Will return the signed content of the document.
+     * Return the signed content of the document. This is not a PDF file, nor is it the PDF file
+     * before signing, it is the byte sequence made of the input minus the area where the signature
+     * bytes will be. See "The ByteRange and signature value" in the document
+     * <a href="https://www.adobe.com/content/dam/acom/en/devnet/acrobat/pdfs/DigitalSignaturesInPDF.pdf#page=5">Digital
+     * Signatures in a PDF</a>.
      *
      * @param pdfFile The signed pdf file as byte array
      * @return a byte array containing only the signed part of the content
@@ -411,14 +432,14 @@ public class PDSignature implements COSObjectable
     }
 
     /**
-     * PDF signature build dictionary. Provides informations about the signature handler.
+     * PDF signature build dictionary. Provides information about the signature handler.
      *
      * @return the pdf signature build dictionary.
      */
     public PDPropBuild getPropBuild()
     {
         PDPropBuild propBuild = null;
-        COSDictionary propBuildDic = (COSDictionary)dictionary.getDictionaryObject(COSName.PROP_BUILD);
+        COSDictionary propBuildDic = dictionary.getCOSDictionary(COSName.PROP_BUILD);
         if (propBuildDic != null)
         {
             propBuild = new PDPropBuild(propBuildDic);
@@ -427,7 +448,7 @@ public class PDSignature implements COSObjectable
     }
 
     /**
-     * PDF signature build dictionary. Provides informations about the signature handler.
+     * PDF signature build dictionary. Provides information about the signature handler.
      *
      * @param propBuild the prop build
      */

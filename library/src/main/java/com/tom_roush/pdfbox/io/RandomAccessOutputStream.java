@@ -39,7 +39,7 @@ public class RandomAccessOutputStream extends OutputStream
         this.writer = writer;
         // we don't have to maintain a position, as each COSStream can only have one writer.
     }
-
+    
     @Override
     public void write(byte[] b, int offset, int length) throws IOException
     {

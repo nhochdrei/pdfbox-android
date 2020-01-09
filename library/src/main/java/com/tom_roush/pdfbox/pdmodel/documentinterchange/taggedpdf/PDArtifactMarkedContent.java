@@ -26,6 +26,7 @@ import com.tom_roush.pdfbox.pdmodel.documentinterchange.markedcontent.PDMarkedCo
  * An artifact marked content.
  *
  * @author Johannes Koch
+ *
  */
 public class PDArtifactMarkedContent extends PDMarkedContent
 {

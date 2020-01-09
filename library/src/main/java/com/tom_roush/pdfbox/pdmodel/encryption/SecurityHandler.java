@@ -14,9 +14,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.tom_roush.pdfbox.pdmodel.encryption;
 
-import android.util.Log;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.security.GeneralSecurityException;
+import java.security.Key;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Map;
+import java.util.Set;
+
+import javax.crypto.Cipher;
+import javax.crypto.CipherInputStream;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+
+
 
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
@@ -26,30 +47,7 @@ import com.tom_roush.pdfbox.cos.COSStream;
 import com.tom_roush.pdfbox.cos.COSString;
 import com.tom_roush.pdfbox.io.IOUtils;
 import com.tom_roush.pdfbox.pdmodel.PDDocument;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.security.GeneralSecurityException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.CipherInputStream;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
+import com.tom_roush.pdfbox.util.Charsets;
 
 /**
  * A security handler as described in the PDF specifications.
@@ -61,12 +59,13 @@ import javax.crypto.spec.SecretKeySpec;
  */
 public abstract class SecurityHandler
 {
+
     private static final int DEFAULT_KEY_LENGTH = 40;
 
     // see 7.6.2, page 58, PDF 32000-1:2008
     private static final byte[] AES_SALT = { (byte) 0x73, (byte) 0x41, (byte) 0x6c, (byte) 0x54 };
 
-    /** The length of the secret key used to encrypt the document. */
+    /** The length in bits of the secret key used to encrypt the document. */
     protected int keyLength = DEFAULT_KEY_LENGTH;
 
     /** The encryption key that will used to encrypt / decrypt.*/
@@ -78,7 +77,13 @@ public abstract class SecurityHandler
     /** indicates if the Metadata have to be decrypted of not. */
     private boolean decryptMetadata;
 
-    private final Set<COSBase> objects = new HashSet<COSBase>();
+    // PDFBOX-4453, PDFBOX-4477: Originally this was just a Set. This failed in rare cases
+    // when a decrypted string was identical to an encrypted string.
+    // Because COSString.equals() checks the contents, decryption was then skipped.
+    // This solution keeps all different "equal" objects.
+    // IdentityHashMap solves this problem and is also faster than a HashMap
+    private final Set<COSBase> objects =
+            Collections.newSetFromMap(new IdentityHashMap<COSBase, Boolean>());
 
     private boolean useAES;
 
@@ -89,13 +94,43 @@ public abstract class SecurityHandler
     private AccessPermission currentAccessPermission = null;
 
     /**
-     * Set wether to decrypt meta data.
+     * The stream filter name.
+     */
+    private COSName streamFilterName;
+
+    /**
+     * The string filter name.
+     */
+    private COSName stringFilterName;
+
+    /**
+     * Set whether to decrypt meta data.
      *
      * @param decryptMetadata true if meta data has to be decrypted.
      */
     protected void setDecryptMetadata(boolean decryptMetadata)
     {
         this.decryptMetadata = decryptMetadata;
+    }
+    
+    /**
+     * Set the string filter name.
+     * 
+     * @param stringFilterName the string filter name.
+     */
+    protected void setStringFilterName(COSName stringFilterName)
+    {
+        this.stringFilterName = stringFilterName;
+    }
+
+    /**
+     * Set the stream filter name.
+     * 
+     * @param streamFilterName the stream filter name.
+     */
+    protected void setStreamFilterName(COSName streamFilterName)
+    {
+        this.streamFilterName = streamFilterName;
     }
 
     /**
@@ -114,10 +149,11 @@ public abstract class SecurityHandler
      * @param documentIDArray  document id which is returned via {@link com.tom_roush.pdfbox.cos.COSDocument#getDocumentID()}
      * @param decryptionMaterial Information used to decrypt the document.
      *
+     * @throws InvalidPasswordException If the password is incorrect.
      * @throws IOException If there is an error accessing data.
      */
     public abstract void prepareForDecryption(PDEncryption encryption, COSArray documentIDArray,
-        DecryptionMaterial decryptionMaterial) throws IOException;
+            DecryptionMaterial decryptionMaterial) throws IOException;
 
     /**
      * Encrypt or decrypt a set of data.
@@ -131,7 +167,7 @@ public abstract class SecurityHandler
      * @throws IOException If there is an error reading the data.
      */
     private void encryptData(long objectNumber, long genNumber, InputStream data,
-        OutputStream output, boolean decrypt) throws IOException
+                            OutputStream output, boolean decrypt) throws IOException
     {
         // Determine whether we're using Algorithm 1 (for RC4 and AES-128), or 1.A (for AES-256)
         if (useAES && encryptionKey.length == 32)
@@ -140,11 +176,6 @@ public abstract class SecurityHandler
         }
         else
         {
-            if (useAES && !decrypt)
-            {
-                throw new IllegalArgumentException("AES encryption with key length other than 256 bits is not yet implemented.");
-            }
-
             byte[] finalKey = calcFinalKey(objectNumber, genNumber);
 
             if (useAES)
@@ -200,10 +231,11 @@ public abstract class SecurityHandler
      * @param finalKey The final key obtained with via {@link #calcFinalKey(long, long)}.
      * @param input The data to encrypt.
      * @param output The output to write the encrypted data to.
+     *
      * @throws IOException If there is an error reading the data.
      */
     protected void encryptDataRC4(byte[] finalKey, InputStream input, OutputStream output)
-        throws IOException
+            throws IOException
     {
         rc4.setKey(finalKey);
         rc4.write(input, output);
@@ -215,19 +247,20 @@ public abstract class SecurityHandler
      * @param finalKey The final key obtained with via {@link #calcFinalKey(long, long)}.
      * @param input The data to encrypt.
      * @param output The output to write the encrypted data to.
+     *
      * @throws IOException If there is an error reading the data.
      */
-    protected void encryptDataRC4(byte[] finalKey, byte[] input, OutputStream output)
-        throws IOException
+    protected void encryptDataRC4(byte[] finalKey, byte[] input, OutputStream output) throws IOException
     {
         rc4.setKey(finalKey);
         rc4.write(input, output);
     }
 
+
     /**
      * Encrypt or decrypt data with AES with key length other than 256 bits.
      *
-     * @param finalKey The final key obtained with via {@link #calcFinalKey()}.
+     * @param finalKey The final key obtained with via {@link #calcFinalKey(long, long)}.
      * @param data The data to encrypt.
      * @param output The output to write the encrypted data to.
      * @param decrypt true to decrypt the data, false to encrypt it.
@@ -235,59 +268,31 @@ public abstract class SecurityHandler
      * @throws IOException If there is an error reading the data.
      */
     private void encryptDataAESother(byte[] finalKey, InputStream data, OutputStream output, boolean decrypt)
-        throws IOException
+            throws IOException
     {
         byte[] iv = new byte[16];
 
-        int ivSize = data.read(iv);
-        if (ivSize != iv.length)
+        if (!prepareAESInitializationVector(decrypt, iv, data, output))
         {
-            throw new IOException(
-                "AES initialization vector not fully read: only "
-                    + ivSize + " bytes read instead of " + iv.length);
+            return;
         }
 
         try
         {
-            Cipher decryptCipher;
-            try
-            {
-                decryptCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-            }
-            catch (NoSuchAlgorithmException e)
-            {
-                // should never happen
-                throw new RuntimeException(e);
-            }
-
-            SecretKey aesKey = new SecretKeySpec(finalKey, "AES");
-            IvParameterSpec ips = new IvParameterSpec(iv);
-            decryptCipher.init(decrypt ? Cipher.DECRYPT_MODE : Cipher.ENCRYPT_MODE, aesKey, ips);
+            Cipher decryptCipher = createCipher(finalKey, iv, decrypt);
             byte[] buffer = new byte[256];
             int n;
             while ((n = data.read(buffer)) != -1)
             {
-                output.write(decryptCipher.update(buffer, 0, n));
+                byte[] dst = decryptCipher.update(buffer, 0, n);
+                if (dst != null)
+                {
+                    output.write(dst);
+                }
             }
             output.write(decryptCipher.doFinal());
         }
-        catch (InvalidKeyException e)
-        {
-            throw new IOException(e);
-        }
-        catch (InvalidAlgorithmParameterException e)
-        {
-            throw new IOException(e);
-        }
-        catch (NoSuchPaddingException e)
-        {
-            throw new IOException(e);
-        }
-        catch (IllegalBlockSizeException e)
-        {
-            throw new IOException(e);
-        }
-        catch (BadPaddingException e)
+        catch (GeneralSecurityException e)
         {
             throw new IOException(e);
         }
@@ -306,26 +311,15 @@ public abstract class SecurityHandler
     {
         byte[] iv = new byte[16];
 
-        if (decrypt)
+        if (!prepareAESInitializationVector(decrypt, iv, data, output))
         {
-            // read IV from stream
-            data.read(iv);
-        }
-        else
-        {
-            // generate random IV and write to stream
-            SecureRandom rnd = new SecureRandom();
-            rnd.nextBytes(iv);
-            output.write(iv);
+            return;
         }
 
         Cipher cipher;
         try
         {
-            cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-            SecretKeySpec keySpec = new SecretKeySpec(encryptionKey, "AES");
-            IvParameterSpec ivSpec = new IvParameterSpec(iv);
-            cipher.init(decrypt ? Cipher.DECRYPT_MODE : Cipher.ENCRYPT_MODE, keySpec, ivSpec);
+            cipher = createCipher(this.encryptionKey, iv, decrypt);
         }
         catch (GeneralSecurityException e)
         {
@@ -337,7 +331,7 @@ public abstract class SecurityHandler
         {
             IOUtils.copy(cis, output);
         }
-        catch(IOException exception)
+        catch (IOException exception)
         {
             // starting with java 8 the JVM wraps an IOException around a GeneralSecurityException
             // it should be safe to swallow a GeneralSecurityException
@@ -345,12 +339,48 @@ public abstract class SecurityHandler
             {
                 throw exception;
             }
-            Log.d("PdfBox-Android", "A GeneralSecurityException occured when decrypting some stream data", exception);
         }
         finally
         {
             cis.close();
         }
+    }
+
+    private Cipher createCipher(byte[] key, byte[] iv, boolean decrypt) throws GeneralSecurityException
+    {
+        @SuppressWarnings({"squid:S4432"}) // PKCS#5 padding is requested by PDF specification
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        Key keySpec = new SecretKeySpec(key, "AES");
+        IvParameterSpec ips = new IvParameterSpec(iv);
+        cipher.init(decrypt ? Cipher.DECRYPT_MODE : Cipher.ENCRYPT_MODE, keySpec, ips);
+        return cipher;
+    }
+
+    private boolean prepareAESInitializationVector(boolean decrypt, byte[] iv, InputStream data, OutputStream output) throws IOException
+    {
+        if (decrypt)
+        {
+            // read IV from stream
+            int ivSize = data.read(iv);
+            if (ivSize == -1)
+            {
+                return false;
+            }
+            if (ivSize != iv.length)
+            {
+                throw new IOException(
+                        "AES initialization vector not fully read: only "
+                                + ivSize + " bytes read instead of " + iv.length);
+            }
+        }
+        else
+        {
+            // generate random IV and write to stream
+            SecureRandom rnd = new SecureRandom();
+            rnd.nextBytes(iv);
+            output.write(iv);
+        }
+        return true;
     }
 
     /**
@@ -364,26 +394,36 @@ public abstract class SecurityHandler
      */
     public void decrypt(COSBase obj, long objNum, long genNum) throws IOException
     {
-        if (!objects.contains(obj))
+        if (!(obj instanceof COSString || obj instanceof COSDictionary || obj instanceof COSArray))
         {
+            return;
+        }
+        // PDFBOX-4477: only cache strings and streams, this improves speed and memory footprint
+        if (obj instanceof COSString)
+        {
+            if (objects.contains(obj))
+            {
+                return;
+            }
             objects.add(obj);
-
-            if (obj instanceof COSString)
+            decryptString((COSString) obj, objNum, genNum);
+        }
+        else if (obj instanceof COSStream)
+        {
+            if (objects.contains(obj))
             {
-                decryptString((COSString) obj, objNum, genNum);
+                return;
             }
-            else if (obj instanceof COSStream)
-            {
-                decryptStream((COSStream) obj, objNum, genNum);
-            }
-            else if (obj instanceof COSDictionary)
-            {
-                decryptDictionary((COSDictionary) obj, objNum, genNum);
-            }
-            else if (obj instanceof COSArray)
-            {
-                decryptArray((COSArray) obj, objNum, genNum);
-            }
+            objects.add(obj);
+            decryptStream((COSStream) obj, objNum, genNum);
+        }
+        else if (obj instanceof COSDictionary)
+        {
+            decryptDictionary((COSDictionary) obj, objNum, genNum);
+        }
+        else if (obj instanceof COSArray)
+        {
+            decryptArray((COSArray) obj, objNum, genNum);
         }
     }
 
@@ -398,22 +438,41 @@ public abstract class SecurityHandler
      */
     public void decryptStream(COSStream stream, long objNum, long genNum) throws IOException
     {
-        if (!decryptMetadata && COSName.METADATA.equals(stream.getCOSName(COSName.TYPE)))
+        // Stream encrypted with identity filter
+        if (COSName.IDENTITY.equals(streamFilterName))
+        {
+            return;
+        }
+        
+        COSBase type = stream.getCOSName(COSName.TYPE);
+        if (!decryptMetadata && COSName.METADATA.equals(type))
         {
             return;
         }
         // "The cross-reference stream shall not be encrypted"
-        if (COSName.XREF.equals(stream.getCOSName(COSName.TYPE)))
+        if (COSName.XREF.equals(type))
         {
             return;
         }
+        if (COSName.METADATA.equals(type))
+        {
+            // PDFBOX-3229 check case where metadata is not encrypted despite /EncryptMetadata missing
+            InputStream is = stream.createRawInputStream();
+            byte buf[] = new byte[10];
+            is.read(buf);
+            is.close();
+            if (Arrays.equals(buf, "<?xpacket ".getBytes(Charsets.ISO_8859_1)))
+            {
+                return;
+            }
+        }
         decryptDictionary(stream, objNum, genNum);
-        byte[] encrypted = IOUtils.toByteArray(stream.getFilteredStream());
+        byte[] encrypted = IOUtils.toByteArray(stream.createRawInputStream());
         ByteArrayInputStream encryptedStream = new ByteArrayInputStream(encrypted);
         OutputStream output = stream.createRawOutputStream();
         try
         {
-            encryptData(objNum, genNum, encryptedStream, output, true /* decrypt */);
+           encryptData(objNum, genNum, encryptedStream, output, true /* decrypt */);
         }
         finally
         {
@@ -463,18 +522,24 @@ public abstract class SecurityHandler
             // PDFBOX-2936: avoid orphan /CF dictionaries found in US govt "I-" files
             return;
         }
-        // skip dictionary containing the signature
-        if (!COSName.SIG.equals(dictionary.getItem(COSName.TYPE)) &&
-            !COSName.SIG.equals(dictionary.getItem(COSName.FT)))
+        COSBase type = dictionary.getDictionaryObject(COSName.TYPE);
+        boolean isSignature = COSName.SIG.equals(type) || COSName.DOC_TIME_STAMP.equals(type) ||
+                // PDFBOX-4466: /Type is optional, see
+                // https://ec.europa.eu/cefdigital/tracker/browse/DSS-1538
+                (dictionary.getDictionaryObject(COSName.CONTENTS) instanceof COSString && 
+                 dictionary.getDictionaryObject(COSName.BYTERANGE) instanceof COSArray);
+        for (Map.Entry<COSName, COSBase> entry : dictionary.entrySet())
         {
-            for (Map.Entry<COSName, COSBase> entry : dictionary.entrySet())
+            if (isSignature && COSName.CONTENTS.equals(entry.getKey()))
             {
-                COSBase value = entry.getValue();
-                // within a dictionary only the following kind of COS objects have to be decrypted
-                if (value instanceof COSString || value instanceof COSArray || value instanceof COSDictionary)
-                {
-                    decrypt(value, objNum, genNum);
-                }
+                // do not decrypt the signature contents string
+                continue;
+            }
+            COSBase value = entry.getValue();
+            // within a dictionary only the following kind of COS objects have to be decrypted
+            if (value instanceof COSString || value instanceof COSArray || value instanceof COSDictionary)
+            {
+                decrypt(value, objNum, genNum);
             }
         }
     }
@@ -490,10 +555,22 @@ public abstract class SecurityHandler
      */
     private void decryptString(COSString string, long objNum, long genNum) throws IOException
     {
+        // String encrypted with identity filter
+        if (COSName.IDENTITY.equals(stringFilterName))
+        {
+            return;
+        }
+        
         ByteArrayInputStream data = new ByteArrayInputStream(string.getBytes());
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        encryptData(objNum, genNum, data, buffer, true /* decrypt */);
-        string.setValue(buffer.toByteArray());
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        try
+        {
+            encryptData(objNum, genNum, data, outputStream, true /* decrypt */);
+            string.setValue(outputStream.toByteArray());
+        }
+        catch (IOException ex)
+        {
+        }
     }
 
     /**
@@ -509,7 +586,7 @@ public abstract class SecurityHandler
     {
         ByteArrayInputStream data = new ByteArrayInputStream(string.getBytes());
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        encryptData(objNum, genNum, data, buffer, false /* decrypt */);
+        encryptData(objNum, genNum, data, buffer, false /* encrypt */);
         string.setValue(buffer.toByteArray());
     }
 
@@ -594,7 +671,7 @@ public abstract class SecurityHandler
     /**
      * Returns whether a protection policy has been set.
      *
-     * @return true if a protection policy has been set
+     * @return true if a protection policy has been set.
      */
     public abstract boolean hasProtectionPolicy();
 }

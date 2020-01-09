@@ -22,10 +22,10 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.io.InputStream;
+import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.Writer;
 
 import com.tom_roush.pdfbox.cos.COSDictionary;
@@ -33,13 +33,12 @@ import com.tom_roush.pdfbox.cos.COSDocument;
 import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.pdfparser.FDFParser;
 import com.tom_roush.pdfbox.pdfwriter.COSWriter;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 /**
- * This is the in-memory representation of the FDF document.  You need to call
- * close() on this object when you are done using it!!
+ * This is the in-memory representation of the FDF document. You need to call close() on this object when you are done
+ * using it!!
  *
  * @author Ben Litchfield
  */
@@ -49,29 +48,26 @@ public class FDFDocument implements Closeable
 
     /**
      * Constructor, creates a new FDF document.
-     *
-     * @throws IOException If there is an error creating this document.
      */
     public FDFDocument()
     {
         document = new COSDocument();
-        document.setVersion( 1.2f );
+        document.setVersion(1.2f);
 
-        //First we need a trailer
-        document.setTrailer( new COSDictionary() );
+        // First we need a trailer
+        document.setTrailer(new COSDictionary());
 
-        //Next we need the root dictionary.
+        // Next we need the root dictionary.
         FDFCatalog catalog = new FDFCatalog();
-        setCatalog( catalog );
+        setCatalog(catalog);
     }
 
     /**
-     * Constructor that uses an existing document.  The COSDocument that
-     * is passed in must be valid.
+     * Constructor that uses an existing document. The COSDocument that is passed in must be valid.
      *
      * @param doc The COSDocument that this document wraps.
      */
-    public FDFDocument( COSDocument doc )
+    public FDFDocument(COSDocument doc)
     {
         document = doc;
     }
@@ -82,17 +78,17 @@ public class FDFDocument implements Closeable
      * @param doc The XML document that contains the XFDF data.
      * @throws IOException If there is an error reading from the dom.
      */
-    public FDFDocument( Document doc ) throws IOException
+    public FDFDocument(Document doc) throws IOException
     {
         this();
         Element xfdf = doc.getDocumentElement();
-        if( !xfdf.getNodeName().equals( "xfdf" ) )
+        if (!xfdf.getNodeName().equals("xfdf"))
         {
-            throw new IOException( "Error while importing xfdf document, " +
-                "root should be 'xfdf' and not '" + xfdf.getNodeName() + "'" );
+            throw new IOException("Error while importing xfdf document, "
+                    + "root should be 'xfdf' and not '" + xfdf.getNodeName() + "'");
         }
-        FDFCatalog cat = new FDFCatalog( xfdf );
-        setCatalog( cat );
+        FDFCatalog cat = new FDFCatalog(xfdf);
+        setCatalog(cat);
     }
 
     /**
@@ -102,17 +98,15 @@ public class FDFDocument implements Closeable
      *
      * @throws IOException If there is an error writing the XML.
      */
-    public void writeXML( Writer output ) throws IOException
+    public void writeXML(Writer output) throws IOException
     {
-        output.write( "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" );
-        output.write( "<xfdf xmlns=\"http://ns.adobe.com/xfdf/\" xml:space=\"preserve\">\n" );
+        output.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        output.write("<xfdf xmlns=\"http://ns.adobe.com/xfdf/\" xml:space=\"preserve\">\n");
 
-        getCatalog().writeXML( output );
+        getCatalog().writeXML(output);
 
-        output.write( "</xfdf>\n" );
+        output.write("</xfdf>\n");
     }
-
-
 
     /**
      * This will get the low level document.
@@ -125,7 +119,7 @@ public class FDFDocument implements Closeable
     }
 
     /**
-     * This will get the FDF Catalog.  This is guaranteed to not return null.
+     * This will get the FDF Catalog. This is guaranteed to not return null.
      *
      * @return The documents /Root dictionary
      */
@@ -133,15 +127,15 @@ public class FDFDocument implements Closeable
     {
         FDFCatalog retval = null;
         COSDictionary trailer = document.getTrailer();
-        COSDictionary root = (COSDictionary)trailer.getDictionaryObject( COSName.ROOT );
-        if( root == null )
+        COSDictionary root = trailer.getCOSDictionary(COSName.ROOT);
+        if (root == null)
         {
             retval = new FDFCatalog();
-            setCatalog( retval );
+            setCatalog(retval);
         }
         else
         {
-            retval = new FDFCatalog( root );
+            retval = new FDFCatalog(root);
         }
         return retval;
     }
@@ -151,10 +145,10 @@ public class FDFDocument implements Closeable
      *
      * @param cat The FDF catalog.
      */
-    public void setCatalog( FDFCatalog cat )
+    public void setCatalog(FDFCatalog cat)
     {
         COSDictionary trailer = document.getTrailer();
-        trailer.setItem( COSName.ROOT, cat );
+        trailer.setItem(COSName.ROOT, cat);
     }
 
     /**
@@ -166,10 +160,10 @@ public class FDFDocument implements Closeable
      *
      * @throws IOException If there is an error reading from the stream.
      */
-    public static FDFDocument load( String filename ) throws IOException
+    public static FDFDocument load(String filename) throws IOException
     {
-    	FDFParser parser = new FDFParser(filename);
-    	parser.parse();
+        FDFParser parser = new FDFParser(filename);
+        parser.parse();
         return new FDFDocument(parser.getDocument());
     }
 
@@ -182,10 +176,10 @@ public class FDFDocument implements Closeable
      *
      * @throws IOException If there is an error reading from the stream.
      */
-    public static FDFDocument load( File file ) throws IOException
+    public static FDFDocument load(File file) throws IOException
     {
-    	FDFParser parser = new FDFParser(file);
-    	parser.parse();
+        FDFParser parser = new FDFParser(file);
+        parser.parse();
         return new FDFDocument(parser.getDocument());
     }
 
@@ -198,9 +192,9 @@ public class FDFDocument implements Closeable
      *
      * @throws IOException If there is an error reading from the stream.
      */
-    public static FDFDocument load( InputStream input ) throws IOException
+    public static FDFDocument load(InputStream input) throws IOException
     {
-        FDFParser parser = new FDFParser( input );
+        FDFParser parser = new FDFParser(input);
         parser.parse();
         return new FDFDocument(parser.getDocument());
     }
@@ -214,9 +208,9 @@ public class FDFDocument implements Closeable
      *
      * @throws IOException If there is an error reading from the stream.
      */
-    public static FDFDocument loadXFDF( String filename ) throws IOException
+    public static FDFDocument loadXFDF(String filename) throws IOException
     {
-        return loadXFDF( new BufferedInputStream( new FileInputStream( filename ) ) );
+        return loadXFDF(new BufferedInputStream(new FileInputStream(filename)));
     }
 
     /**
@@ -228,9 +222,9 @@ public class FDFDocument implements Closeable
      *
      * @throws IOException If there is an error reading from the stream.
      */
-    public static FDFDocument loadXFDF( File file ) throws IOException
+    public static FDFDocument loadXFDF(File file) throws IOException
     {
-        return loadXFDF( new BufferedInputStream( new FileInputStream( file ) ) );
+        return loadXFDF(new BufferedInputStream(new FileInputStream(file)));
     }
 
     /**
@@ -242,10 +236,10 @@ public class FDFDocument implements Closeable
      *
      * @throws IOException If there is an error reading from the stream.
      */
-    public static FDFDocument loadXFDF( InputStream input ) throws IOException
+    public static FDFDocument loadXFDF(InputStream input) throws IOException
     {
-        Document doc = XMLUtil.parse( input );
-        return new FDFDocument( doc );
+        // Fix CVE-2019-0228: External Entity in XFDF Xml content
+        return new FDFDocument(com.tom_roush.pdfbox.util.XMLUtil.parse(input));
     }
 
     /**
@@ -255,9 +249,9 @@ public class FDFDocument implements Closeable
      *
      * @throws IOException If there is an error saving the document.
      */
-    public void save( File fileName ) throws IOException
+    public void save(File fileName) throws IOException
     {
-        save( new FileOutputStream( fileName ) );
+        save(new FileOutputStream(fileName));
     }
 
     /**
@@ -267,9 +261,9 @@ public class FDFDocument implements Closeable
      *
      * @throws IOException If there is an error saving the document.
      */
-    public void save( String fileName ) throws IOException
+    public void save(String fileName) throws IOException
     {
-        save( new FileOutputStream( fileName ) );
+        save(new FileOutputStream(fileName));
     }
 
     /**
@@ -279,18 +273,18 @@ public class FDFDocument implements Closeable
      *
      * @throws IOException If there is an error writing the document.
      */
-    public void save( OutputStream output ) throws IOException
+    public void save(OutputStream output) throws IOException
     {
         COSWriter writer = null;
         try
         {
-            writer = new COSWriter( output );
-            writer.write( this );
+            writer = new COSWriter(output);
+            writer.write(this);
             writer.close();
         }
         finally
         {
-            if( writer != null )
+            if (writer != null)
             {
                 writer.close();
             }
@@ -304,9 +298,10 @@ public class FDFDocument implements Closeable
      *
      * @throws IOException If there is an error saving the document.
      */
-    public void saveXFDF( File fileName ) throws IOException
+    public void saveXFDF(File fileName) throws IOException
     {
-        saveXFDF( new BufferedWriter( new FileWriter( fileName ) ) );
+        saveXFDF(new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream(fileName), "UTF-8")));
     }
 
     /**
@@ -316,9 +311,10 @@ public class FDFDocument implements Closeable
      *
      * @throws IOException If there is an error saving the document.
      */
-    public void saveXFDF( String fileName ) throws IOException
+    public void saveXFDF(String fileName) throws IOException
     {
-        saveXFDF( new BufferedWriter( new FileWriter( fileName ) ) );
+        saveXFDF(new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream(fileName), "UTF-8")));
     }
 
     /**
@@ -328,15 +324,15 @@ public class FDFDocument implements Closeable
      *
      * @throws IOException If there is an error writing the document.
      */
-    public void saveXFDF( Writer output ) throws IOException
+    public void saveXFDF(Writer output) throws IOException
     {
         try
         {
-            writeXML( output );
+            writeXML(output);
         }
         finally
         {
-            if( output != null )
+            if (output != null)
             {
                 output.close();
             }

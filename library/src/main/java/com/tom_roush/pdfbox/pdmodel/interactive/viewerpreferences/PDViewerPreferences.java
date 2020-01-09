@@ -16,7 +16,6 @@
  */
 package com.tom_roush.pdfbox.pdmodel.interactive.viewerpreferences;
 
-import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
 
@@ -214,7 +213,7 @@ public class PDViewerPreferences implements COSObjectable
      * @return The underlying info dictionary.
      */
     @Override
-    public COSBase getCOSObject()
+    public COSDictionary getCOSObject()
     {
         return prefs;
     }

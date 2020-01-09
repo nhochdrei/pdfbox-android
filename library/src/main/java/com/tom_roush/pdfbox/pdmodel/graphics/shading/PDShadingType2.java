@@ -16,9 +16,11 @@
  */
 package com.tom_roush.pdfbox.pdmodel.graphics.shading;
 
+
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
+import com.tom_roush.pdfbox.util.Matrix;
 
 /**
  * Resources for an axial shading.
@@ -67,7 +69,7 @@ public class PDShadingType2 extends PDShading
     public void setExtend(COSArray newExtend)
     {
         extend = newExtend;
-        getCOSObject().setItem(COSName.EXTEND, newExtend);        getCOSObject().setItem(COSName.EXTEND, newExtend);
+        getCOSObject().setItem(COSName.EXTEND, newExtend);
     }
 
     /**
@@ -124,5 +126,5 @@ public class PDShadingType2 extends PDShading
 //    public Paint toPaint(Matrix matrix)
 //    {
 //        return new AxialShadingPaint(this, matrix);
-//    }TODO: PdfBox-Android
+//    }
 }

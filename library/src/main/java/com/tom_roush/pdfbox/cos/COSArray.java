@@ -29,9 +29,10 @@ import com.tom_roush.pdfbox.pdmodel.common.COSObjectable;
  *
  * @author Ben Litchfield
  */
-public class COSArray extends COSBase implements Iterable<COSBase>
+public class COSArray extends COSBase implements Iterable<COSBase>, COSUpdateInfo
 {
     private final List<COSBase> objects = new ArrayList<COSBase>();
+    private boolean needToBeUpdated;
 
     /**
      * Constructor.
@@ -189,7 +190,7 @@ public class COSArray extends COSBase implements Iterable<COSBase>
         {
             obj = ((COSObject)obj).getObject();
         }
-        else if( obj instanceof COSNull )
+        if (obj instanceof COSNull)
         {
             obj = null;
         }
@@ -197,7 +198,7 @@ public class COSArray extends COSBase implements Iterable<COSBase>
     }
 
     /**
-     * This will get an object from the array. This will NOT dereference
+     * This will get an object from the array.  This will NOT dereference
      * the COS object.
      *
      * @param index The index into the array to get the object.
@@ -214,7 +215,7 @@ public class COSArray extends COSBase implements Iterable<COSBase>
      *
      * @param index The index into the list.
      *
-     * @return The value at that index or -1 if it is null.
+     * @return The value at that index or -1 if does not exist.
      */
     public int getInt( int index )
     {
@@ -222,8 +223,7 @@ public class COSArray extends COSBase implements Iterable<COSBase>
     }
 
     /**
-     * Get the value of the array as an integer, return the default if it does
-     * not exist.
+     * Get the value of the array as an integer, return the default if it does not exist.
      *
      * @param index The value of the array.
      * @param defaultValue The value to return if the value is null.
@@ -459,15 +459,11 @@ public class COSArray extends COSBase implements Iterable<COSBase>
         for (int i = 0; retval < 0 && i < this.size(); i++)
         {
             COSBase item = this.get(i);
-            if (item.equals(object))
+            if (item.equals(object) ||
+                item instanceof COSObject && ((COSObject) item).getObject().equals(object))
             {
                 retval = i;
                 break;
-            }
-            else if (item instanceof COSObject && ((COSObject) item).getObject().equals(object))
-            {
-            	retval = i;
-            	break;
             }
         }
         return retval;
@@ -514,6 +510,27 @@ public class COSArray extends COSBase implements Iterable<COSBase>
         return visitor.visitFromArray(this);
     }
 
+    @Override
+    public boolean isNeedToBeUpdated() 
+    {
+      return needToBeUpdated;
+    }
+    
+    /**
+     * {@inheritDoc}
+     *<p>
+     * Although the state is set, it has no effect on COSWriter behavior because arrays are always
+     * written as direct object. If an array is to be part of an incremental save, then the method
+     * should be called for its holding dictionary.
+     *
+     * @param flag
+     */
+    @Override
+    public void setNeedToBeUpdated(boolean flag) 
+    {
+      needToBeUpdated = flag;
+    }
+
     /**
      * This will take an COSArray of numbers and convert it to a float[].
      *
@@ -522,9 +539,11 @@ public class COSArray extends COSBase implements Iterable<COSBase>
     public float[] toFloatArray()
     {
         float[] retval = new float[size()];
-        for( int i=0; i<size(); i++ )
+        for (int i = 0; i < size(); i++)
         {
-            retval[i] = ((COSNumber)getObject( i )).floatValue();
+            COSBase base = getObject(i);
+            retval[i] =
+                base instanceof COSNumber ? ((COSNumber) base).floatValue() : 0;
         }
         return retval;
     }
@@ -537,9 +556,9 @@ public class COSArray extends COSBase implements Iterable<COSBase>
     public void setFloatArray( float[] value )
     {
         this.clear();
-        for( int i=0; i<value.length; i++ )
+        for (float aValue : value)
         {
-            add( new COSFloat( value[i] ) );
+            add(new COSFloat(aValue));
         }
     }
 
@@ -548,7 +567,7 @@ public class COSArray extends COSBase implements Iterable<COSBase>
      *
      *  @return the COSArray as List
      */
-    public List<?> toList()
+    public List<? extends COSBase> toList()
     {
         List<COSBase> retList = new ArrayList<COSBase>(size());
         for (int i = 0; i < size(); i++)

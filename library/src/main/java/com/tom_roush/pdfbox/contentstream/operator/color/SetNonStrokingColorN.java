@@ -17,8 +17,10 @@
 
 package com.tom_roush.pdfbox.contentstream.operator.color;
 
+import com.tom_roush.pdfbox.contentstream.operator.OperatorName;
+
 /**
- * scn: Sets the colour to use for stroking non-stroking operations.
+ * scn: Sets the colour to use for non-stroking operations.
  * Supports Pattern, Separation, DeviceN and ICCBased colour spaces.
  *
  * @author John Hewson
@@ -28,6 +30,6 @@ public class SetNonStrokingColorN extends SetNonStrokingColor
     @Override
     public String getName()
     {
-        return "scn";
+        return OperatorName.NON_STROKING_COLOR_N;
     }
 }

@@ -17,10 +17,9 @@
 
 package com.tom_roush.fontbox.ttf;
 
+import java.io.IOException;
 import com.tom_roush.fontbox.cff.CFFFont;
 import com.tom_roush.fontbox.cff.CFFParser;
-
-import java.io.IOException;
 
 /**
  * PostScript font program (compact font format).
@@ -46,12 +45,13 @@ public class CFFTable extends TTFTable
      * @param data The stream to read the data from.
      * @throws java.io.IOException If there is an error reading the data.
      */
-    public void read(TrueTypeFont ttf, TTFDataStream data) throws IOException
+    @Override
+    void read(TrueTypeFont ttf, TTFDataStream data) throws IOException
     {
         byte[] bytes = data.read((int)getLength());
 
         CFFParser parser = new CFFParser();
-        cffFont = parser.parse(bytes).get(0);
+        cffFont = parser.parse(bytes, new CFFBytesource(font)).get(0);
 
         initialized = true;
     }
@@ -62,5 +62,24 @@ public class CFFTable extends TTFTable
     public CFFFont getFont()
     {
         return cffFont;
+    }
+    
+    /**
+     * Allows bytes to be re-read later by CFFParser.
+     */
+    private static class CFFBytesource implements CFFParser.ByteSource
+    {
+        private final TrueTypeFont ttf;
+        
+        CFFBytesource(TrueTypeFont ttf)
+        {
+           this.ttf = ttf; 
+        }
+        
+        @Override
+        public byte[] getBytes() throws IOException
+        {
+            return ttf.getTableBytes(ttf.getTableMap().get(CFFTable.TAG));
+        }
     }
 }

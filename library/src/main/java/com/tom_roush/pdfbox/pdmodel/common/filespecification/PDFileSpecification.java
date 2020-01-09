@@ -21,6 +21,7 @@ import java.io.IOException;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSString;
+
 import com.tom_roush.pdfbox.pdmodel.common.COSObjectable;
 
 /**
@@ -32,7 +33,7 @@ public abstract class PDFileSpecification implements COSObjectable
 {
 
     /**
-     * A file specfication can either be a COSString or a COSDictionary.  This
+     * A file specification can either be a COSString or a COSDictionary.  This
      * will create the file specification either way.
      *
      * @param base The cos object that describes the fs.

@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.tom_roush.fontbox.cff;
 
 public abstract class FDSelect
@@ -32,7 +33,7 @@ public abstract class FDSelect
 
     /**
      * Returns the Font DICT index for the given GID.
-     *
+     * 
      * @param gid GID
      */
     public abstract int getFDIndex(int gid);

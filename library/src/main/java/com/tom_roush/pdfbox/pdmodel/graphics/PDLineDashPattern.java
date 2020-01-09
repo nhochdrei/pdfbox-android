@@ -16,13 +16,13 @@
  */
 package com.tom_roush.pdfbox.pdmodel.graphics;
 
-import java.util.Arrays;
-
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSInteger;
-import com.tom_roush.pdfbox.pdmodel.common.COSArrayList;
+
 import com.tom_roush.pdfbox.pdmodel.common.COSObjectable;
+
+import java.util.Arrays;
 
 /**
  * A line dash pattern for stroking paths.
@@ -59,7 +59,9 @@ public final class PDLineDashPattern implements COSObjectable
     public COSBase getCOSObject()
     {
         COSArray cos = new COSArray();
-        cos.add(COSArrayList.converterToCOSArray(Arrays.asList(array)));
+        COSArray patternArray = new COSArray();
+        patternArray.setFloatArray(array);
+        cos.add(patternArray);
         cos.add(COSInteger.get(phase));
         return cos;
     }
@@ -76,10 +78,16 @@ public final class PDLineDashPattern implements COSObjectable
 
     /**
      * Returns the dash array.
-     * @return the dash array
+     * @return the dash array, never null.
      */
     public float[] getDashArray()
     {
         return array.clone();
+    }
+
+    @Override
+    public String toString()
+    {
+        return "PDLineDashPattern{array=" + Arrays.toString(array) + ", phase=" + phase + "}";
     }
 }

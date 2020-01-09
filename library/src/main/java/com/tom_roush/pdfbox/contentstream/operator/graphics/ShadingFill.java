@@ -16,12 +16,14 @@
  */
 package com.tom_roush.pdfbox.contentstream.operator.graphics;
 
-import com.tom_roush.pdfbox.contentstream.operator.Operator;
-import com.tom_roush.pdfbox.cos.COSBase;
-import com.tom_roush.pdfbox.cos.COSName;
-
 import java.io.IOException;
 import java.util.List;
+
+import com.tom_roush.pdfbox.contentstream.operator.MissingOperandException;
+import com.tom_roush.pdfbox.cos.COSBase;
+import com.tom_roush.pdfbox.cos.COSName;
+import com.tom_roush.pdfbox.contentstream.operator.Operator;
+import com.tom_roush.pdfbox.contentstream.operator.OperatorName;
 
 /**
  * sh Fills the clipping area with the given shading pattern.
@@ -33,12 +35,16 @@ public final class ShadingFill extends GraphicsOperatorProcessor
     @Override
     public void process(Operator operator, List<COSBase> operands) throws IOException
     {
+        if (operands.isEmpty())
+        {
+            throw new MissingOperandException(operator, operands);
+        }
         context.shadingFill((COSName) operands.get(0));
     }
 
     @Override
     public String getName()
     {
-        return "sh";
+        return OperatorName.SHADING_FILL;
     }
 }

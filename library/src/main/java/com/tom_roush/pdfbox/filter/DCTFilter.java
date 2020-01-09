@@ -16,14 +16,12 @@
  */
 package com.tom_roush.pdfbox.filter;
 
-import android.util.Log;
-
-import com.tom_roush.pdfbox.cos.COSDictionary;
-import com.tom_roush.pdfbox.io.IOUtils;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+
+import com.tom_roush.pdfbox.cos.COSDictionary;
+import com.tom_roush.pdfbox.io.IOUtils;
 
 /**
  * Decompresses data encoded using a DCT (discrete cosine transform)
@@ -35,21 +33,14 @@ final class DCTFilter extends Filter
 {
     @Override
     public DecodeResult decode(InputStream encoded, OutputStream decoded,
-                                         COSDictionary parameters, int index) throws IOException
+                               COSDictionary parameters, int index) throws IOException
     {
-    	// Already ready, just read it back out
-//    	byte[] buffer = new byte[1024];
-//        int bytesRead;
-//        while ((bytesRead = encoded.read(buffer)) != -1)
-//        {
-//            decoded.write(buffer, 0, bytesRead);
-//        }
-        
+        // Already ready, just read it back out
         IOUtils.copy(encoded, decoded);
-        
+
         return new DecodeResult(parameters);
     }
-    
+
     // Anything past here probably won't be needed
 
     // reads the APP14 Adobe transform tag
@@ -116,7 +107,7 @@ final class DCTFilter extends Filter
 //        int height = raster.getHeight();
 //        int w3 = width * 3;
 //        int[] tab = new int[w3];
-//        //BEWARE: handling the full image at a time is slower than one line at a time        
+//        //BEWARE: handling the full image at a time is slower than one line at a time
 //        for (int y = 0; y < height; y++)
 //        {
 //            raster.getPixels(0, y, width, 1, tab);
@@ -139,8 +130,9 @@ final class DCTFilter extends Filter
 
     @Override
     protected void encode(InputStream input, OutputStream encoded, COSDictionary parameters)
-            throws IOException
+        throws IOException
     {
-    	Log.w("PdfBox-Android", "DCTFilter#encode is not implemented yet, skipping this stream.");
+        throw new UnsupportedOperationException(
+            "DCTFilter encoding is not implemented, use the JPEGFactory methods instead");
     }
 }

@@ -22,6 +22,7 @@ import java.util.TreeSet;
 
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
+
 import com.tom_roush.pdfbox.pdmodel.common.COSObjectable;
 
 /**
@@ -30,11 +31,12 @@ import com.tom_roush.pdfbox.pdmodel.common.COSObjectable;
  * method then it will clear the value.
  *
  * @author Ben Litchfield
- * @author  Gerardo Ortiz
+ * @author Gerardo Ortiz
+ *
  */
-public final class PDDocumentInformation implements COSObjectable
+public class PDDocumentInformation implements COSObjectable
 {
-    private COSDictionary info;
+    private final COSDictionary info;
 
     /**
      * Default Constructor.
@@ -63,22 +65,22 @@ public final class PDDocumentInformation implements COSObjectable
     public COSDictionary getCOSObject()
     {
         return info;
-    }
+    }    
     
     /**
      * Return the properties String value.
      * <p>
      * Allows to retrieve the
      * low level date for validation purposes.
-     * </p>
-     *
+     * </p> 
+     * 
      * @param propertyKey the dictionaries key
      * @return the properties value
      */
-    public Object getPropertyStringValue(String propertyKey)
-    {
-    	return info.getString(propertyKey);
-    }
+     public Object getPropertyStringValue(String propertyKey)
+     {
+         return info.getString(propertyKey);
+     }    
 
     /**
      * This will get the title of the document.  This will return null if no title exists.

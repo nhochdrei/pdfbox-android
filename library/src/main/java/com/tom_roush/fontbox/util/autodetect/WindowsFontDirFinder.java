@@ -23,12 +23,15 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.List;
 
+import com.tom_roush.fontbox.util.Charsets;
+
 /**
  * FontFinder for native Windows platforms. This class is based on a class provided by Apache FOP. see
- * com.tom_roush.fop.fonts.autodetect.WindowsFontDirFinder
+ * org.apache.fop.fonts.autodetect.WindowsFontDirFinder
  */
 public class WindowsFontDirFinder implements FontDirFinder
 {
+
     /**
      * Attempts to read windir environment variable on windows (disclaimer: This is a bit dirty but seems to work
      * nicely).
@@ -46,7 +49,7 @@ public class WindowsFontDirFinder implements FontDirFinder
             process = runtime.exec("cmd.exe /c echo %windir%");
         }
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(
-            process.getInputStream()));
+                process.getInputStream(), Charsets.ISO_8859_1));
         String winDir = bufferedReader.readLine();
         bufferedReader.close();
         return winDir;
@@ -54,7 +57,7 @@ public class WindowsFontDirFinder implements FontDirFinder
 
     /**
      * {@inheritDoc}
-     *
+     * 
      * @return a list of detected font files
      */
     @Override
@@ -81,10 +84,14 @@ public class WindowsFontDirFinder implements FontDirFinder
             {
                 // should continue if this fails
             }
+            catch (SecurityException e)
+            {
+                // should continue if this fails
+            }
         }
         File osFontsDir;
         File psFontsDir;
-        if (windir != null)
+        if (windir != null && windir.length() > 2)
         {
             // remove any trailing '/'
             if (windir.endsWith("/"))
@@ -109,21 +116,35 @@ public class WindowsFontDirFinder implements FontDirFinder
             for (char driveLetter = 'C'; driveLetter <= 'E'; driveLetter++)
             {
                 osFontsDir = new File(driveLetter + ":" + File.separator + windowsDirName
-                    + File.separator + "FONTS");
-                if (osFontsDir.exists() && osFontsDir.canRead())
+                        + File.separator + "FONTS");
+                try
                 {
-                    fontDirList.add(osFontsDir);
-                    break;
+                    if (osFontsDir.exists() && osFontsDir.canRead())
+                    {
+                        fontDirList.add(osFontsDir);
+                        break;
+                    }
+                }
+                catch (SecurityException e)
+                {
+                    // should continue if this fails
                 }
             }
             // look for type 1 font folder
             for (char driveLetter = 'C'; driveLetter <= 'E'; driveLetter++)
             {
                 psFontsDir = new File(driveLetter + ":" + File.separator + "PSFONTS");
-                if (psFontsDir.exists() && psFontsDir.canRead())
+                try
                 {
-                    fontDirList.add(psFontsDir);
-                    break;
+                    if (psFontsDir.exists() && psFontsDir.canRead())
+                    {
+                        fontDirList.add(psFontsDir);
+                        break;
+                    }
+                }
+                catch (SecurityException e)
+                {
+                    // should continue if this fails
                 }
             }
         }

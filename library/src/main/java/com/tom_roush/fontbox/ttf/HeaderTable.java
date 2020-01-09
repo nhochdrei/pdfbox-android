@@ -40,7 +40,7 @@ public class HeaderTable extends TTFTable
      * Italic macStyle flag.
      */
     public static final int MAC_STYLE_ITALIC = 2;
-
+    
     private float version;
     private float fontRevision;
     private long checkSumAdjustment;
@@ -63,7 +63,7 @@ public class HeaderTable extends TTFTable
     {
         super(font);
     }
-    
+
     /**
      * This will read the required data from the stream.
      * 
@@ -71,7 +71,7 @@ public class HeaderTable extends TTFTable
      * @param data The stream to read the data from.
      * @throws IOException If there is an error reading the data.
      */
-    public void read(TrueTypeFont ttf, TTFDataStream data) throws IOException
+    void read(TrueTypeFont ttf, TTFDataStream data) throws IOException
     {
         version = data.read32Fixed();
         fontRevision = data.read32Fixed();

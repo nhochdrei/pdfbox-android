@@ -78,7 +78,7 @@ public final class OTFParser extends TTFParser
     {
         return (OpenTypeFont)super.parse(raf);
     }
-
+    
     @Override
     OpenTypeFont newFont(TTFDataStream raf)
     {
@@ -103,5 +103,11 @@ public final class OTFParser extends TTFParser
         {
             return super.readTable(font, tag);
         }
+    }
+
+    @Override
+    protected boolean allowCFF()
+    {
+        return true;
     }
 }

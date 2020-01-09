@@ -27,9 +27,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import com.tom_roush.fontbox.EncodedFont;
 import com.tom_roush.fontbox.FontBoxFont;
+import com.tom_roush.fontbox.EncodedFont;
 import com.tom_roush.fontbox.cff.Type1CharString;
 import com.tom_roush.fontbox.cff.Type1CharStringParser;
 import com.tom_roush.fontbox.encoding.Encoding;
@@ -130,7 +129,7 @@ public final class Type1Font implements Type1CharStringReader, EncodedFont, Font
     // private caches
     private final Map<String, Type1CharString> charStringCache =
             new ConcurrentHashMap<String, Type1CharString>();
-
+    
     // raw data
     private final byte[] segment1, segment2;
 

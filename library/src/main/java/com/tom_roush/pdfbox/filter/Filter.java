@@ -18,14 +18,14 @@ package com.tom_roush.pdfbox.filter;
 
 import android.util.Log;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 
 /**
  * A filter for stream data.
@@ -52,7 +52,7 @@ public abstract class Filter
      * @throws IOException if the stream cannot be decoded
      */
     public abstract DecodeResult decode(InputStream encoded, OutputStream decoded, COSDictionary parameters,
-                            int index) throws IOException;
+                                        int index) throws IOException;
 
     /**
      * Encodes data.
@@ -63,7 +63,7 @@ public abstract class Filter
      * @throws IOException if the stream cannot be encoded
      */
     public final void encode(InputStream input, OutputStream encoded, COSDictionary parameters,
-                            int index) throws IOException
+                             int index) throws IOException
     {
         encode(input, encoded, parameters.asUnmodifiableDictionary());
     }
@@ -74,7 +74,7 @@ public abstract class Filter
 
     // gets the decode params for a specific filter index, this is used to
     // normalise the DecodeParams entry so that it is always a dictionary
-    protected static COSDictionary getDecodeParams(COSDictionary dictionary, int index)
+    protected COSDictionary getDecodeParams(COSDictionary dictionary, int index)
     {
         COSBase obj = dictionary.getDictionaryObject(COSName.DECODE_PARMS, COSName.DP);
         if (obj instanceof COSDictionary)
@@ -91,8 +91,8 @@ public abstract class Filter
         }
         else if (obj != null)
         {
-        	Log.e("PdfBox-Android", "Expected DecodeParams to be an Array or Dictionary but found " +
-                      obj.getClass().getName());
+            Log.e("PdfBox-Android", "Expected DecodeParams to be an Array or Dictionary but found " +
+                obj.getClass().getName());
         }
         return new COSDictionary();
     }

@@ -19,17 +19,18 @@ package com.tom_roush.pdfbox.pdmodel.fdf;
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSString;
+
 import com.tom_roush.pdfbox.pdmodel.common.COSObjectable;
 
 /**
- * This represents an object that can be used in a Field's Opt entry to represent
- * an available option and a default appearance string.
+ * This represents an object that can be used in a Field's Opt entry to represent an available option and a default
+ * appearance string.
  *
  * @author Ben Litchfield
  */
 public class FDFOptionElement implements COSObjectable
 {
-    private COSArray option;
+    private final COSArray option;
 
     /**
      * Default constructor.
@@ -37,8 +38,8 @@ public class FDFOptionElement implements COSObjectable
     public FDFOptionElement()
     {
         option = new COSArray();
-        option.add( new COSString( "" ) );
-        option.add( new COSString( "" ) );
+        option.add(new COSString(""));
+        option.add(new COSString(""));
     }
 
     /**
@@ -46,7 +47,7 @@ public class FDFOptionElement implements COSObjectable
      *
      * @param o The option element.
      */
-    public FDFOptionElement( COSArray o )
+    public FDFOptionElement(COSArray o)
     {
         option = o;
     }
@@ -56,6 +57,7 @@ public class FDFOptionElement implements COSObjectable
      *
      * @return The cos object that matches this Java object.
      */
+    @Override
     public COSBase getCOSObject()
     {
         return option;
@@ -72,13 +74,13 @@ public class FDFOptionElement implements COSObjectable
     }
 
     /**
-     * This will get the string of one of the available options.  A required element.
+     * This will get the string of one of the available options. A required element.
      *
      * @return An available option.
      */
     public String getOption()
     {
-        return ((COSString)option.getObject( 0 ) ).getString();
+        return ((COSString) option.getObject(0)).getString();
     }
 
     /**
@@ -86,19 +88,19 @@ public class FDFOptionElement implements COSObjectable
      *
      * @param opt One of the available options.
      */
-    public void setOption( String opt )
+    public void setOption(String opt)
     {
-        option.set( 0, new COSString( opt ) );
+        option.set(0, new COSString(opt));
     }
 
     /**
-     * This will get the string of default appearance string.  A required element.
+     * This will get the string of default appearance string. A required element.
      *
      * @return A default appearance string.
      */
     public String getDefaultAppearanceString()
     {
-        return ((COSString)option.getObject( 1 ) ).getString();
+        return ((COSString) option.getObject(1)).getString();
     }
 
     /**
@@ -106,8 +108,8 @@ public class FDFOptionElement implements COSObjectable
      *
      * @param da The default appearance string.
      */
-    public void setDefaultAppearanceString( String da )
+    public void setDefaultAppearanceString(String da)
     {
-        option.set( 1, new COSString( da ) );
+        option.set(1, new COSString(da));
     }
 }

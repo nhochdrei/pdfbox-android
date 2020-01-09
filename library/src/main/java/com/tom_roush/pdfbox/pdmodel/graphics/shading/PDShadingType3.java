@@ -16,7 +16,9 @@
  */
 package com.tom_roush.pdfbox.pdmodel.graphics.shading;
 
+
 import com.tom_roush.pdfbox.cos.COSDictionary;
+import com.tom_roush.pdfbox.util.Matrix;
 
 /**
  * Resources for a radial shading.
@@ -43,5 +45,5 @@ public class PDShadingType3 extends PDShadingType2
 //    public Paint toPaint(Matrix matrix)
 //    {
 //        return new RadialShadingPaint(this, matrix);
-//    }TODO: PdfBox-Android
+//    }
 }

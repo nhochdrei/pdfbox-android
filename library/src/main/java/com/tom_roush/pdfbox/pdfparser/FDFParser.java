@@ -16,11 +16,11 @@
  */
 package com.tom_roush.pdfbox.pdfparser;
 
-import android.util.Log;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+
+
 
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;
@@ -32,6 +32,7 @@ import com.tom_roush.pdfbox.io.RandomAccessFile;
 
 public class FDFParser extends COSParser
 {
+
     /**
      * Constructs parser for given file using memory buffer.
      * 
@@ -72,7 +73,19 @@ public class FDFParser extends COSParser
         init();
     }
 
-    private void init() throws IOException
+    /**
+     * Tell if the dictionary is a FDF catalog.
+     *
+     * @param dictionary
+     * @return
+     */
+    @Override
+    protected final boolean isCatalog(COSDictionary dictionary)
+    {
+        return dictionary.containsKey(COSName.FDF);
+    }
+
+    private void init()
     {
         String eofLookupRangeStr = System.getProperty(SYSPROP_EOFLOOKUPRANGE);
         if (eofLookupRangeStr != null)
@@ -83,11 +96,9 @@ public class FDFParser extends COSParser
             }
             catch (NumberFormatException nfe)
             {
-            	Log.w("PdfBox-Android", "System property " + SYSPROP_EOFLOOKUPRANGE
-            			+ " does not contain an integer value, but: '" + eofLookupRangeStr + "'");
             }
         }
-        document = new COSDocument(false);
+        document = new COSDocument();
     }
 
     /**
@@ -100,13 +111,32 @@ public class FDFParser extends COSParser
     private void initialParse() throws IOException
     {
         COSDictionary trailer = null;
-        // parse startxref
-        long startXRefOffset = getStartxrefOffset();
-        if (startXRefOffset > 0)
+        boolean rebuildTrailer = false;
+        try
         {
-            trailer = parseXref(startXRefOffset);
+            // parse startxref
+            long startXRefOffset = getStartxrefOffset();
+            if (startXRefOffset > 0)
+            {
+                trailer = parseXref(startXRefOffset);
+            }
+            else if (isLenient())
+            {
+                rebuildTrailer = true;
+            }
         }
-        else
+        catch (IOException exception)
+        {
+            if (isLenient())
+            {
+                rebuildTrailer = true;
+            }
+            else
+            {
+                throw exception;
+            }
+        }
+        if (rebuildTrailer)
         {
             trailer = rebuildTrailer();
         }
@@ -119,13 +149,11 @@ public class FDFParser extends COSParser
         {
             parseDictObjects((COSDictionary) rootObject, (COSName[]) null);
         }
-    
         initialParseDone = true;
     }
 
     /**
-     * This will parse the stream and populate the COSDocument object.  This will close
-     * the stream when it is done parsing.
+     * This will parse the stream and populate the COSDocument object.
      *
      * @throws IOException If there is an error reading from the stream or corrupt data
      * is found.

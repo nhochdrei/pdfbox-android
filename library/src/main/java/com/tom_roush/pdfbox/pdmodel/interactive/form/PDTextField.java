@@ -17,7 +17,6 @@
 package com.tom_roush.pdfbox.pdmodel.interactive.form;
 
 import java.io.IOException;
-
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
 
@@ -36,7 +35,7 @@ public final class PDTextField extends PDVariableText
     private static final int FLAG_DO_NOT_SCROLL = 1 << 23;
     private static final int FLAG_COMB = 1 << 24;
     private static final int FLAG_RICH_TEXT = 1 << 25;
-
+    
     /**
      * @see PDField#PDField(PDAcroForm)
      *
@@ -45,17 +44,17 @@ public final class PDTextField extends PDVariableText
     public PDTextField(PDAcroForm acroForm)
     {
         super(acroForm);
-        dictionary.setItem(COSName.FT, COSName.TX);
+        getCOSObject().setItem(COSName.FT, COSName.TX);
     }
 
     /**
      * Constructor.
-     *
+     * 
      * @param acroForm The form that this field is part of.
      * @param field the PDF object to represent as a field.
      * @param parent the parent node of the node
      */
-    public PDTextField(PDAcroForm acroForm, COSDictionary field, PDNonTerminalField parent)
+    PDTextField(PDAcroForm acroForm, COSDictionary field, PDNonTerminalField parent)
     {
         super(acroForm, field, parent);
     }
@@ -65,7 +64,7 @@ public final class PDTextField extends PDVariableText
      */
     public boolean isMultiline()
     {
-        return dictionary.getFlag(COSName.FF, FLAG_MULTILINE);
+        return getCOSObject().getFlag(COSName.FF, FLAG_MULTILINE);
     }
 
     /**
@@ -73,9 +72,9 @@ public final class PDTextField extends PDVariableText
      *
      * @param multiline The value for the multiline.
      */
-    public void setMultiline( boolean multiline )
+    public void setMultiline(boolean multiline)
     {
-        dictionary.setFlag(COSName.FF, FLAG_MULTILINE, multiline);
+        getCOSObject().setFlag(COSName.FF, FLAG_MULTILINE, multiline);
     }
 
     /**
@@ -83,7 +82,7 @@ public final class PDTextField extends PDVariableText
      */
     public boolean isPassword()
     {
-        return dictionary.getFlag(COSName.FF, FLAG_PASSWORD);
+        return getCOSObject().getFlag(COSName.FF, FLAG_PASSWORD);
     }
 
     /**
@@ -91,9 +90,9 @@ public final class PDTextField extends PDVariableText
      *
      * @param password The value for the password.
      */
-    public void setPassword( boolean password )
+    public void setPassword(boolean password)
     {
-        dictionary.setFlag(COSName.FF, FLAG_PASSWORD, password);
+        getCOSObject().setFlag(COSName.FF, FLAG_PASSWORD, password);
     }
 
     /**
@@ -101,7 +100,7 @@ public final class PDTextField extends PDVariableText
      */
     public boolean isFileSelect()
     {
-        return dictionary.getFlag(COSName.FF, FLAG_FILE_SELECT);
+        return getCOSObject().getFlag(COSName.FF, FLAG_FILE_SELECT);
     }
 
     /**
@@ -109,9 +108,9 @@ public final class PDTextField extends PDVariableText
      *
      * @param fileSelect The value for the fileSelect.
      */
-    public void setFileSelect( boolean fileSelect )
+    public void setFileSelect(boolean fileSelect)
     {
-        dictionary.setFlag(COSName.FF, FLAG_FILE_SELECT, fileSelect);
+        getCOSObject().setFlag(COSName.FF, FLAG_FILE_SELECT, fileSelect);
     }
 
     /**
@@ -119,7 +118,7 @@ public final class PDTextField extends PDVariableText
      */
     public boolean doNotSpellCheck()
     {
-        return dictionary.getFlag(COSName.FF, FLAG_DO_NOT_SPELL_CHECK);
+        return getCOSObject().getFlag(COSName.FF, FLAG_DO_NOT_SPELL_CHECK);
     }
 
     /**
@@ -127,9 +126,9 @@ public final class PDTextField extends PDVariableText
      *
      * @param doNotSpellCheck The value for the doNotSpellCheck.
      */
-    public void setDoNotSpellCheck( boolean doNotSpellCheck )
+    public void setDoNotSpellCheck(boolean doNotSpellCheck)
     {
-        dictionary.setFlag(COSName.FF, FLAG_DO_NOT_SPELL_CHECK, doNotSpellCheck);
+        getCOSObject().setFlag(COSName.FF, FLAG_DO_NOT_SPELL_CHECK, doNotSpellCheck);
     }
 
     /**
@@ -137,7 +136,7 @@ public final class PDTextField extends PDVariableText
      */
     public boolean doNotScroll()
     {
-        return dictionary.getFlag(COSName.FF, FLAG_DO_NOT_SCROLL);
+        return getCOSObject().getFlag(COSName.FF, FLAG_DO_NOT_SCROLL);
     }
 
     /**
@@ -145,9 +144,9 @@ public final class PDTextField extends PDVariableText
      *
      * @param doNotScroll The value for the doNotScroll.
      */
-    public void setDoNotScroll( boolean doNotScroll )
+    public void setDoNotScroll(boolean doNotScroll)
     {
-        dictionary.setFlag(COSName.FF, FLAG_DO_NOT_SCROLL, doNotScroll);
+        getCOSObject().setFlag(COSName.FF, FLAG_DO_NOT_SCROLL, doNotScroll);
     }
 
     /**
@@ -155,7 +154,7 @@ public final class PDTextField extends PDVariableText
      */
     public boolean isComb()
     {
-        return dictionary.getFlag(COSName.FF, FLAG_COMB);
+        return getCOSObject().getFlag(COSName.FF, FLAG_COMB);
     }
 
     /**
@@ -163,9 +162,9 @@ public final class PDTextField extends PDVariableText
      *
      * @param comb The value for the comb.
      */
-    public void setComb( boolean comb )
+    public void setComb(boolean comb)
     {
-        dictionary.setFlag(COSName.FF, FLAG_COMB, comb);
+        getCOSObject().setFlag(COSName.FF, FLAG_COMB, comb);
     }
 
     /**
@@ -173,7 +172,7 @@ public final class PDTextField extends PDVariableText
      */
     public boolean isRichText()
     {
-        return dictionary.getFlag(COSName.FF, FLAG_RICH_TEXT);
+        return getCOSObject().getFlag(COSName.FF, FLAG_RICH_TEXT);
     }
 
     /**
@@ -181,40 +180,42 @@ public final class PDTextField extends PDVariableText
      *
      * @param richText The value for the richText.
      */
-    public void setRichText( boolean richText )
+    public void setRichText(boolean richText)
     {
-        dictionary.setFlag(COSName.FF, FLAG_RICH_TEXT, richText);
+        getCOSObject().setFlag(COSName.FF, FLAG_RICH_TEXT, richText);
     }
-
+    
     /**
      * Returns the maximum number of characters of the text field.
-     *
+     * 
      * @return the maximum number of characters, returns -1 if the value isn't present
      */
     public int getMaxLen()
     {
-        return dictionary.getInt(COSName.MAX_LEN);
+        return getCOSObject().getInt(COSName.MAX_LEN);
     }
 
     /**
      * Sets the maximum number of characters of the text field.
-     *
+     * 
      * @param maxLen the maximum number of characters
      */
     public void setMaxLen(int maxLen)
     {
-        dictionary.setInt(COSName.MAX_LEN, maxLen);
+        getCOSObject().setInt(COSName.MAX_LEN, maxLen);
     }
 
     /**
-     * Sets the plain text value of this field.
+     * Sets the plain text value of this field. It also tries to update the visual appearance,
+     * unless {@link PDAcroForm#getNeedAppearances()} is true.
      *
      * @param value Plain text
      * @throws IOException if the value could not be set
      */
+    @Override
     public void setValue(String value) throws IOException
     {
-        dictionary.setString(COSName.V, value);
+        getCOSObject().setString(COSName.V, value);
         applyChange();
     }
 
@@ -226,12 +227,12 @@ public final class PDTextField extends PDVariableText
      */
     public void setDefaultValue(String value) throws IOException
     {
-        dictionary.setString(COSName.DV, value);
+        getCOSObject().setString(COSName.DV, value);
     }
 
     /**
      * Returns the value of this field, or an empty string.
-     *
+     * 
      * @return A non-null string.
      */
     public String getValue()
@@ -254,7 +255,7 @@ public final class PDTextField extends PDVariableText
     {
         return getValue();
     }
-
+    
     @Override
     void constructAppearances() throws IOException
     {

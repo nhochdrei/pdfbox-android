@@ -16,9 +16,9 @@
  */
 package com.tom_roush.pdfbox.cos;
 
-import java.io.IOException;
-
 import com.tom_roush.pdfbox.pdmodel.common.COSObjectable;
+
+import java.io.IOException;
 
 /**
  * The base object that all objects in the PDF document will extend.
@@ -70,7 +70,7 @@ public abstract class COSBase implements COSObjectable
     /**
      * Set the state true, if the dictionary should be written as a direct object and not indirect.
      * 
-     * @param direct set it true, for writting direct object
+     * @param direct set it true, for writing direct object
      */
     public void setDirect(boolean direct)
     {

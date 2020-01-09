@@ -16,12 +16,12 @@
  */
 package com.tom_roush.pdfbox.pdmodel.common.function;
 
-import java.io.IOException;
-
 import com.tom_roush.pdfbox.cos.COSArray;
 import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.pdmodel.common.PDRange;
+
+import java.io.IOException;
 
 /**
  * This class represents a Type 3 (stitching) function in a PDF document.
@@ -30,10 +30,11 @@ import com.tom_roush.pdfbox.pdmodel.common.PDRange;
  */
 public class PDFunctionType3 extends PDFunction
 {
-
     private COSArray functions = null;
     private COSArray encode = null;
     private COSArray bounds = null;
+    private PDFunction[] functionsArray = null;
+    private float[] boundsValues = null;
     
     /**
      * Constructor.
@@ -68,19 +69,30 @@ public class PDFunctionType3 extends PDFunction
         PDRange domain = getDomainForInput(0);
         // clip input value to domain
         x = clipToRange(x, domain.getMin(), domain.getMax());
-
-        COSArray functionsArray = getFunctions();
-        int numberOfFunctions = functionsArray.size();
-        // This doesn't make sense but it may happen ...
-        if (numberOfFunctions == 1) 
+        
+        if (functionsArray == null)
         {
-            function = PDFunction.create(functionsArray.get(0));
+            COSArray ar = getFunctions();
+            functionsArray = new PDFunction[ar.size()];
+            for (int i = 0; i < ar.size(); ++i)
+            {
+                functionsArray[i] = PDFunction.create(ar.getObject(i));
+            }            
+        }
+
+        if (functionsArray.length == 1) 
+        {
+            // This doesn't make sense but it may happen ...
+            function = functionsArray[0];
             PDRange encRange = getEncodeForParameter(0);
             x = interpolate(x, domain.getMin(), domain.getMax(), encRange.getMin(), encRange.getMax());
         }
         else 
         {
-            float[] boundsValues = getBounds().toFloatArray();
+            if (boundsValues == null)
+            {
+                boundsValues = getBounds().toFloatArray();
+            }
             int boundsSize = boundsValues.length;
             // create a combined array containing the domain and the bounds values
             // domain.min, bounds[0], bounds[1], ...., bounds[boundsSize-1], domain.max
@@ -95,16 +107,16 @@ public class PDFunctionType3 extends PDFunction
                 if ( x >= partitionValues[i] && 
                         (x < partitionValues[i+1] || (i == partitionValuesSize - 2 && x == partitionValues[i+1])))
                 {
-                    function = PDFunction.create(functionsArray.get(i));
+                    function = functionsArray[i];
                     PDRange encRange = getEncodeForParameter(i);
                     x = interpolate(x, partitionValues[i], partitionValues[i+1], encRange.getMin(), encRange.getMax());
                     break;
                 }
             }
-        }
-        if (function == null)
-        {
-        	throw new IOException("partition not found in type 3 function");
+            if (function == null)
+            {
+                throw new IOException("partition not found in type 3 function");
+            }
         }
         float[] functionValues = new float[]{x};
         // calculate the output values using the chosen function
@@ -122,7 +134,7 @@ public class PDFunctionType3 extends PDFunction
     {
         if (functions == null)
         {
-            functions = (COSArray) (getCOSObject().getDictionaryObject(COSName.FUNCTIONS));
+            functions = (COSArray)(getCOSObject().getDictionaryObject( COSName.FUNCTIONS ));
         }
         return functions;
     }
@@ -136,7 +148,7 @@ public class PDFunctionType3 extends PDFunction
     {
         if (bounds == null) 
         {
-            bounds = (COSArray) (getCOSObject().getDictionaryObject(COSName.BOUNDS));
+            bounds = (COSArray)(getCOSObject().getDictionaryObject( COSName.BOUNDS ));
         }
         return bounds;
     }
@@ -150,7 +162,7 @@ public class PDFunctionType3 extends PDFunction
     {
         if (encode == null)
         {
-            encode = (COSArray) (getCOSObject().getDictionaryObject(COSName.ENCODE));
+            encode = (COSArray)(getCOSObject().getDictionaryObject( COSName.ENCODE ));
         }
         return encode;
     }

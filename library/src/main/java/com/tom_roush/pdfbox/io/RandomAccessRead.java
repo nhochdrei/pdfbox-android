@@ -28,6 +28,7 @@ public interface RandomAccessRead extends Closeable
      * Read a single byte of data.
      *
      * @return The byte of data that is being read.
+     *
      * @throws IOException If there is an error while reading the data.
      */
     int read() throws IOException;
@@ -51,7 +52,7 @@ public interface RandomAccessRead extends Closeable
      * @throws IOException If there was an error while reading the data.
      */
     int read(byte[] b, int offset, int length) throws IOException;
-
+    
     /**
      * Returns offset of next byte to be returned by a read method.
      * 
@@ -89,13 +90,14 @@ public interface RandomAccessRead extends Closeable
      * This will peek at the next byte.
      *
      * @return The next byte on the stream, leaving it as available to read.
+     *
      * @throws IOException If there is an error reading the next byte.
      */
     int peek() throws IOException;
 
     /**
      * Seek backwards the given number of bytes.
-     *
+     * 
      * @param bytes the number of bytes to be seeked backwards
      * @throws IOException If there is an error while seeking
      */
@@ -103,7 +105,6 @@ public interface RandomAccessRead extends Closeable
 
     /**
      * Reads a given number of bytes.
-     *
      * @param length the number of bytes to be read
      * @return a byte array containing the bytes just read
      * @throws IOException if an I/O error occurs while reading data
@@ -114,6 +115,7 @@ public interface RandomAccessRead extends Closeable
      * A simple test to see if we are at the end of the data.
      *
      * @return true if we are at the end of the data.
+     *
      * @throws IOException If there is an error reading the next byte.
      */
     boolean isEOF() throws IOException;

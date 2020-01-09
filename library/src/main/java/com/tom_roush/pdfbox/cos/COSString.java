@@ -16,11 +16,11 @@
  */
 package com.tom_roush.pdfbox.cos;
 
-import android.util.Log;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+
 import java.util.Arrays;
+
 
 import com.tom_roush.pdfbox.util.Charsets;
 import com.tom_roush.pdfbox.util.Hex;
@@ -39,60 +39,19 @@ import com.tom_roush.pdfbox.util.Hex;
  *
  * <p>Byte strings are used for binary data represented as a series of bytes, but the encoding is
  * not known. The bytes of the string need not represent characters.
- *
+ * 
  * @author Ben Litchfield
  * @author John Hewson
  */
 public final class COSString extends COSBase
 {
-    // legacy behaviour for old PDFParser
-    public static final boolean FORCE_PARSING =
-        Boolean.getBoolean("com.tom_roush.pdfbox.forceParsing");
-
-    /**
-     * This will create a COS string from a string of hex characters.
-     *
-     * @param hex A hex string.
-     * @return A cos string with the hex characters converted to their actual bytes.
-     * @throws IOException If there is an error with the hex string.
-     */
-    public static COSString parseHex(String hex) throws IOException
-    {
-        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        StringBuilder hexBuffer = new StringBuilder(hex.trim());
-
-        // if odd number then the last hex digit is assumed to be 0
-        if (hexBuffer.length() % 2 != 0)
-        {
-            hexBuffer.append('0');
-        }
-
-        int length = hexBuffer.length();
-        for (int i = 0; i < length; i += 2)
-        {
-            try
-            {
-                bytes.write(Integer.parseInt(hexBuffer.substring(i, i + 2), 16));
-            }
-            catch (NumberFormatException e)
-            {
-                if (FORCE_PARSING)
-                {
-                    Log.w("PdfBox-Android", "Encountered a malformed hex string");
-                    bytes.write('?'); // todo: what does Acrobat do? Any example PDFs?
-                }
-                else
-                {
-                    throw new IOException("Invalid hex string: " + hex, e);
-                }
-            }
-        }
-
-        return new COSString(bytes.toByteArray());
-    }
 
     private byte[] bytes;
     private boolean forceHexForm;
+
+    // legacy behaviour for old PDFParser
+    public static final boolean FORCE_PARSING =
+            Boolean.getBoolean("com.tom_roush.pdfbox.forceParsing");
 
     /**
      * Creates a new PDF string from a byte array. This method can be used to read a string from
@@ -132,20 +91,52 @@ public final class COSString extends COSBase
         {
             // UTF-16BE encoded string with a leading byte order marker
             byte[] data = text.getBytes(Charsets.UTF_16BE);
-            ByteArrayOutputStream out = new ByteArrayOutputStream(data.length + 2);
-            out.write(0xFE); // BOM
-            out.write(0xFF); // BOM
+            bytes = new byte[data.length + 2];
+            bytes[0] = (byte) 0xFE;
+            bytes[1] = (byte) 0xFF;
+            System.arraycopy(data, 0, bytes, 2, data.length);
+        }
+    }
+
+    /**
+     * This will create a COS string from a string of hex characters.
+     *
+     * @param hex A hex string.
+     * @return A cos string with the hex characters converted to their actual bytes.
+     * @throws IOException If there is an error with the hex string.
+     */
+    public static COSString parseHex(String hex) throws IOException
+    {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        StringBuilder hexBuffer = new StringBuilder(hex.trim());
+
+        // if odd number then the last hex digit is assumed to be 0
+        if (hexBuffer.length() % 2 != 0)
+        {
+            hexBuffer.append('0');
+        }
+
+        int length = hexBuffer.length();
+        for (int i = 0; i < length; i += 2)
+        {
             try
             {
-                out.write(data);
+                bytes.write(Integer.parseInt(hexBuffer.substring(i, i + 2), 16));
             }
-            catch (IOException e)
+            catch (NumberFormatException e)
             {
-                // should never happen
-                throw new RuntimeException(e);
+                if (FORCE_PARSING)
+                {
+                    bytes.write('?'); // todo: what does Acrobat do? Any example PDFs?
+                }
+                else
+                {
+                    throw new IOException("Invalid hex string: " + hex, e);
+                }
             }
-            bytes = out.toByteArray();
         }
+
+        return new COSString(bytes.toByteArray());
     }
 
     /**
@@ -171,6 +162,8 @@ public final class COSString extends COSBase
 
     /**
      * Returns true if the string is to be written in hex form.
+     * 
+     * @return the hex representation of this string.
      */
     public boolean getForceHexForm()
     {
@@ -179,11 +172,13 @@ public final class COSString extends COSBase
 
     /**
      * Returns the content of this string as a PDF <i>text string</i>.
+     * 
+     * @return the string representation of this string using the given encoding.
      */
     public String getString()
     {
         // text string - BOM indicates Unicode
-        if (bytes.length > 2)
+        if (bytes.length >= 2)
         {
             if ((bytes[0] & 0xff) == 0xFE && (bytes[1] & 0xff) == 0xFF)
             {
@@ -196,13 +191,14 @@ public final class COSString extends COSBase
                 return new String(bytes, 2, bytes.length - 2, Charsets.UTF_16LE);
             }
         }
-
         // otherwise use PDFDocEncoding
         return PDFDocEncoding.toString(bytes);
     }
 
     /**
      * Returns the content of this string as a PDF <i>ASCII string</i>.
+     * 
+     * @return the ASCII representation of this string.
      */
     public String getASCII()
     {
@@ -212,6 +208,8 @@ public final class COSString extends COSBase
 
     /**
      * Returns the raw bytes of the string. Best used with a PDF <i>byte string</i>.
+     * 
+     * @return the raw bytes of this string.
      */
     public byte[] getBytes()
     {
@@ -225,17 +223,12 @@ public final class COSString extends COSBase
      */
     public String toHexString()
     {
-        StringBuilder sb = new StringBuilder(bytes.length * 2);
-        for (byte b : bytes)
-        {
-            sb.append(Hex.getString(b));
-        }
-        return sb.toString();
+        return Hex.getString(bytes);
     }
 
     /**
      * Visitor pattern double dispatch method.
-     *
+     * 
      * @param visitor The object to notify when visiting this object.
      * @return any object, depending on the visitor implementation, or null
      * @throws IOException If an error occurs while visiting this object.
@@ -253,7 +246,7 @@ public final class COSString extends COSBase
         {
             COSString strObj = (COSString) obj;
             return getString().equals(strObj.getString()) &&
-                forceHexForm == strObj.forceHexForm;
+                   forceHexForm == strObj.forceHexForm;
         }
         return false;
     }

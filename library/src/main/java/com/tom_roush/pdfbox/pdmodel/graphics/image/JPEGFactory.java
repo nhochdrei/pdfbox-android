@@ -26,6 +26,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
@@ -102,7 +103,7 @@ public final class JPEGFactory
      * @throws IOException if the JPEG data cannot be written
      */
     public static PDImageXObject createFromImage(PDDocument document, Bitmap image,
-        float quality) throws IOException
+                                                 float quality) throws IOException
     {
         return createFromImage(document, image, quality, 72);
     }
@@ -117,7 +118,7 @@ public final class JPEGFactory
      * @throws IOException if the JPEG data cannot be written
      */
     public static PDImageXObject createFromImage(PDDocument document, Bitmap image,
-        float quality, int dpi) throws IOException
+                                                 float quality, int dpi) throws IOException
     {
         return createJPEG(document, image, quality, dpi);
     }
@@ -134,12 +135,12 @@ public final class JPEGFactory
 
     // Creates an Image XObject from a Buffered Image using JAI Image I/O
     private static PDImageXObject createJPEG(PDDocument document, Bitmap image,
-        float quality, int dpi) throws IOException
+                                             float quality, int dpi) throws IOException
     {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        image.compress(Bitmap.CompressFormat.JPEG, (int)(quality * 100), bos);
-        byte[] bitmapData = bos.toByteArray();
-        ByteArrayInputStream byteStream = new ByteArrayInputStream(bitmapData);
+        // create XObject
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        encodeImageToJPEGStream(image, quality, dpi, baos);
+        ByteArrayInputStream byteStream = new ByteArrayInputStream(baos.toByteArray());
 
         PDImageXObject pdImage = new PDImageXObject(document, byteStream,
             COSName.DCT_DECODE, image.getWidth(), image.getHeight(),
@@ -150,10 +151,10 @@ public final class JPEGFactory
         // alpha -> soft mask
         if (image.hasAlpha())
         {
-            PDImageXObject xAlpha = createAlphaFromARGBImage(document, image);
-
-            pdImage.getCOSStream().setItem(COSName.SMASK, xAlpha);
+            PDImage xAlpha = createAlphaFromARGBImage(document, image);
+            pdImage.getCOSObject().setItem(COSName.SMASK, xAlpha);
         }
+
         return pdImage;
     }
 
@@ -235,8 +236,8 @@ public final class JPEGFactory
      * @throws IOException
      */
     private static PDImageXObject prepareImageXObject(PDDocument document,
-        byte [] byteArray, int width, int height, int bitsPerComponent,
-        PDColorSpace initColorSpace) throws IOException
+                                                      byte [] byteArray, int width, int height, int bitsPerComponent,
+                                                      PDColorSpace initColorSpace) throws IOException
     {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
@@ -248,47 +249,48 @@ public final class JPEGFactory
             width, height, bitsPerComponent, initColorSpace);
     }
 
-    //	private static void encodeImageToJPEGStream(BufferedImage image, float quality, int dpi,
-    //			OutputStream out) throws IOException
-    //	{
-    //		// encode to JPEG
-    //		ImageOutputStream ios = null;
-    //		ImageWriter imageWriter = null;
-    //		try
-    //		{
-    //			// find JAI writer
-    //			imageWriter = ImageIO.getImageWritersBySuffix("jpeg").next();
-    //			ios = ImageIO.createImageOutputStream(out);
-    //			imageWriter.setOutput(ios);
-    //			// add compression
-    //			JPEGImageWriteParam jpegParam = (JPEGImageWriteParam)imageWriter.getDefaultWriteParam();
-    //			jpegParam.setCompressionMode(JPEGImageWriteParam.MODE_EXPLICIT);
-    //			jpegParam.setCompressionQuality(quality);
-    //			// add metadata
-    //			ImageTypeSpecifier imageTypeSpecifier = new ImageTypeSpecifier(image);
-    //			IIOMetadata data = imageWriter.getDefaultImageMetadata(imageTypeSpecifier, jpegParam);
-    //			Element tree = (Element)data.getAsTree("javax_imageio_jpeg_image_1.0");
-    //			Element jfif = (Element)tree.getElementsByTagName("app0JFIF").item(0);
-    //			jfif.setAttribute("Xdensity", Integer.toString(dpi));
-    //			jfif.setAttribute("Ydensity", Integer.toString(dpi));
-    //			jfif.setAttribute("resUnits", "1"); // 1 = dots/inch
-    //			// write
-    //			imageWriter.write(data, new IIOImage(image, null, null), jpegParam);
-    //		}
-    //		finally
-    //		{
-    //			// clean up
-    //			IOUtils.closeQuietly(out);
-    //			if (ios != null)
-    //			{
-    //				ios.close();
-    //			}
-    //			if (imageWriter != null)
-    //			{
-    //				imageWriter.dispose();
-    //			}
-    //		}
-    //	} TODO: PdfBox-Android
+    private static void encodeImageToJPEGStream(Bitmap image, float quality, int dpi,
+                                                OutputStream out) throws IOException
+    {
+        image.compress(Bitmap.CompressFormat.JPEG, (int)(quality * 100), out);
+        //		// encode to JPEG
+        //		ImageOutputStream ios = null;
+        //		ImageWriter imageWriter = null;
+        //		try
+        //		{
+        //			// find JAI writer
+        //			imageWriter = ImageIO.getImageWritersBySuffix("jpeg").next();
+        //			ios = ImageIO.createImageOutputStream(out);
+        //			imageWriter.setOutput(ios);
+        //			// add compression
+        //			JPEGImageWriteParam jpegParam = (JPEGImageWriteParam)imageWriter.getDefaultWriteParam();
+        //			jpegParam.setCompressionMode(JPEGImageWriteParam.MODE_EXPLICIT);
+        //			jpegParam.setCompressionQuality(quality);
+        //			// add metadata
+        //			ImageTypeSpecifier imageTypeSpecifier = new ImageTypeSpecifier(image);
+        //			IIOMetadata data = imageWriter.getDefaultImageMetadata(imageTypeSpecifier, jpegParam);
+        //			Element tree = (Element)data.getAsTree("javax_imageio_jpeg_image_1.0");
+        //			Element jfif = (Element)tree.getElementsByTagName("app0JFIF").item(0);
+        //			jfif.setAttribute("Xdensity", Integer.toString(dpi));
+        //			jfif.setAttribute("Ydensity", Integer.toString(dpi));
+        //			jfif.setAttribute("resUnits", "1"); // 1 = dots/inch
+        //			// write
+        //			imageWriter.write(data, new IIOImage(image, null, null), jpegParam);
+        //		}
+        //		finally
+        //		{
+        //			// clean up
+        //			IOUtils.closeQuietly(out);
+        //			if (ios != null)
+        //			{
+        //				ios.close();
+        //			}
+        //			if (imageWriter != null)
+        //			{
+        //				imageWriter.dispose();
+        //			}
+        //		} TODO: PdfBox-Android
+    }
 
     // returns a PDColorSpace for a given BufferedImage
     //	private static PDColorSpace getColorSpaceFromAWT(Bitmap awtImage)

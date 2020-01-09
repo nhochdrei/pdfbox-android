@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.tom_roush.pdfbox.cos.COSArray;
+import com.tom_roush.pdfbox.cos.COSBase;
 import com.tom_roush.pdfbox.cos.COSDictionary;
 import com.tom_roush.pdfbox.cos.COSName;
 import com.tom_roush.pdfbox.pdmodel.common.COSArrayList;
@@ -67,7 +68,7 @@ public class PDSeedValue implements COSObjectable
      */
     public static final int FLAG_DIGEST_METHOD = 1 << 6;
 
-    private COSDictionary dictionary;
+    private final COSDictionary dictionary;
 
     /**
      * Default constructor.
@@ -284,7 +285,7 @@ public class PDSeedValue implements COSObjectable
                     actuals.add(element);
                 }
             }
-            retval = new COSArrayList(actuals, fields);
+            retval = new COSArrayList<String>(actuals, fields);
         }
         return retval;
     }
@@ -324,7 +325,7 @@ public class PDSeedValue implements COSObjectable
                     actuals.add(element);
                 }
             }
-            retval = new COSArrayList(actuals, fields);
+            retval = new COSArrayList<String>(actuals, fields);
         }
         return retval;
     }
@@ -413,7 +414,7 @@ public class PDSeedValue implements COSObjectable
                     actuals.add(element);
                 }
             }
-            retval = new COSArrayList(actuals, fields);
+            retval = new COSArrayList<String>(actuals, fields);
         }
         return retval;
     }
@@ -424,8 +425,23 @@ public class PDSeedValue implements COSObjectable
      * by conforming products.
      *
      * @param reasons is a list of possible text string that specifying possible reasons
+     * 
+     * @deprecated use {@link #setReasons(java.util.List) }
      */
+    @Deprecated
     public void setReasonsd(List<String> reasons)
+    {
+        setReasons(reasons);
+    }
+
+    /**
+     * (Optional) An array of text strings that specifying possible reasons for signing
+     * a document. If specified, the reasons supplied in this entry replace those used
+     * by conforming products.
+     *
+     * @param reasons is a list of possible text string that specifying possible reasons
+     */
+    public void setReasons(List<String> reasons)
     {
         dictionary.setItem(COSName.REASONS, COSArrayList.converterToCOSArray(reasons));
     }
@@ -445,7 +461,7 @@ public class PDSeedValue implements COSObjectable
      */
     public PDSeedValueMDP getMDP()
     {
-        COSDictionary dict = (COSDictionary)dictionary.getDictionaryObject(COSName.MDP);
+        COSDictionary dict = dictionary.getCOSDictionary(COSName.MDP);
         PDSeedValueMDP mdp = null;
         if (dict != null)
         {
@@ -476,6 +492,35 @@ public class PDSeedValue implements COSObjectable
     }
 
     /**
+     * (Optional) A certificate seed value dictionary containing information about the certificate
+     * to be used when signing.
+     *
+     * @return dictionary
+     */
+    public PDSeedValueCertificate getSeedValueCertificate()
+    {
+        COSBase base = dictionary.getDictionaryObject(COSName.CERT);
+        PDSeedValueCertificate certificate = null;
+        if (base instanceof COSDictionary)
+        {
+            COSDictionary dict = (COSDictionary) base;
+            certificate = new PDSeedValueCertificate(dict);
+        }
+        return certificate;
+    }
+
+    /**
+     * (Optional) A certificate seed value dictionary containing information about the certificate
+     * to be used when signing.
+     *
+     * @param certificate dictionary
+     */
+    public void setSeedValueCertificate(PDSeedValueCertificate certificate)
+    {
+        dictionary.setItem(COSName.CERT, certificate);
+    }
+
+    /**
      * <p>(Optional; PDF 1.6) A time stamp dictionary containing two entries. URL which
      * is a ASCII string specifying the URL to a rfc3161 conform timestamp server and Ff
      * to indicate if a timestamp is required or optional.</p>
@@ -484,7 +529,7 @@ public class PDSeedValue implements COSObjectable
      */
     public PDSeedValueTimeStamp getTimeStamp()
     {
-        COSDictionary dict = (COSDictionary)dictionary.getDictionaryObject(COSName.TIME_STAMP);
+        COSDictionary dict = dictionary.getCOSDictionary(COSName.TIME_STAMP);
         PDSeedValueTimeStamp timestamp = null;
         if (dict != null)
         {
@@ -530,7 +575,7 @@ public class PDSeedValue implements COSObjectable
                     actuals.add(element);
                 }
             }
-            retval = new COSArrayList(actuals, fields);
+            retval = new COSArrayList<String>(actuals, fields);
         }
         return retval;
     }

@@ -19,6 +19,7 @@ package com.tom_roush.pdfbox.pdmodel.common.function.type4;
 /**
  * Parser for PDF Type 4 functions. This implements a small subset of the PostScript
  * language but is no full PostScript interpreter.
+ *
  */
 public final class Parser
 {
@@ -86,21 +87,21 @@ public final class Parser
     {
 
         /** {@inheritDoc} */
-    	@Override
+        @Override
         public void comment(CharSequence text)
         {
             //nop
         }
 
         /** {@inheritDoc} */
-    	@Override
+        @Override
         public void newLine(CharSequence text)
         {
             //nop
         }
 
         /** {@inheritDoc} */
-    	@Override
+        @Override
         public void whitespace(CharSequence text)
         {
             //nop
@@ -223,8 +224,8 @@ public final class Parser
             buffer.append(ch);
             if (ch == CR && peek() == LF)
             {
-            	//CRLF is treated as one newline
-            	buffer.append(nextChar());
+                //CRLF is treated as one newline
+                buffer.append(nextChar());
             }
             handler.newLine(buffer);
             nextChar();

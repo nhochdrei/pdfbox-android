@@ -20,14 +20,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * 
  * @author Johannes Koch
- *
+
  * @param <T> the type of object to store the revision numbers with
  */
 public class Revisions<T>
 {
     private List<T> objects;
     private List<Integer> revisionNumbers;
+
+    /**
+     * Constructor.
+     */
+    public Revisions()
+    {
+    }
 
     private List<T> getObjects()
     {
@@ -45,13 +53,6 @@ public class Revisions<T>
             this.revisionNumbers = new ArrayList<Integer>();
         }
         return this.revisionNumbers;
-    }
-
-    /**
-     * 
-     */
-    public Revisions()
-    {
     }
 
     /**
@@ -133,4 +134,5 @@ public class Revisions<T>
         }
         return sb.toString();
     }
+
 }
