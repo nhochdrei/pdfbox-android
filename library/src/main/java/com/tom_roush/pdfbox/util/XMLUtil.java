@@ -71,6 +71,7 @@ public final class XMLUtil
         try
         {
             DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+            // Fix for CVE-2016-2175: disable external entities
             builderFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
             builderFactory.setFeature("http://xml.org/sax/features/external-general-entities",
                     false);

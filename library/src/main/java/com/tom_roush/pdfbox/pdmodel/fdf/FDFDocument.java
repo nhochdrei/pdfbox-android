@@ -238,6 +238,7 @@ public class FDFDocument implements Closeable
      */
     public static FDFDocument loadXFDF(InputStream input) throws IOException
     {
+        // Fix CVE-2019-0228: External Entity in XFDF Xml content
         return new FDFDocument(com.tom_roush.pdfbox.util.XMLUtil.parse(input));
     }
 

@@ -951,6 +951,7 @@ public class AFMParser
         buf.append( (char)nextByte );
 
         //now read the data
+        // Fix CVE-2018-8036: DoS (Out-Of-Memory)
         nextByte = input.read();
         while (nextByte != -1 && !isEOL(nextByte))
         {
@@ -980,6 +981,7 @@ public class AFMParser
         buf.append( (char)nextByte );
 
         //now read the data
+        // Fix CVE-2018-8036: DoS (Out-Of-Memory)
         nextByte = input.read();
         while (nextByte != -1 && !isWhitespace(nextByte))
         {

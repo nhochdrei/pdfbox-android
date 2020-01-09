@@ -2304,6 +2304,7 @@ public class COSParser extends BaseParser
             List<? extends COSBase> kidsList = kidsArray.toList();
             for (COSBase kid : kidsList)
             {
+                // Fix CVE-2018-11797: Skip duplicates
                 if (!(kid instanceof COSObject) || set.contains((COSObject) kid))
                 {
                     kidsArray.remove(kid);
