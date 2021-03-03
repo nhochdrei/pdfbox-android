@@ -217,7 +217,7 @@ public final class OpenTypeScript
 
     static
     {
-        String path = "/org/apache/fontbox/unicode/Scripts.txt";
+        String path = "/com/tom_roush/fontbox/unicode/Scripts.txt";
         InputStream input = null;
         try
         {

@@ -29,7 +29,7 @@ import com.tom_roush.pdfbox.io.IOUtils;
 public final class Version
 {
     private static final String PDFBOX_VERSION_PROPERTIES =
-            "/org/apache/pdfbox/resources/version.properties";
+            "/com/tom_roush/pdfbox/resources/version.properties";
 
     private Version()
     {

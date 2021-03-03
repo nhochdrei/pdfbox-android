@@ -1,5 +1,5 @@
-apply plugin: 'com.jfrog.bintray'
 apply plugin: 'maven-publish'
+apply plugin: 'net.linguica.maven-settings'
 
 task copyResources(type: Copy) {
     from fileTree('src/main/resources') //.files
@@ -11,26 +11,6 @@ preBuild.dependsOn copyResources
 
 clean {
     delete 'src/main/assets'
-}
-
-bintray {
-    user = System.getenv('BINTRAY_USER')
-    key = System.getenv('BINTRAY_KEY')
-
-    dryRun = false
-    publish = false
-    override = false
-
-    pkg {
-        repo = 'PdfBox-Android'
-        name = 'PdfBox-Android'
-
-        version {
-            name = project.VERSION_NAME
-        }
-    }
-
-    publications = ['Production']
 }
 
 task androidJavadocs(type: Javadoc) {
@@ -81,7 +61,7 @@ def pomConfig = {
     }
 
     scm {
-        url "https://github.com/TomRoush/PdfBox-Android"
+        url "https://github.com/nhochdrei/PdfBox-Android"
     }
 }
 
@@ -110,6 +90,12 @@ publishing {
                     dependencyNode.appendNode('version', it.version)
                 }
             }
+        }
+    }
+    repositories {
+        maven {
+            name = 'REPLACEME'
+            url = 'REPLACEME'
         }
     }
 }

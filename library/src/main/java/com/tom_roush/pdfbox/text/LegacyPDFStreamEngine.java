@@ -108,7 +108,7 @@ class LegacyPDFStreamEngine extends PDFStreamEngine
         addOperator(new ShowTextLineAndSpace());
 
         // load additional glyph list for Unicode mapping
-        String path = "/org/apache/pdfbox/resources/glyphlist/additional.txt";
+        String path = "/com/tom_roush/pdfbox/resources/glyphlist/additional.txt";
         InputStream input = GlyphList.class.getResourceAsStream(path);
         glyphList = new GlyphList(GlyphList.getAdobeGlyphList(), input);
     }

@@ -1,9 +1,10 @@
 plugins {
     id 'com.android.library'
+    id 'net.linguica.maven-settings' version '0.5' apply false
 }
 
 ext {
-    PUBLISH_GROUP_ID = 'com.tom_roush'
+    PUBLISH_GROUP_ID = 'com.nhochdrei'
     PUBLISH_ARTIFACT_ID = 'pdfbox-android'
     PUBLISH_VERSION = VERSION_NAME
 }
@@ -94,4 +95,4 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
 }
 
-apply from: 'bintray-release.gradle'
+apply from: 'company-release.gradle'
